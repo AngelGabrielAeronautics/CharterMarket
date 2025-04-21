@@ -1,0 +1,7 @@
+{
+    "workbench.editor.tabActionLocation": "right",
+    "workbench.editor.autoLockGroups": {
+        "imagePreview.previewEditor": true
+    },
+    "workbench.editor.openSideBySideDirection": "right"
+}

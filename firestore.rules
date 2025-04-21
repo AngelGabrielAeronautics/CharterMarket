@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if a document is locked
+    function isLocked(data) {
+      return data != null && data.locked == true;
+    }
+    
+    // Helper function to check if user is superAdmin
+    function isSuperAdmin() {
+      return request.auth != null && request.auth.token.role == 'superAdmin';
+    }
+
+    match /{document=**} {
+      // Allow read if authenticated
+      allow read: if request.auth != null;
+      
+      // Allow write only if:
+      // 1. Document is not locked, or
+      // 2. User is a superAdmin
+      allow write: if !isLocked(resource.data) || isSuperAdmin();
+    }
+    
+    // Additional collection-specific rules can be added here
+  }
+} 
