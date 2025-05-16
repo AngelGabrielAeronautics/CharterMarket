@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Los Angeles International Airport",
+    "city": "Los Angeles",
+    "country": "United States",
+    "iata": "LAX"
+  },
+  {
+    "name": "John F. Kennedy International Airport",
+    "city": "New York",
+    "country": "United States",
+    "iata": "JFK"
+  },
+  {
+    "name": "Heathrow Airport",
+    "city": "London",
+    "country": "United Kingdom",
+    "iata": "LHR"
+  }
+] 

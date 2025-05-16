@@ -2,49 +2,42 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import { Box, Paper, Typography, Tabs, Tab } from '@mui/material';
 import NotificationList from '@/components/NotificationList';
 import NotificationPreferences from '@/components/NotificationPreferences';
 
 export default function NotificationsPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('notifications');
+  const [activeTab, setActiveTab] = useState(0);
 
   if (!user) {
     return null;
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
-        <p className="mt-2 text-sm text-gray-500">
+    <Box sx={{ p: { xs: 2, sm: 4 }, maxWidth: 900, mx: 'auto' }}>
+      <Box mb={4}>
+        <Typography variant="h4" fontWeight="bold" color="text.primary">Notifications</Typography>
+        <Typography variant="body2" color="text.secondary" mt={1}>
           Manage your notifications and preferences
-        </p>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="preferences">Preferences</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="notifications" className="mt-6">
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6">
-              <NotificationList userId={user.uid} />
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="preferences" className="mt-6">
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6">
-              <NotificationPreferences userId={user.uid} />
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
+        </Typography>
+      </Box>
+      <Paper elevation={2} sx={{ borderRadius: 2 }}>
+        <Tabs
+          value={activeTab}
+          onChange={(_e, v) => setActiveTab(v)}
+          indicatorColor="primary"
+          textColor="primary"
+          variant="fullWidth"
+        >
+          <Tab label="Notifications" />
+          <Tab label="Preferences" />
+        </Tabs>
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
+          {activeTab === 0 && <NotificationList userId={user.uid} />}
+          {activeTab === 1 && <NotificationPreferences userId={user.uid} />}
+        </Box>
+      </Paper>
+    </Box>
   );
 } 

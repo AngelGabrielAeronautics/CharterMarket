@@ -6,6 +6,8 @@ import { uploadAircraftImage, deleteAircraftImage } from '@/lib/aircraft';
 import { AircraftImage } from '@/types/aircraft';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
+import { Box, Typography, Grid, CircularProgress, Alert } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 
 interface AircraftImageGalleryProps {
   aircraftId: string;
@@ -18,6 +20,7 @@ export default function AircraftImageGallery({ aircraftId, images, onImagesUpdat
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const theme = useTheme();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -70,93 +73,165 @@ export default function AircraftImageGallery({ aircraftId, images, onImagesUpdat
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Aircraft Images</h3>
-        <div className="flex items-center space-x-4">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Typography variant="h6" fontWeight="medium">Aircraft Images</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <input
             type="file"
             ref={fileInputRef}
             onChange={handleFileUpload}
             accept="image/*"
             multiple
-            className="hidden"
+            style={{ display: 'none' }}
           />
           <Button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
           >
             {uploading ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+              <CircularProgress size={20} sx={{ color: 'white' }} />
             ) : (
               <>
-                <Upload className="h-5 w-5 mr-2" />
+                <Upload style={{ height: 20, width: 20, marginRight: 8 }} />
                 Upload Images
               </>
             )}
           </Button>
-        </div>
-      </div>
-
+        </Box>
+      </Box>
       {error && (
-        <div className="text-red-500 text-sm">{error}</div>
+        <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
       )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <Grid container spacing={2}>
         {images.map((image) => (
-          <div
+          <Grid
             key={image.id}
-            className="relative group rounded-lg overflow-hidden border border-gray-200"
-          >
-            <div className="aspect-w-16 aspect-h-9 relative">
-              <Image
-                src={image.url}
-                alt={`${image.type} view`}
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
-              <div className="flex space-x-2">
-                {!image.isPrimary && (
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 4
+            }}>
+            <Box
+              sx={{
+                position: 'relative',
+                borderRadius: theme.shape.borderRadius,
+                overflow: 'hidden',
+                border: `1px solid ${theme.palette.divider}`,
+                '&:hover .overlay': {
+                  opacity: 1,
+                },
+              }}
+            >
+              <Box sx={{ position: 'relative', paddingTop: '56.25%' }}> {/* 16:9 aspect ratio */}
+                <Image
+                  src={image.url}
+                  alt={`${image.type} view`}
+                  fill
+                  style={{ objectFit: 'cover' }}
+                />
+              </Box>
+              <Box
+                className="overlay"
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  backgroundColor: 'rgba(0, 0, 0, 0)',
+                  transition: theme.transitions.create('background-color'),
+                  opacity: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  },
+                }}
+              >
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  {!image.isPrimary && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => handleSetPrimary(image)}
+                      sx={{
+                        backgroundColor: 'white',
+                        color: 'text.primary',
+                        '&:hover': {
+                          backgroundColor: 'grey.100',
+                        },
+                      }}
+                    >
+                      <ImageIcon style={{ height: 16, width: 16, marginRight: 4 }} />
+                      Set Primary
+                    </Button>
+                  )}
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSetPrimary(image)}
-                    className="bg-white text-gray-900 hover:bg-gray-100"
+                    variant="outlined"
+                    size="small"
+                    onClick={() => handleDeleteImage(image)}
+                    sx={{
+                      backgroundColor: 'white',
+                      color: 'error.main',
+                      '&:hover': {
+                        backgroundColor: 'error.lighter',
+                      },
+                    }}
                   >
-                    <ImageIcon className="h-4 w-4 mr-1" />
-                    Set Primary
+                    <X style={{ height: 16, width: 16 }} />
                   </Button>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDeleteImage(image)}
-                  className="bg-white text-red-600 hover:bg-red-50"
+                </Box>
+              </Box>
+              {image.isPrimary && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 8,
+                    left: 8,
+                    backgroundColor: 'primary.main',
+                    color: 'white',
+                    px: 1,
+                    py: 0.5,
+                    borderRadius: theme.shape.borderRadius,
+                    typography: 'caption',
+                  }}
                 >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            {image.isPrimary && (
-              <div className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 text-xs rounded">
-                Primary
-              </div>
-            )}
-            <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 text-xs rounded">
-              {image.type}
-            </div>
-          </div>
+                  Primary
+                </Box>
+              )}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: 8,
+                  left: 8,
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  color: 'white',
+                  px: 1,
+                  py: 0.5,
+                  borderRadius: theme.shape.borderRadius,
+                  typography: 'caption',
+                }}
+              >
+                {image.type}
+              </Box>
+            </Box>
+          </Grid>
         ))}
-      </div>
-
+      </Grid>
       {images.length === 0 && (
-        <div className="text-center py-12 border-2 border-dashed rounded-lg">
-          <ImageIcon className="h-12 w-12 mx-auto text-gray-400" />
-          <p className="mt-2 text-sm text-gray-500">No images uploaded yet</p>
-        </div>
+        <Box
+          sx={{
+            textAlign: 'center',
+            py: 6,
+            border: `2px dashed ${theme.palette.divider}`,
+            borderRadius: theme.shape.borderRadius,
+          }}
+        >
+          <ImageIcon style={{ height: 48, width: 48, color: theme.palette.text.disabled, margin: '0 auto' }} />
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            No images uploaded yet
+          </Typography>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 } 

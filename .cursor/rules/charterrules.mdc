@@ -1,0 +1,71 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Description
+Enforce Next.js, TypeScript, functional React, and SEO best practices across the Charter Aviation Platform codebase.
+
+# Applies to
+src/**/*.{ts,tsx,js,jsx}
+lib/**/*.{ts,tsx}
+components/**/*.{ts,tsx}
+pages/**/*.{ts,tsx}
+
+# Rules
+
+## 🔧 General Conventions
+- Use functional React components and hooks; never class components.
+- All components must use explicit TypeScript typings for props and returns.
+- Use Tailwind CSS and Material UI consistently with design tokens.
+
+## 🚀 Performance & SEO
+- Use `next/image` for all images with correct dimensions and lazy loading.
+- Apply `<Head>` metadata dynamically with OpenGraph and Twitter card support.
+- Include semantic tags and proper heading hierarchy (h1 > h2 > h3).
+- Follow image optimization and bundle-splitting guidelines.
+
+## 🎨 Styling
+- Use responsive Tailwind classes (`sm:`, `md:`, `lg:`).
+- Follow your `tokens.css` and `tailwind.config.js` extension guidelines.
+
+### 💎 Design Tokens (Single Source of Truth)
+- Define and update tokens in `style-dictionary/tokens/global.json`.
+- Run `npm run build:tokens` to generate `src/styles/tokens.css` and `src/styles/tokens.js`.
+- Import `tokens.css` in your root layout (e.g., `layout.tsx`) to load CSS variables globally.
+- Reference tokens in Tailwind via `tailwind.config.js` and in Material UI by importing `tokens` from `@/styles/tokens`.
+
+- Inputs must follow Material Design spec with framer-motion transitions.
+
+## 🔐 Security & Secrets
+- Never commit `.env` or `service-account.json`.
+- All environment variables must be declared in `.env.example`.
+- Sanitize all inputs client- and server-side.
+- Protect routes with proper Firebase auth checks.
+
+## 🧪 Testing
+- All utility functions must have Jest tests (80%+ coverage).
+- Use React Testing Library for UI tests.
+- Smoke test all booking and auth flows.
+
+## 📦 File & Project Structure
+- PascalCase for components, kebab-case for filenames.
+- Organize code by feature (auth/, flight/, dashboard/, etc.).
+- Keep components modular, typed, and documented.
+
+## 🧠 Git & CI/CD
+- Use conventional commit messages (`feat:`, `fix:`, `chore:`).
+- Branch naming: `feature/`, `bugfix/`, `release/`.
+- PRs must include test cases or screenshots.
+- CI must fail on lint/type/test errors.
+
+## 🔍 Accessibility
+- All interactive elements must have ARIA labels and keyboard support.
+- Use meaningful alt text on all images.
+- Maintain WCAG 2.1 contrast and font size compliance.
+
+## ✅ Required Commands
+```bash
+npm run lint         # Enforce linting before commit
+npm run test         # Run unit and integration tests
+npm run build:tokens # Sync design tokens

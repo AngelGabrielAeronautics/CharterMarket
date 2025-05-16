@@ -2,9 +2,90 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import Input from '@/components/ui/Input';
-import DateInput from '@/components/ui/DateInput';
 import { useState } from "react";
+import { 
+  Box, 
+  Container, 
+  Typography, 
+  Grid, 
+  TextField, 
+  Button, 
+  Paper, 
+  Card, 
+  CardMedia, 
+  CardContent, 
+  Stack,
+  List,
+  ListItem,
+  Divider,
+  InputAdornment,
+  styled
+} from '@mui/material';
+import type { GridProps as MuiGridProps } from '@mui/material';
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import BookingForm from '@/components/BookingForm';
+
+// Define props that are specific to Grid containers and should be omitted for items
+type GridContainerPropsKeys = 'container' | 'columns' | 'columnSpacing' | 'direction' | 'rowSpacing' | 'spacing' | 'wrap';
+// Define breakpoint props that GridItem will handle and convert to the 'size' object
+type BreakpointKeys = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
+// Props that are allowed to be passed through to the underlying Grid item,
+// omitting container-specific props and the breakpoint/size props we're transforming.
+type AllowedPassthroughGridProps = Omit<MuiGridProps, GridContainerPropsKeys | BreakpointKeys | 'size'>;
+
+// Define the GridItem component props type
+interface GridItemProps extends AllowedPassthroughGridProps {
+  xs?: number | boolean;
+  sm?: number | boolean;
+  md?: number | boolean;
+  lg?: number | boolean;
+  xl?: number | boolean; // Added for completeness
+  children?: React.ReactNode;
+}
+
+// Create a custom GridItem component to transform breakpoint props to the 'size' object
+const GridItem: React.FC<GridItemProps> = ({
+  children,
+  xs,
+  sm,
+  md,
+  lg,
+  xl,
+  ...otherProps // These are the AllowedPassthroughGridProps
+}) => {
+  const sizeBreakpoints: { [key: string]: number | 'auto' } = {};
+
+  // Helper to map boolean 'true' to 'auto' and validate numbers for GridSize (1-12)
+  const mapToGridSizeValue = (val: number | boolean | undefined): number | 'auto' | undefined => {
+    if (typeof val === 'number' && val >= 1 && val <= 12) return val;
+    if (val === true) return 'auto';
+    return undefined; // Invalid numbers, false, or undefined are ignored
+  };
+
+  const xsValue = mapToGridSizeValue(xs);
+  if (xsValue !== undefined) sizeBreakpoints.xs = xsValue;
+
+  const smValue = mapToGridSizeValue(sm);
+  if (smValue !== undefined) sizeBreakpoints.sm = smValue;
+
+  const mdValue = mapToGridSizeValue(md);
+  if (mdValue !== undefined) sizeBreakpoints.md = mdValue;
+
+  const lgValue = mapToGridSizeValue(lg);
+  if (lgValue !== undefined) sizeBreakpoints.lg = lgValue;
+
+  const xlValue = mapToGridSizeValue(xl);
+  if (xlValue !== undefined) sizeBreakpoints.xl = xlValue;
+
+  // Pass the transformed 'size' prop if any breakpoints were defined, along with other valid props
+  return (
+    <Grid {...otherProps} {...(Object.keys(sizeBreakpoints).length > 0 ? { size: sizeBreakpoints } : {})}>
+      {children}
+    </Grid>
+  );
+};
 
 const PLACEHOLDER_BASE = "https://placehold.co";
 const BRAND_COLORS = {
@@ -53,7 +134,56 @@ const aircraft = [
   }
 ];
 
+// Styled components for destination card
+const DestinationCard = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  height: 400,
+  borderRadius: theme.shape.borderRadius,
+  overflow: 'hidden',
+  cursor: 'pointer',
+  '&:hover img': {
+    transform: 'scale(1.05)',
+    transition: 'transform 0.3s ease-in-out'
+  },
+  [theme.breakpoints.down('md')]: {
+    height: 350,
+  },
+  [theme.breakpoints.down('sm')]: {
+    height: 300,
+  },
+}));
+
+const DestinationOverlay = styled(Box)(({ theme }) => ({
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  right: 0,
+  background: 'linear-gradient(to top, rgba(26, 43, 60, 0.9), transparent)',
+  padding: theme.spacing(3),
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(2),
+  },
+}));
+
+// Styled components for footer links
+const FooterLink = styled(Link)(({ theme }) => ({
+  color: 'rgba(255, 255, 255, 0.7)',
+  textDecoration: 'none',
+  fontSize: '0.875rem',
+  '&:hover': {
+    color: '#ffffff',
+    transition: 'color 0.2s ease-in-out',
+  },
+  [theme.breakpoints.up('sm')]: {
+    fontSize: '1rem',
+  },
+}));
+
 export default function Home() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  
   const [searchForm, setSearchForm] = useState({
     from: '',
     to: '',
@@ -70,199 +200,439 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background-primary">
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Hero Section */}
-      <section className="relative min-h-[600px] h-screen">
-        {/* Full-screen background image with overlay */}
-        <div className="absolute inset-0 bg-light dark:bg-gradient-to-br dark:from-charter-navy-900 dark:via-charter-navy-950 dark:to-black">
+      <Box 
+        component="section" 
+        sx={{ 
+          position: 'relative', 
+          minHeight: 600, 
+          height: '100vh',
+          mt: -12,
+        }}
+      >
+        {/* Background with overlay */}
+        <Box 
+          sx={{ 
+            position: 'absolute', 
+            inset: 0,
+            bgcolor: theme.palette.mode === 'dark' 
+              ? 'primary.dark' 
+              : 'cream.lighter',
+            backgroundImage: theme.palette.mode === 'dark' 
+              ? 'linear-gradient(to bottom right, #0b3746, #072530, #000000)'
+              : 'none',
+          }}
+        >
           {/* Decorative elements */}
-          <div className="absolute inset-0 bg-charter-navy-50 dark:bg-charter-navy-900 opacity-5">
-            <div className="absolute top-0 left-0 w-full h-full bg-[url('/patterns/grid.svg')] bg-repeat"></div>
-          </div>
-        </div>
-
+          <Box 
+            sx={{ 
+              position: 'absolute', 
+              inset: 0, 
+              opacity: 0.05,
+              backgroundImage: 'url(/patterns/grid.svg)',
+              backgroundRepeat: 'repeat'
+            }}
+          />
+        </Box>
+        {/* Hero Video Background */}
+        <Box
+          component="video"
+          src="/images/hero/Charter. Landing.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
+        />
         {/* Hero Content */}
-        <div className="relative h-full flex items-center">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl mx-auto">
-              <h1 className="font-playfair text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-charter-navy-900 dark:text-[#F9EFE4] mb-4 sm:mb-6 leading-tight text-center sm:text-left">
-                Experience Luxury <br className="hidden sm:block"/>
-                <span className="text-charter-gold-500 dark:text-charter-gold-400">in the Skies</span>
-              </h1>
-              <p className="text-lg sm:text-xl md:text-2xl text-charter-navy-700 dark:text-[#F9EFE4] mb-8 sm:mb-12 font-inter text-center sm:text-left">
-                Private aviation tailored to your journey
-              </p>
+        <Box 
+          sx={{ 
+            position: 'relative', 
+            height: '100%', 
+            display: 'flex', 
+            alignItems: 'center' 
+          }}
+        >
+          <Container>
+            <Box 
+              sx={{ 
+                maxWidth: 1200, 
+                mx: 'auto',
+              }}
+            >
+              <Grid container spacing={2} alignItems="center" justifyContent={{ xs: 'center', md: 'flex-end' }}>
+                {/* Left Column (empty or for future content) */}
+                <GridItem xs={12} md={6}>
+                  {/* This column can be used for an image or other content later */}
+                  {/* For now, it creates the two-column effect */}
+                </GridItem>
+                
+                {/* Right Column for Text */}
+                <GridItem xs={12} md={6}>
+                  <Box sx={{ textAlign: { xs: 'center', md: 'right' } }}>
+                    <Typography
+                      variant="h1"
+                      sx={{
+                        fontFamily: 'var(--font-playfair)',
+                        fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem', lg: '4rem' },
+                        color: theme.palette.common.white,
+                        mb: { xs: 2, sm: 3 },
+                        lineHeight: 1.2,
+                        fontWeight: 700,
+                        textShadow: '0 2px 4px rgba(0, 0, 0, 0.6)',
+                      }}
+                    >
+                      The Worlds First and Only Charter Marketplace.
+                      {!isMobile && <br />}
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        color: theme.palette.common.white,
+                        mb: { xs: 4, sm: 6 },
+                        fontWeight: 400,
+                        textShadow: '0 1px 3px rgba(0, 0, 0, 0.6)',
+                      }}
+                    >
+                      Transparent quoting direct from aircraft operators.
+                    </Typography>
+                  </Box>
+                </GridItem>
+              </Grid>
               
-              {/* Search Flight Form */}
-              <div className="bg-light dark:bg-charter-navy-800 p-4 sm:p-6 md:p-8 rounded-xl shadow-2xl">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                  <Input
-                    label="From"
-                    name="from"
-                    value={searchForm.from}
-                    onChange={handleSearchChange}
-                    helperText="Departure city or airport"
-                    className="w-full px-4 py-3 rounded-lg border-2 border-charter-navy-200 dark:border-charter-navy-600 bg-white dark:bg-charter-navy-700 focus:ring-2 focus:ring-charter-gold-400 focus:border-charter-gold-400 transition-all duration-200 text-charter-navy-900 dark:text-[#F9EFE4] placeholder:text-charter-navy-400 dark:placeholder:text-[#F9EFE4]/70"
-                  />
-                  <Input
-                    label="To"
-                    name="to"
-                    value={searchForm.to}
-                    onChange={handleSearchChange}
-                    helperText="Destination city or airport"
-                    className="w-full px-4 py-3 rounded-lg border-2 border-charter-navy-200 dark:border-charter-navy-600 bg-white dark:bg-charter-navy-700 focus:ring-2 focus:ring-charter-gold-400 focus:border-charter-gold-400 transition-all duration-200 text-charter-navy-900 dark:text-[#F9EFE4] placeholder:text-charter-navy-400 dark:placeholder:text-[#F9EFE4]/70"
-                  />
-                  <DateInput
-                    label="Departure Date"
-                    name="departureDate"
-                    value={searchForm.departureDate}
-                    onChange={handleSearchChange}
-                    helperText="Select your travel date"
-                    className="w-full px-4 py-3 rounded-lg border-2 border-charter-navy-200 dark:border-charter-navy-600 bg-white dark:bg-charter-navy-700 focus:ring-2 focus:ring-charter-gold-400 focus:border-charter-gold-400 transition-all duration-200 text-charter-navy-900 dark:text-[#F9EFE4]"
-                  />
-                  <Input
-                    label="Passengers"
-                    name="passengers"
-                    type="number"
-                    value={searchForm.passengers}
-                    onChange={handleSearchChange}
-                    min="1"
-                    helperText="Number of passengers"
-                    className="w-full px-4 py-3 rounded-lg border-2 border-charter-navy-200 dark:border-charter-navy-600 bg-white dark:bg-charter-navy-700 focus:ring-2 focus:ring-charter-gold-400 focus:border-charter-gold-400 transition-all duration-200 text-charter-navy-900 dark:text-[#F9EFE4] placeholder:text-charter-navy-400 dark:placeholder:text-[#F9EFE4]/70"
-                  />
-                </div>
-                <div className="mt-6">
-                  <button className="w-full sm:w-auto px-8 py-4 bg-charter-gold-500 hover:bg-charter-gold-600 text-white rounded-lg text-lg font-medium transition-colors duration-200">
-                    Search Flights
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+              {/* Search Flight Form (remains below the two-column text) */}
+              <BookingForm />
+            </Box>
+          </Container>
+        </Box>
+      </Box>
 
       {/* Featured Destinations */}
-      <section className="py-12 sm:py-16 md:py-20 bg-background-primary">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-playfair text-2xl sm:text-3xl md:text-4xl text-primary text-center mb-8 sm:mb-12">Popular Destinations</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+      <Box 
+        component="section" 
+        sx={{ 
+          py: { xs: 6, sm: 8, md: 10 },
+          bgcolor: 'background.default'
+        }}
+      >
+        <Container>
+          <Typography 
+            variant="h2" 
+            align="center" 
+            gutterBottom
+            sx={{ 
+              fontFamily: 'var(--font-playfair)',
+              mb: { xs: 4, sm: 6 },
+              color: 'primary.main'
+            }}
+          >
+            Popular Destinations
+          </Typography>
+          
+          <Grid container spacing={3}>
             {destinations.map((city) => (
-              <div key={city.name} className="group relative h-64 sm:h-80 md:h-96 overflow-hidden rounded-xl">
-            <Image
-                  src={city.image}
-                  alt={city.name}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-charter-navy-900/90 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 p-4 sm:p-6">
-                  <h3 className="text-xl sm:text-2xl text-light font-playfair mb-1 sm:mb-2">{city.name}</h3>
-                  <p className="text-sm sm:text-base text-light/90">{city.description}</p>
-                </div>
-              </div>
+              <GridItem xs={12} sm={6} md={4} key={city.name}>
+                <DestinationCard>
+                  <Box 
+                    sx={{ 
+                      position: 'relative',
+                      height: '100%',
+                      width: '100%'
+                    }}
+                  >
+                    <Image
+                      src={city.image}
+                      alt={city.name}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      style={{ 
+                        objectFit: 'cover',
+                        transition: 'transform 0.3s ease-in-out'
+                      }}
+                    />
+                  </Box>
+                  <DestinationOverlay>
+                    <Typography 
+                      variant="h5" 
+                      sx={{ 
+                        fontFamily: 'var(--font-playfair)',
+                        color: 'common.white',
+                        mb: 0.5
+                      }}
+                    >
+                      {city.name}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ color: 'rgba(255, 255, 255, 0.9)' }}
+                    >
+                      {city.description}
+                    </Typography>
+                  </DestinationOverlay>
+                </DestinationCard>
+              </GridItem>
             ))}
-          </div>
-        </div>
-      </section>
+          </Grid>
+        </Container>
+      </Box>
 
       {/* Aircraft Showcase */}
-      <section className="py-12 sm:py-16 md:py-20 bg-background-secondary">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-playfair text-2xl sm:text-3xl md:text-4xl text-primary text-center mb-8 sm:mb-12">Our Fleet</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <Box 
+        component="section" 
+        sx={{ 
+          py: { xs: 6, sm: 8, md: 10 },
+          bgcolor: 'background.paper'
+        }}
+      >
+        <Container>
+          <Typography 
+            variant="h2" 
+            align="center" 
+            gutterBottom
+            sx={{ 
+              fontFamily: 'var(--font-playfair)',
+              mb: { xs: 4, sm: 6 },
+              color: 'primary.main'
+            }}
+          >
+            Our Fleet
+          </Typography>
+          
+          <Grid container spacing={3}>
             {aircraft.map((item) => (
-              <div key={item.name} className="group cursor-pointer">
-                <div className="relative h-48 sm:h-56 md:h-64 rounded-lg overflow-hidden mb-3 sm:mb-4">
-          <Image
-                    src={item.image}
-                    alt={item.name}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                </div>
-                <h3 className="text-lg sm:text-xl font-playfair text-primary text-center mb-1 sm:mb-2">{item.name}</h3>
-                <p className="text-secondary text-center text-sm">{item.description}</p>
-              </div>
+              <GridItem xs={12} sm={6} lg={3} key={item.name}>
+                <Card 
+                  sx={{ 
+                    height: '100%',
+                    boxShadow: 2,
+                    transition: 'transform 0.3s',
+                    '&:hover': {
+                      transform: 'translateY(-5px)',
+                      boxShadow: 4
+                    }
+                  }}
+                >
+                  <CardMedia
+                    component="div"
+                    sx={{ 
+                      height: { xs: 200, sm: 220, md: 240 },
+                      position: 'relative'
+                    }}
+                  >
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      style={{ objectFit: 'cover' }}
+                    />
+                  </CardMedia>
+                  <CardContent>
+                    <Typography 
+                      variant="h6" 
+                      align="center" 
+                      gutterBottom
+                      sx={{ fontFamily: 'var(--font-playfair)' }}
+                    >
+                      {item.name}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      align="center"
+                      color="text.secondary"
+                    >
+                      {item.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </GridItem>
             ))}
-          </div>
-        </div>
-      </section>
+          </Grid>
+        </Container>
+      </Box>
 
       {/* Empty Legs Section */}
-      <section className="py-12 sm:py-16 md:py-20 bg-charter-navy-500">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12">
-            <div className="w-full md:w-1/2">
-              <h2 className="font-playfair text-2xl sm:text-3xl md:text-4xl text-light mb-4 sm:mb-6">Empty Leg Flights</h2>
-              <p className="text-lg sm:text-xl text-light/80 mb-6 sm:mb-8">
+      <Box 
+        component="section" 
+        sx={{ 
+          py: { xs: 6, sm: 8, md: 10 },
+          bgcolor: 'primary.main',
+          color: 'common.white'
+        }}
+      >
+        <Container>
+          <Grid container spacing={4} alignItems="center">
+            <GridItem xs={12} md={6}>
+              <Typography 
+                variant="h2" 
+                gutterBottom
+                sx={{ 
+                  fontFamily: 'var(--font-playfair)',
+                  color: 'common.white',
+                  mb: { xs: 2, sm: 3 }
+                }}
+              >
+                Empty Leg Flights
+              </Typography>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  mb: { xs: 3, sm: 4 }
+                }}
+              >
                 Take advantage of exclusive deals on empty leg flights. Save up to 75% on private jet travel.
-              </p>
-              <Link
+              </Typography>
+              <Button
+                component={Link} 
                 href="/empty-legs"
-                className="inline-block px-6 sm:px-8 py-3 bg-interactive-default hover:bg-interactive-hover active:bg-interactive-active text-light rounded-lg transition-colors font-medium text-sm sm:text-base"
+                variant="outlined"
+                color="secondary"
+                size="large"
+                sx={{ 
+                  borderRadius: 2,
+                  color: 'common.white',
+                  borderColor: 'common.white',
+                  '&:hover': {
+                    borderColor: 'secondary.light',
+                    bgcolor: 'rgba(255, 255, 255, 0.1)'
+                  }
+                }}
               >
                 View Available Flights
-              </Link>
-            </div>
-            <div className="w-full md:w-1/2 relative h-64 sm:h-80 md:h-96">
-          <Image
-                src={`${PLACEHOLDER_BASE}/800x600/${BRAND_COLORS.gold}/${BRAND_COLORS.navy}?text=Empty+Leg+Flights`}
-                alt="Empty leg flight promotion"
-                fill
-                className="object-cover rounded-xl"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
+              </Button>
+            </GridItem>
+            <GridItem xs={12} md={6}>
+              <Box 
+                sx={{ 
+                  position: 'relative',
+                  height: { xs: 300, sm: 350, md: 400 },
+                  borderRadius: 3,
+                  overflow: 'hidden'
+                }}
+              >
+                <Image
+                  src={`${PLACEHOLDER_BASE}/800x600/${BRAND_COLORS.gold}/${BRAND_COLORS.navy}?text=Empty+Leg+Flights`}
+                  alt="Empty leg flight promotion"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  style={{ objectFit: 'cover' }}
+                />
+              </Box>
+            </GridItem>
+          </Grid>
+        </Container>
+      </Box>
 
       {/* Footer */}
-      <footer className="py-8 sm:py-12 bg-charter-navy-600">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="col-span-2 sm:col-span-1">
-          <Image
-                src={`${PLACEHOLDER_BASE}/240x80/${BRAND_COLORS.gold}/FFFFFF?text=CHARTER`}
-                alt="Charter Logo" 
-                width={120} 
-                height={40} 
-                className="mb-4 sm:mb-6" 
-              />
-              <p className="text-sm sm:text-base text-light/70">
+      <Box 
+        component="footer" 
+        sx={{ 
+          py: { xs: 4, sm: 6 },
+          bgcolor: 'primary.dark',
+          color: 'common.white'
+        }}
+      >
+        <Container>
+          <Grid container spacing={4}>
+            <GridItem xs={12} sm={6} md={3}>
+              <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+                <Image
+                  src={`${PLACEHOLDER_BASE}/240x80/${BRAND_COLORS.gold}/FFFFFF?text=CHARTER`}
+                  alt="Charter Logo" 
+                  width={120} 
+                  height={40} 
+                />
+              </Box>
+              <Typography 
+                variant="body2" 
+                sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+              >
                 Your trusted partner in private aviation
-              </p>
-            </div>
-            <div>
-              <h4 className="font-playfair text-base sm:text-lg text-light mb-3 sm:mb-4">Quick Links</h4>
-              <ul className="space-y-2">
-                <li><Link href="/about" className="text-sm sm:text-base text-light/70 hover:text-light transition-colors">About Us</Link></li>
-                <li><Link href="/fleet" className="text-sm sm:text-base text-light/70 hover:text-light transition-colors">Our Fleet</Link></li>
-                <li><Link href="/contact" className="text-sm sm:text-base text-light/70 hover:text-light transition-colors">Contact</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-playfair text-base sm:text-lg text-light mb-3 sm:mb-4">Services</h4>
-              <ul className="space-y-2">
-                <li><Link href="/charter" className="text-sm sm:text-base text-light/70 hover:text-light transition-colors">Private Charter</Link></li>
-                <li><Link href="/empty-legs" className="text-sm sm:text-base text-light/70 hover:text-light transition-colors">Empty Legs</Link></li>
-                <li><Link href="/membership" className="text-sm sm:text-base text-light/70 hover:text-light transition-colors">Membership</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-playfair text-base sm:text-lg text-light mb-3 sm:mb-4">Contact Us</h4>
-              <ul className="space-y-2 text-sm sm:text-base text-light/70">
-                <li>+27 XXX XXX XXX</li>
-                <li>info@chartermarket.app</li>
-                <li>Cape Town, South Africa</li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-charter-navy-400/20 mt-8 sm:mt-12 pt-6 sm:pt-8 text-center text-sm sm:text-base text-light/60">
-            <p>© 2024 Charter. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
-    </div>
+              </Typography>
+            </GridItem>
+            
+            <GridItem xs={12} sm={6} md={3}>
+              <Typography 
+                variant="h6" 
+                gutterBottom
+                sx={{ 
+                  fontFamily: 'var(--font-playfair)',
+                  mb: 2,
+                  color: 'common.white',
+                }}
+              >
+                Quick Links
+              </Typography>
+              <Stack spacing={1}>
+                <FooterLink href="/about">About Us</FooterLink>
+                <FooterLink href="/fleet">Our Fleet</FooterLink>
+                <FooterLink href="/contact">Contact</FooterLink>
+              </Stack>
+            </GridItem>
+            
+            <GridItem xs={12} sm={6} md={3}>
+              <Typography 
+                variant="h6" 
+                gutterBottom
+                sx={{ 
+                  fontFamily: 'var(--font-playfair)',
+                  mb: 2,
+                  color: 'common.white',
+                }}
+              >
+                Services
+              </Typography>
+              <Stack spacing={1}>
+                <FooterLink href="/charter">Private Charter</FooterLink>
+                <FooterLink href="/empty-legs">Empty Legs</FooterLink>
+                <FooterLink href="/membership">Membership</FooterLink>
+              </Stack>
+            </GridItem>
+            
+            <GridItem xs={12} sm={6} md={3}>
+              <Typography 
+                variant="h6" 
+                gutterBottom
+                sx={{ 
+                  fontFamily: 'var(--font-playfair)',
+                  mb: 2,
+                  color: 'common.white',
+                }}
+              >
+                Contact Us
+              </Typography>
+              <Stack spacing={1} sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                <Typography variant="body2">+27 XXX XXX XXX</Typography>
+                <Typography variant="body2">info@chartermarket.app</Typography>
+                <Typography variant="body2">Cape Town, South Africa</Typography>
+              </Stack>
+            </GridItem>
+          </Grid>
+          
+          <Divider 
+            sx={{ 
+              my: { xs: 3, sm: 4 },
+              borderColor: 'rgba(255, 255, 255, 0.1)'
+            }} 
+          />
+          
+          <Typography 
+            variant="body2" 
+            align="center"
+            sx={{ color: 'rgba(255, 255, 255, 0.6)' }}
+          >
+            © 2024 Charter. All rights reserved.
+          </Typography>
+        </Container>
+      </Box>
+    </Box>
   );
 }

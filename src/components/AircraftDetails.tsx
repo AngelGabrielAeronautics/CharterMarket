@@ -1,8 +1,8 @@
 'use client';
 
 import { Aircraft } from '@/types/aircraft';
-import { Button } from '@/components/ui/Button';
-import { Edit } from 'lucide-react';
+import { Box, Paper, Typography, Stack, Grid, Chip, Button } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
 import Link from 'next/link';
 import AircraftImageGallery from './AircraftImageGallery';
 
@@ -12,117 +12,144 @@ interface AircraftDetailsProps {
 
 export default function AircraftDetails({ aircraft }: AircraftDetailsProps) {
   return (
-    <div className="p-6 space-y-8">
-      <div className="flex justify-between items-start">
-        <div>
-          <h2 className="text-xl font-semibold">Aircraft Information</h2>
-          <p className="text-gray-500 mt-1">
+    <Box sx={{ p: { xs: 2, sm: 4 }, maxWidth: 1200, mx: 'auto' }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={4}>
+        <Box>
+          <Typography variant="h5" fontWeight="bold">Aircraft Information</Typography>
+          <Typography variant="body2" color="text.secondary" mt={0.5}>
             Last updated: {aircraft.updatedAt.toDate().toLocaleDateString()}
-          </p>
-        </div>
-        <Link href={`/dashboard/aircraft/${aircraft.id}/edit`}>
-          <Button variant="outline" size="sm">
-            <Edit className="h-4 w-4 mr-2" />
+          </Typography>
+        </Box>
+        <Button
+          component={Link}
+          href={`/dashboard/aircraft/${aircraft.id}/edit`}
+          variant="outlined"
+          size="small"
+          startIcon={<EditIcon fontSize="small" />}
+        >
             Edit Aircraft
           </Button>
-        </Link>
-      </div>
+      </Stack>
+      <Grid container spacing={4} mb={4}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
+          <Stack spacing={4}>
+            <Box>
+              <Typography variant="h6" fontWeight="medium" mb={2}>Basic Information</Typography>
+              <Grid container spacing={2}>
+                <Grid size={6}>
+                  <Typography variant="caption" color="text.secondary">Registration</Typography>
+                  <Typography variant="body2">{aircraft.registration}</Typography>
+                </Grid>
+                <Grid size={6}>
+                  <Typography variant="caption" color="text.secondary">Manufacturer</Typography>
+                  <Typography variant="body2">{aircraft.manufacturer}</Typography>
+                </Grid>
+                <Grid size={6}>
+                  <Typography variant="caption" color="text.secondary">Model</Typography>
+                  <Typography variant="body2">{aircraft.model}</Typography>
+                </Grid>
+                <Grid size={6}>
+                  <Typography variant="caption" color="text.secondary">Year</Typography>
+                  <Typography variant="body2">{aircraft.year}</Typography>
+                </Grid>
+                <Grid size={6}>
+                  <Typography variant="caption" color="text.secondary">Status</Typography>
+                  <Chip
+                    label={aircraft.status.charAt(0).toUpperCase() + aircraft.status.slice(1)}
+                    size="small"
+                    sx={{
+                      bgcolor:
+                        aircraft.status === 'active' ? 'success.lighter' :
+                        aircraft.status === 'maintenance' ? 'warning.lighter' :
+                        'error.lighter',
+                      color:
+                        aircraft.status === 'active' ? 'success.dark' :
+                        aircraft.status === 'maintenance' ? 'warning.dark' :
+                        'error.dark',
+                      fontWeight: 500
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Box>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-medium mb-4">Basic Information</h3>
-            <dl className="grid grid-cols-2 gap-4">
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Registration</dt>
-                <dd className="mt-1 text-sm text-gray-900">{aircraft.registration}</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Manufacturer</dt>
-                <dd className="mt-1 text-sm text-gray-900">{aircraft.manufacturer}</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Model</dt>
-                <dd className="mt-1 text-sm text-gray-900">{aircraft.model}</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Year</dt>
-                <dd className="mt-1 text-sm text-gray-900">{aircraft.year}</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Status</dt>
-                <dd className="mt-1 text-sm text-gray-900">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                    ${aircraft.status === 'active' ? 'bg-green-100 text-green-800' :
-                    aircraft.status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'}`}>
-                    {aircraft.status.charAt(0).toUpperCase() + aircraft.status.slice(1)}
-                  </span>
-                </dd>
-              </div>
-            </dl>
-          </div>
+            <Box>
+              <Typography variant="h6" fontWeight="medium" mb={2}>Performance</Typography>
+              <Grid container spacing={2}>
+                <Grid size={6}>
+                  <Typography variant="caption" color="text.secondary">Maximum Passengers</Typography>
+                  <Typography variant="body2">{aircraft.maxPassengers}</Typography>
+                </Grid>
+                <Grid size={6}>
+                  <Typography variant="caption" color="text.secondary">Range</Typography>
+                  <Typography variant="body2">{aircraft.maxRange} nm</Typography>
+                </Grid>
+                <Grid size={6}>
+                  <Typography variant="caption" color="text.secondary">Maximum Speed</Typography>
+                  <Typography variant="body2">{aircraft.maxSpeed} kts</Typography>
+                </Grid>
+              </Grid>
+            </Box>
+          </Stack>
+        </Grid>
 
-          <div>
-            <h3 className="text-lg font-medium mb-4">Performance</h3>
-            <dl className="grid grid-cols-2 gap-4">
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Maximum Passengers</dt>
-                <dd className="mt-1 text-sm text-gray-900">{aircraft.maxPassengers}</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Range</dt>
-                <dd className="mt-1 text-sm text-gray-900">{aircraft.maxRange} nm</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Maximum Speed</dt>
-                <dd className="mt-1 text-sm text-gray-900">{aircraft.maxSpeed} kts</dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-medium mb-4">Cabin Dimensions</h3>
-            <dl className="grid grid-cols-2 gap-4">
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Height</dt>
-                <dd className="mt-1 text-sm text-gray-900">{aircraft.cabinHeight} ft</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Width</dt>
-                <dd className="mt-1 text-sm text-gray-900">{aircraft.cabinWidth} ft</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Length</dt>
-                <dd className="mt-1 text-sm text-gray-900">{aircraft.cabinLength} ft</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Baggage Capacity</dt>
-                <dd className="mt-1 text-sm text-gray-900">{aircraft.baggageCapacity} cu ft</dd>
-              </div>
-            </dl>
-          </div>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
+          <Stack spacing={4}>
+            <Box>
+              <Typography variant="h6" fontWeight="medium" mb={2}>Cabin Dimensions</Typography>
+              <Grid container spacing={2}>
+                <Grid size={6}>
+                  <Typography variant="caption" color="text.secondary">Height</Typography>
+                  <Typography variant="body2">{aircraft.cabinHeight} ft</Typography>
+                </Grid>
+                <Grid size={6}>
+                  <Typography variant="caption" color="text.secondary">Width</Typography>
+                  <Typography variant="body2">{aircraft.cabinWidth} ft</Typography>
+                </Grid>
+                <Grid size={6}>
+                  <Typography variant="caption" color="text.secondary">Length</Typography>
+                  <Typography variant="body2">{aircraft.cabinLength} ft</Typography>
+                </Grid>
+                <Grid size={6}>
+                  <Typography variant="caption" color="text.secondary">Baggage Capacity</Typography>
+                  <Typography variant="body2">{aircraft.baggageCapacity} cu ft</Typography>
+                </Grid>
+              </Grid>
+            </Box>
 
           {aircraft.features && aircraft.features.length > 0 && (
-            <div>
-              <h3 className="text-lg font-medium mb-4">Features & Amenities</h3>
-              <ul className="grid grid-cols-2 gap-2">
+              <Box>
+                <Typography variant="h6" fontWeight="medium" mb={2}>Features & Amenities</Typography>
+                <Grid container spacing={1}>
                 {aircraft.features.map((feature, index) => (
-                  <li key={index} className="flex items-center text-sm text-gray-600">
-                    <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-lg font-medium mb-4">Aircraft Images</h3>
+                    <Grid
+                      key={index}
+                      size={{
+                        xs: 12,
+                        sm: 6
+                      }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+                        <Box sx={{ width: 8, height: 8, bgcolor: 'primary.main', borderRadius: '50%', mr: 1.5 }} />
+                        <Typography variant="body2">{feature}</Typography>
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            )}
+          </Stack>
+        </Grid>
+      </Grid>
+      <Box>
+        <Typography variant="h6" fontWeight="medium" mb={2}>Aircraft Images</Typography>
         <AircraftImageGallery
           aircraftId={aircraft.id}
           images={aircraft.images.map((url, index) => ({
@@ -136,7 +163,7 @@ export default function AircraftDetails({ aircraft }: AircraftDetailsProps) {
           }))}
           onImagesUpdate={() => {}}
         />
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 } 

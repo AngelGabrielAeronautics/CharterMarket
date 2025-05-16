@@ -1,20 +1,40 @@
-import { useState } from 'react';
-import { Bell, X } from 'lucide-react';
+'use client';
+
+import { useState, useRef } from 'react';
 import { Notification } from '@/types/notification';
 import { getUserNotifications, markNotificationAsRead } from '@/lib/notification';
 import { format } from 'date-fns';
 import Link from 'next/link';
-import { Button } from '@/components/ui/Button';
+import { 
+  Box, 
+  IconButton, 
+  Badge, 
+  Popper, 
+  Grow, 
+  Paper, 
+  ClickAwayListener, 
+  Typography, 
+  Divider, 
+  CircularProgress,
+  List,
+  ListItem,
+  ListItemText,
+  useTheme as useMuiTheme
+} from '@mui/material';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import CloseIcon from '@mui/icons-material/Close';
 
 interface NotificationDropdownProps {
   userId: string;
 }
 
 export default function NotificationDropdown({ userId }: NotificationDropdownProps) {
+  const theme = useMuiTheme();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const anchorRef = useRef<HTMLButtonElement>(null);
 
   const fetchNotifications = async () => {
     try {
@@ -50,89 +70,184 @@ export default function NotificationDropdown({ userId }: NotificationDropdownPro
     setIsOpen(!isOpen);
   };
 
+  const handleClose = (event: Event | React.SyntheticEvent) => {
+    if (
+      anchorRef.current &&
+      anchorRef.current.contains(event.target as HTMLElement)
+    ) {
+      return;
+    }
+    setIsOpen(false);
+  };
+
+  // Count unread notifications
+  const unreadCount = notifications.filter(notification => !notification.read).length;
+
   return (
-    <div className="relative">
-      <Button
-        variant="ghost"
-        size="default"
+    <Box>
+      <IconButton
+        ref={anchorRef}
         onClick={handleBellClick}
-        className="relative w-10 h-10 p-2 flex items-center justify-center"
+        size="medium"
+        color="inherit"
+        aria-label="notifications"
+        sx={{ color: 'text.secondary' }}
       >
-        <Bell className="h-6 w-6 text-gray-600" />
-      </Button>
+        <Badge badgeContent={unreadCount} color="error" max={99}>
+          <NotificationsIcon />
+        </Badge>
+      </IconButton>
 
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
-          <div className="py-1">
-            <div className="px-4 py-2 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-900">Notifications</h3>
-                <Link
-                  href="/dashboard/notifications"
-                  className="text-xs text-blue-600 hover:text-blue-800"
-                >
-                  View All
-                </Link>
-              </div>
-            </div>
+      <Popper
+        open={isOpen}
+        anchorEl={anchorRef.current}
+        placement="bottom-end"
+        transition
+        sx={{ 
+          zIndex: theme.zIndex.modal,
+          width: { 
+            xs: `calc(100vw - ${theme.spacing(4)})`, 
+            sm: theme.spacing(40) 
+          }
+        }}
+      >
+        {({ TransitionProps }) => (
+          <Grow {...TransitionProps}>
+            <Paper 
+              elevation={4} 
+              sx={{ 
+                borderRadius: theme.shape.borderRadius,
+                overflow: 'hidden'
+              }}
+            >
+              <ClickAwayListener onClickAway={handleClose}>
+                <Box>
+                  <Box sx={{ 
+                    p: 2, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    borderBottom: 1,
+                    borderColor: 'divider'
+                  }}>
+                    <Typography variant="subtitle2">
+                      Notifications
+                    </Typography>
+                    <Typography
+                      component={Link}
+                      href="/dashboard/notifications"
+                      variant="caption"
+                      color="primary.main"
+                      sx={{ textDecoration: 'none' }}
+                    >
+                      View All
+                    </Typography>
+                  </Box>
 
-            {loading ? (
-              <div className="flex items-center justify-center p-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900" />
-              </div>
-            ) : error ? (
-              <div className="px-4 py-2 text-sm text-red-600">{error}</div>
-            ) : notifications.length === 0 ? (
-              <div className="px-4 py-2 text-sm text-gray-500">No notifications</div>
-            ) : (
-              <div className="max-h-96 overflow-y-auto">
-                {notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`px-4 py-3 hover:bg-gray-50 ${
-                      !notification.read ? 'bg-blue-50' : ''
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">
-                          {notification.title}
-                        </p>
-                        <p className="mt-1 text-xs text-gray-500">
-                          {notification.message}
-                        </p>
-                        <div className="mt-2 flex items-center justify-between">
-                          <span className="text-xs text-gray-400">
-                            {format(notification.createdAt.toDate(), 'MMM d, h:mm a')}
-                          </span>
-                          {notification.link && (
-                            <Link
-                              href={notification.link}
-                              className="text-xs text-blue-600 hover:text-blue-800"
-                            >
-                              View
-                            </Link>
-                          )}
-                        </div>
-                      </div>
-                      {!notification.read && (
-                        <Button
-                          variant="ghost"
-                          size="default"
-                          onClick={() => handleMarkAsRead(notification.id)}
-                          className="ml-2 w-8 h-8 p-1 flex items-center justify-center text-gray-400 hover:text-gray-500"
+                  {loading ? (
+                    <Box sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      alignItems: 'center', 
+                      p: 4 
+                    }}>
+                      <CircularProgress size={24} />
+                    </Box>
+                  ) : error ? (
+                    <Box sx={{ px: 2, py: 2 }}>
+                      <Typography variant="body2" color="error">
+                        {error}
+                      </Typography>
+                    </Box>
+                  ) : notifications.length === 0 ? (
+                    <Box sx={{ px: 2, py: 2 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        No notifications
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <List 
+                      sx={{ 
+                        maxHeight: theme.spacing(48), 
+                        overflow: 'auto',
+                        p: 0
+                      }}
+                    >
+                      {notifications.map((notification) => (
+                        <ListItem
+                          key={notification.id}
+                          sx={{ 
+                            px: 2, 
+                            py: 1.5,
+                            bgcolor: !notification.read ? 'action.selected' : 'transparent',
+                            '&:hover': { bgcolor: 'action.hover' },
+                            borderBottom: 1,
+                            borderColor: 'divider'
+                          }}
                         >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+                          <Box sx={{ width: '100%' }}>
+                            <Box sx={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between',
+                              alignItems: 'flex-start' 
+                            }}>
+                              <ListItemText
+                                primary={notification.title}
+                                secondary={notification.message}
+                                primaryTypographyProps={{ 
+                                  variant: 'body2',
+                                  fontWeight: 'medium',
+                                  color: 'text.primary'
+                                }}
+                                secondaryTypographyProps={{ 
+                                  variant: 'caption',
+                                  color: 'text.secondary'
+                                }}
+                              />
+                              {!notification.read && (
+                                <IconButton 
+                                  size="small"
+                                  onClick={() => handleMarkAsRead(notification.id)}
+                                  sx={{ ml: 1, color: 'text.disabled' }}
+                                >
+                                  <CloseIcon fontSize="small" />
+                                </IconButton>
+                              )}
+                            </Box>
+                            
+                            <Box sx={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              mt: 0.5
+                            }}>
+                              <Typography variant="caption" color="text.disabled">
+                                {format(notification.createdAt.toDate(), 'MMM d, h:mm a')}
+                              </Typography>
+                              
+                              {notification.link && (
+                                <Typography
+                                  component={Link}
+                                  href={notification.link}
+                                  variant="caption"
+                                  color="primary.main"
+                                  sx={{ textDecoration: 'none' }}
+                                >
+                                  View
+                                </Typography>
+                              )}
+                            </Box>
+                          </Box>
+                        </ListItem>
+                      ))}
+                    </List>
+                  )}
+                </Box>
+              </ClickAwayListener>
+            </Paper>
+          </Grow>
+        )}
+      </Popper>
+    </Box>
   );
 } 

@@ -1,8 +1,11 @@
+"use client";
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { logEvent } from '@/lib/events';
+import { logEvent } from '../../../utils/eventLogger';
 import { createUserProfile } from '@/lib/user';
 import { OnboardingFormData } from '@/types/user';
+import { EventCategory, EventType, EventSeverity, EventData } from '@/types/event';
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -16,16 +19,18 @@ export default function OnboardingPage() {
 
       // Log onboarding start event
       await logEvent({
-        category: 'onboarding',
-        type: 'start',
-        severity: 'info',
+        category: EventCategory.USER,
+        type: EventType.REGISTER,
+        severity: EventSeverity.INFO,
         description: 'User started onboarding process',
         data: {
           step: 'initial',
-          formData: data
+          formData: { ...data }
         },
         userId: data.userId,
-        operatorId: data.operatorId
+        userCode: data.userCode,
+        userRole: data.role,
+        operatorCode: data.operatorId
       });
 
       // Create user profile
@@ -40,30 +45,34 @@ export default function OnboardingPage() {
 
       // Log onboarding completion event
       await logEvent({
-        category: 'onboarding',
-        type: 'complete',
-        severity: 'info',
+        category: EventCategory.USER,
+        type: EventType.REGISTER,
+        severity: EventSeverity.INFO,
         description: 'User completed onboarding process',
         data: {
-          profile: userProfile
+          profile: { ...userProfile }
         },
         userId: data.userId,
-        operatorId: data.operatorId
+        userCode: data.userCode,
+        userRole: data.role,
+        operatorCode: data.operatorId
       });
 
       router.push('/dashboard');
     } catch (err) {
       // Log onboarding error event
       await logEvent({
-        category: 'onboarding',
-        type: 'error',
-        severity: 'error',
+        category: EventCategory.SYSTEM,
+        type: EventType.ERROR,
+        severity: EventSeverity.ERROR,
         description: 'Error during onboarding process',
         data: {
           error: err instanceof Error ? err.message : 'Unknown error'
         },
         userId: data.userId,
-        operatorId: data.operatorId
+        userCode: data.userCode,
+        userRole: data.role,
+        operatorCode: data.operatorId
       });
 
       setError(err instanceof Error ? err.message : 'An error occurred');

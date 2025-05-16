@@ -2,8 +2,6 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function Loading() {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-charter-navy bg-opacity-80 backdrop-blur-sm">
-      <LoadingSpinner size={96} className="text-charter-gold" />
-    </div>
+    <LoadingSpinner size={96} className="text-charter-gold" fullscreen />
   );
 } 

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useForm, Controller, FieldErrors, Resolver } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import type { Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
@@ -9,6 +10,7 @@ import {
   Select,
   MenuItem,
   FormControl,
+  FormHelperText,
   InputLabel,
   Checkbox,
   FormControlLabel,
@@ -17,8 +19,6 @@ import {
   Paper,
   Typography,
   Box,
-  FormHelperText,
-  IconButton,
   GridProps,
   Theme,
   SxProps,
@@ -161,7 +161,7 @@ const errorHighlightStyle = {
 
 export default function AircraftFormMaterial({ initialData, onSubmit, onClose, aircraftId, isSubmitting }: AircraftFormProps) {
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [isManufacturerDialogOpen, setIsManufacturerDialogOpen] = useState(false);
   const [customManufacturer, setCustomManufacturer] = useState('');
   const [isCheckingRegistration, setIsCheckingRegistration] = useState(false);
@@ -173,19 +173,19 @@ export default function AircraftFormMaterial({ initialData, onSubmit, onClose, a
   const [registrationExists, setRegistrationExists] = useState(false);
   const [registrationError, setRegistrationError] = useState<string | null>(null);
 
-  // Add debounce function for registration check
-  const debounce = (func: Function, wait: number) => {
-    let timeout: NodeJS.Timeout;
-    return (...args: any[]) => {
+  // Add debounce function
+  function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
+    let timeout: ReturnType<typeof setTimeout>;
+    return (...args: Parameters<T>): void => {
       clearTimeout(timeout);
       timeout = setTimeout(() => func(...args), wait);
     };
-  };
+  }
 
   // Create debounced registration check
   const debouncedRegistrationCheck = useRef(
     debounce(async (registration: string) => {
-      if (!registration || !user?.operatorCode) return;
+      if (!registration || !user?.userCode) return;
       
       // Don't check if we're editing and the registration hasn't changed
       if (aircraftId && initialData?.registration === registration) {
@@ -196,7 +196,7 @@ export default function AircraftFormMaterial({ initialData, onSubmit, onClose, a
 
       setIsCheckingRegistration(true);
       try {
-        const exists = await checkRegistrationExists(registration, user.operatorCode);
+        const exists = await checkRegistrationExists(registration, user.userCode);
         setRegistrationExists(exists);
         setRegistrationError(exists ? `Registration ${registration} is already in use` : null);
         
@@ -238,6 +238,7 @@ export default function AircraftFormMaterial({ initialData, onSubmit, onClose, a
     control,
     trigger,
     clearErrors,
+    setError,
   } = useForm<AircraftFormSchema>({
     resolver: zodResolver(aircraftSchema) as Resolver<AircraftFormSchema>,
     defaultValues: {
@@ -297,7 +298,7 @@ export default function AircraftFormMaterial({ initialData, onSubmit, onClose, a
     const handleFormSubmit = (e: Event) => {
       const customEvent = e as CustomEvent;
       const shouldSave = customEvent.detail?.shouldSave ?? false;
-      formHandleSubmit((data: AircraftFormSchema) => onSubmit(data as unknown as AircraftFormData, shouldSave))();
+      formHandleSubmit((data: AircraftFormSchema) => onSubmit(data, shouldSave))();
     };
 
     const form = formRef.current;
@@ -344,15 +345,15 @@ export default function AircraftFormMaterial({ initialData, onSubmit, onClose, a
     }
 
     setIsSaving(true);
-    setError(null);
+    setSubmissionError(null);
     try {
       const loadingToast = toast.loading('Saving progress...');
-      await onSubmit(data as unknown as AircraftFormData, true);
+      await onSubmit(data, true);
       toast.dismiss(loadingToast);
       toast.success('Progress saved successfully');
       reset(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save progress');
+      setSubmissionError(err instanceof Error ? err.message : 'Failed to save progress');
       toast.error(err instanceof Error ? err.message : 'Failed to save progress');
     } finally {
       setIsSaving(false);
@@ -411,7 +412,7 @@ export default function AircraftFormMaterial({ initialData, onSubmit, onClose, a
 
     try {
       const loadingToast = toast.loading('Creating aircraft...');
-      await onSubmit(data as unknown as AircraftFormData);
+      await onSubmit(data);
       toast.dismiss(loadingToast);
       toast.success('Aircraft created successfully');
     } catch (err) {
@@ -970,9 +971,9 @@ export default function AircraftFormMaterial({ initialData, onSubmit, onClose, a
         </CustomGrid>
       </Paper>
 
-      {error && (
+      {submissionError && (
         <Box sx={{ color: 'error.main', mb: 2 }}>
-          {error}
+          {submissionError}
         </Box>
       )}
 

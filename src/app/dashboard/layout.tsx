@@ -8,9 +8,12 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import EmailVerificationBanner from '@/components/EmailVerificationBanner';
 import OperatorOnboardingBanner from '@/components/OperatorOnboardingBanner';
 import SideNav from '@/components/SideNav';
-import TopNav from '@/components/TopNav';
 import { UserRole } from '@/lib/userCode';
+import { UserStatus } from '@/types/user';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { Box, Container } from '@mui/material';
+import tokens from '@/styles/tokens';
+import { useTheme as useMuiTheme } from '@mui/material/styles';
 
 interface UserData {
   email: string;
@@ -19,7 +22,7 @@ interface UserData {
   userId: string;
   role: UserRole;
   firstName: string;
-  status: string;
+  status: UserStatus;
   isProfileComplete: boolean;
   hasAircraft: boolean;
 }
@@ -31,8 +34,16 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const muiTheme = useMuiTheme();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSideNavMini, setIsSideNavMini] = useState(false);
+  // Width of the sidebar drawer (to offset content when open on mobile)
+  const expandedSideNavWidth = muiTheme.spacing(32); // 256px
+  const collapsedSideNavWidth = muiTheme.spacing(9); // 72px
+
+  const toggleSideNavMini = () => setIsSideNavMini(prev => !prev);
+  const toggleMobileMenu = () => setIsMobileMenuOpen(prev => !prev);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -56,7 +67,7 @@ export default function DashboardLayout({
             userId: user.uid,
             role: userDoc.role,
             firstName: userDoc.firstName || user.email!.split('@')[0], // Fallback to email username if firstName not set
-            status: userDoc.status,
+            status: userDoc.status as UserStatus,
             isProfileComplete: userDoc.isProfileComplete || false,
             hasAircraft: userDoc.hasAircraft || false,
           });
@@ -71,43 +82,75 @@ export default function DashboardLayout({
     return () => unsubscribe();
   }, [router]);
 
-  if (loading) {
-    return <LoadingSpinner />;
+  if (loading || !userData) {
+    return <LoadingSpinner fullscreen />;
   }
 
   return (
-    <div className="min-h-screen bg-cream-50 dark:bg-dark-primary">
-      {userData && (
-        <TopNav 
-          userEmail={userData.email} 
-          userRole={userData.role} 
-          firstName={userData.firstName}
-          onMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          isMobileMenuOpen={isMobileMenuOpen}
-        />
-      )}
-      
-      <div className="pt-16 flex min-h-screen relative">
+    <Box sx={{ 
+      minHeight: '100vh', 
+      bgcolor: 'background.default'
+    }}>
+      {/* Dashboard header removed; SideNav will handle navigation */}
+      {/* Side nav layout without TopNav */}
+      <Box sx={{ 
+        pt: 0, 
+        display: 'flex', 
+        minHeight: '100vh', 
+        position: 'relative'
+      }}>
         {/* Mobile menu backdrop */}
         {isMobileMenuOpen && (
-          <div 
-            className="fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity lg:hidden z-20"
+          <Box 
+            sx={{
+              position: 'fixed',
+              inset: 0,
+              bgcolor: 'rgba(0, 0, 0, 0.5)',
+              transition: 'opacity 300ms',
+              display: { xs: 'block', lg: 'none' },
+              zIndex: 20
+            }}
             onClick={() => setIsMobileMenuOpen(false)}
           />
         )}
 
-        {/* Mobile menu */}
-        <div className={`
-          fixed inset-y-0 left-0 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-          transition duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto lg:duration-0
-          z-30 lg:z-0
-        `}>
-          {userData && <SideNav userRole={userData.role} isMobile={isMobileMenuOpen} onCloseMobile={() => setIsMobileMenuOpen(false)} />}
-        </div>
+        {/* SideNav container: hidden on mobile, flows on desktop */}
+        <Box sx={{
+          display: { xs: 'none', lg: 'flex' },
+          flexDirection: 'column',
+          flexShrink: 0,
+          position: { xs: 'fixed', lg: 'static' },
+          inset: { xs: '0 auto 0 0', lg: 'auto' },
+          transform: { 
+            xs: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)', 
+            lg: 'none' 
+          },
+          transition: 'transform 300ms ease-in-out',
+          zIndex: { xs: 30, lg: 'auto' },
+          height: '100%'
+        }}>
+          {userData && 
+            <SideNav 
+              userRole={userData.role} 
+              isMobile={isMobileMenuOpen} 
+              onCloseMobile={() => setIsMobileMenuOpen(false)} 
+              mini={isSideNavMini} 
+              onToggleMini={toggleSideNavMini} 
+            />}
+        </Box>
 
         {/* Main content */}
-        <main className="flex-1 relative">
-          <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <Box sx={{ 
+          flexGrow: 1, 
+          position: 'relative',
+          overflow: 'auto',
+          // Using flex layout: no ml needed since nav now flows in layout
+          pt: { xs: muiTheme.spacing(8), lg: muiTheme.spacing(4) } // Adjusted lg padding top
+        }}>
+          <Container maxWidth={false} disableGutters sx={{ 
+            py: 3,
+            px: muiTheme.spacing(4),
+          }}>
             {userData && !userData.emailVerified && (
               <EmailVerificationBanner
                 email={userData.email}
@@ -126,15 +169,16 @@ export default function DashboardLayout({
                   lastReminderSent: null,
                   reminderCount: 0,
                   profileIncompleteDate: null,
-                  dormantDate: null
+                  dormantDate: null,
+                  lastName: '',
                 }}
                 isEmailVerified={userData.emailVerified}
               />
             )}
             {children}
-          </div>
-        </main>
-      </div>
-    </div>
+          </Container>
+        </Box>
+      </Box>
+    </Box>
   );
 } 

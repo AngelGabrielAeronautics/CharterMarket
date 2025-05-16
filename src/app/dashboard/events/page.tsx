@@ -1,22 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getEventLogs, searchEventLogs } from '@/lib/events';
-import { EventLog, EventCategory, EventType, EventSeverity } from '@/types/event';
+import { getEventLogs, searchEventLogs } from '@/utils/eventLogger';
+import { EventLog, EventCategory, EventSeverity } from '@/types/event';
 import {
+  Box,
+  Paper,
+  Typography,
+  Stack,
+  Grid,
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
-  TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import Select from '@/components/ui/Select';
-import Input from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
+  Select,
+  MenuItem,
+  TextField,
+  Button,
+  Alert,
+  CircularProgress
+} from '@mui/material';
 import { format } from 'date-fns';
-import { ChangeEvent } from 'react';
 import { toast } from 'react-hot-toast';
 
 const defaultFilters = {
@@ -118,182 +125,197 @@ export default function EventsPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
-        </div>
-      </div>
+      <Box sx={{ p: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 320 }}>
+        <CircularProgress color="primary" size={48} />
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
-      </div>
+      <Box sx={{ p: 4, maxWidth: 600, mx: 'auto' }}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
     );
   }
 
   const hasActiveFilters = Object.values(filters).some(value => value !== '');
 
   return (
-    <div className="container mx-auto p-4 max-w-[1400px]">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Event Logs</h1>
-        <div className="flex gap-2">
-          <Button onClick={handleExport} variant="outline">
-            Export to CSV
-          </Button>
-        </div>
-      </div>
-      
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-[200px]">
-            <Input
-              type="text"
-              placeholder="Search events..."
+    <Box sx={{ p: { xs: 2, sm: 4 }, maxWidth: 1400, mx: 'auto' }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
+        <Typography variant="h4" fontWeight="bold">Event Logs</Typography>
+        <Button onClick={handleExport} variant="outlined">
+          Export to CSV
+        </Button>
+      </Stack>
+
+      <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 }, mb: 4, borderRadius: 2 }}>
+        <Grid container spacing={2} alignItems="flex-end">
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              fullWidth
+              label="Search events..."
               value={filters.searchTerm}
               onChange={handleSearch}
+              variant="outlined"
+              size="small"
             />
-          </div>
-
-          <div className="w-[150px]">
+          </Grid>
+          <Grid item xs={6} sm={3} md={2}>
             <Select
-              label="Category"
-              name="category"
+              fullWidth
+              displayEmpty
               value={filters.category}
-              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              options={[
-                { value: '', label: 'All Categories' },
-                ...Object.values(EventCategory).map(category => ({
-                  value: category,
-                  label: category
-                }))
-              ]}
-            />
-          </div>
-
-          <div className="w-[150px]">
-            <Select
-              label="Severity"
-              name="severity"
-              value={filters.severity}
-              onChange={(e) => setFilters({ ...filters, severity: e.target.value })}
-              options={[
-                { value: '', label: 'All Severities' },
-                ...Object.values(EventSeverity).map(severity => ({
-                  value: severity,
-                  label: severity
-                }))
-              ]}
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <div className="w-[150px]">
-              <Input
-                type="date"
-                value={filters.startDate}
-                onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                placeholder="Start Date"
-              />
-            </div>
-            <div className="w-[150px]">
-              <Input
-                type="date"
-                value={filters.endDate}
-                onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                placeholder="End Date"
-              />
-            </div>
-          </div>
-
-          {hasActiveFilters && (
-            <Button 
-              onClick={handleResetFilters} 
-              variant="outline" 
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              onChange={e => setFilters({ ...filters, category: e.target.value })}
+              size="small"
             >
-              Reset Filters
-            </Button>
+              <MenuItem value="">All Categories</MenuItem>
+              {Object.values(EventCategory).map(category => (
+                <MenuItem key={category} value={category}>{category}</MenuItem>
+              ))}
+            </Select>
+          </Grid>
+          <Grid item xs={6} sm={3} md={2}>
+            <Select
+              fullWidth
+              displayEmpty
+              value={filters.severity}
+              onChange={e => setFilters({ ...filters, severity: e.target.value })}
+              size="small"
+            >
+              <MenuItem value="">All Severities</MenuItem>
+              {Object.values(EventSeverity).map(severity => (
+                <MenuItem key={severity} value={severity}>{severity}</MenuItem>
+              ))}
+            </Select>
+          </Grid>
+          <Grid item xs={6} sm={3} md={2}>
+            <TextField
+              fullWidth
+              label="Start Date"
+              type="date"
+              value={filters.startDate}
+              onChange={e => setFilters({ ...filters, startDate: e.target.value })}
+              InputLabelProps={{ shrink: true }}
+              size="small"
+            />
+          </Grid>
+          <Grid item xs={6} sm={3} md={2}>
+            <TextField
+              fullWidth
+              label="End Date"
+              type="date"
+              value={filters.endDate}
+              onChange={e => setFilters({ ...filters, endDate: e.target.value })}
+              InputLabelProps={{ shrink: true }}
+              size="small"
+            />
+          </Grid>
+          {hasActiveFilters && (
+            <Grid item xs={12} sm={3} md={1}>
+              <Button 
+                onClick={handleResetFilters} 
+                variant="outlined" 
+                color="error"
+                fullWidth
+                size="small"
+              >
+                Reset
+              </Button>
+            </Grid>
           )}
-        </div>
-      </div>
+        </Grid>
+      </Paper>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Timestamp</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Severity</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>User Code</TableHead>
-              <TableHead>User Role</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {events.length === 0 ? (
+      <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+        <TableContainer>
+          <Table>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-4">
-                  No events found
-                </TableCell>
+                <TableCell>Timestamp</TableCell>
+                <TableCell>Category</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Severity</TableCell>
+                <TableCell>Description</TableCell>
+                <TableCell>User Code</TableCell>
+                <TableCell>User Role</TableCell>
               </TableRow>
-            ) : (
-              events.map((event) => (
-                <TableRow key={event.id}>
-                  <TableCell>{format(event.timestamp.toDate(), 'PPpp')}</TableCell>
-                  <TableCell>{event.category}</TableCell>
-                  <TableCell>{event.type}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      event.severity === EventSeverity.CRITICAL ? 'bg-red-100 text-red-800' :
-                      event.severity === EventSeverity.HIGH ? 'bg-orange-100 text-orange-800' :
-                      event.severity === EventSeverity.MEDIUM ? 'bg-yellow-100 text-yellow-800' :
-                      event.severity === EventSeverity.LOW ? 'bg-blue-100 text-blue-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {event.severity}
-                    </span>
+            </TableHead>
+            <TableBody>
+              {events.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    No events found
                   </TableCell>
-                  <TableCell>{event.description}</TableCell>
-                  <TableCell>{event.userCode}</TableCell>
-                  <TableCell>{event.userRole}</TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ) : (
+                events.map((event) => (
+                  <TableRow key={event.id}>
+                    <TableCell>{event.timestamp?.toDate ? format(event.timestamp.toDate(), 'PPpp') : '-'}</TableCell>
+                    <TableCell>{event.category}</TableCell>
+                    <TableCell>{event.type}</TableCell>
+                    <TableCell>
+                      <Box
+                        sx={{
+                          display: 'inline-block',
+                          px: 1.5,
+                          py: 0.5,
+                          borderRadius: 2,
+                          fontSize: '0.75rem',
+                          fontWeight: 500,
+                          bgcolor:
+                            event.severity === EventSeverity.CRITICAL ? 'error.light' :
+                            event.severity === EventSeverity.HIGH ? 'warning.light' :
+                            event.severity === EventSeverity.MEDIUM ? 'warning.main' :
+                            event.severity === EventSeverity.LOW ? 'info.light' :
+                            'success.light',
+                          color:
+                            event.severity === EventSeverity.CRITICAL ? 'error.dark' :
+                            event.severity === EventSeverity.HIGH ? 'warning.dark' :
+                            event.severity === EventSeverity.MEDIUM ? 'warning.contrastText' :
+                            event.severity === EventSeverity.LOW ? 'info.dark' :
+                            'success.dark',
+                        }}
+                      >
+                        {event.severity}
+                      </Box>
+                    </TableCell>
+                    <TableCell>{event.description}</TableCell>
+                    <TableCell>{event.userCode}</TableCell>
+                    <TableCell>{event.userRole}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
 
-      <div className="flex justify-between items-center mt-4">
-        <div className="text-sm text-gray-600">
+      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" mt={4} gap={2}>
+        <Typography variant="body2" color="text.secondary">
           Showing {events.length} of {totalEvents} events
-        </div>
-        <div className="flex gap-2 items-center">
+        </Typography>
+        <Stack direction="row" gap={2} alignItems="center">
           <Button
-            variant="outline"
+            variant="outlined"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
           >
             Previous
           </Button>
-          <span className="px-2">
+          <Typography variant="body2">
             Page {page} of {totalPages}
-          </span>
+          </Typography>
           <Button
-            variant="outline"
+            variant="outlined"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
           >
             Next
           </Button>
-        </div>
-      </div>
-    </div>
+        </Stack>
+      </Stack>
+    </Box>
   );
 } 

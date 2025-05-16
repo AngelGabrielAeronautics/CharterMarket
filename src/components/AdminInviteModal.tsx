@@ -1,187 +1,223 @@
 'use client';
 
-import { Dialog } from '@headlessui/react';
-import { useState, FormEvent } from 'react';
-import Input from '@/components/ui/Input';
-import { useAuth } from '@/hooks/useAuth';
-import { AdminPermissions } from '@/lib/admin';
-import { sendAdminInvitation } from '@/lib/admin';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import type { UserData } from '@/lib/auth';
+import { useState } from 'react';
+import { generateUserInviteCode } from '@/lib/userCode';
+import { sendAdminInvite } from '@/lib/admin';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  TextField,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
+  Box,
+  Button,
+  Typography,
+  Alert,
+  Grid
+} from '@mui/material';
 
 interface AdminInviteModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const AdminInviteModal = ({ isOpen, onClose }: AdminInviteModalProps) => {
-  const [formData, setFormData] = useState({
-    email: '',
-    firstName: '',
-    lastName: '',
-  });
-  
-  const [permissions, setPermissions] = useState<AdminPermissions>({
-    userManagement: false,
-    bookingManagement: false,
-    financialAccess: false,
-    systemConfig: false,
-    contentManagement: false,
-  });
+const adminPermissions = [
+  {
+    id: 'users',
+    label: 'User Management',
+    description: 'View and manage user accounts.',
+  },
+  {
+    id: 'operators',
+    label: 'Operator Management',
+    description: 'View and manage operator accounts and their aircraft.',
+  },
+  {
+    id: 'bookings',
+    label: 'Booking Management',
+    description: 'View and manage all bookings in the system.',
+  },
+  {
+    id: 'reports',
+    label: 'Reports',
+    description: 'Access financial and operational reports.',
+  },
+  {
+    id: 'notifications',
+    label: 'System Notifications',
+    description: 'Manage system-wide notifications and announcements.',
+  },
+];
 
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+export default function AdminInviteModal({ isOpen, onClose }: AdminInviteModalProps) {
+  const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const { user } = useAuth();
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleCheckboxChange = (permissionId: string) => {
+    setSelectedPermissions((prev) =>
+      prev.includes(permissionId)
+        ? prev.filter((id) => id !== permissionId)
+        : [...prev, permissionId]
+    );
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
+    setIsSubmitting(true);
+    setError(null);
     setSuccess(false);
 
     try {
-      if (!user) throw new Error('You must be logged in to invite admins');
-
-      // Fetch the user's data from Firestore
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('email', '==', user.email));
-      const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.empty) {
-        throw new Error('Unable to find your account information. Please contact support.');
-      }
-
-      const userData = querySnapshot.docs[0].data() as UserData;
-
-      await sendAdminInvitation(
-        formData.email,
-        formData.firstName,
-        formData.lastName,
-        permissions,
-        {
-          uid: user.uid,
-          email: user.email!,
-          userCode: userData.userCode,
-        }
-      );
-
-      setSuccess(true);
-      setFormData({ email: '', firstName: '', lastName: '' });
-      setPermissions({
-        userManagement: false,
-        bookingManagement: false,
-        financialAccess: false,
-        systemConfig: false,
-        contentManagement: false,
+      const inviteCode = await generateUserInviteCode('admin');
+      await sendAdminInvite({
+        email,
+        firstName,
+        lastName,
+        inviteCode,
+        permissions: selectedPermissions,
       });
+      setSuccess(true);
+      // Reset form
+      setEmail('');
+      setFirstName('');
+      setLastName('');
+      setSelectedPermissions([]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while sending the invitation.'
+      );
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handlePermissionChange = (permission: keyof AdminPermissions) => {
-    setPermissions(prev => ({
-      ...prev,
-      [permission]: !prev[permission]
-    }));
-  };
-
   return (
-    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
-      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-      <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className="mx-auto max-w-md rounded bg-white p-6 shadow-xl dark:bg-dark-primary">
-          <Dialog.Title className="text-lg font-medium mb-4">Invite Admin User</Dialog.Title>
-          
-          {success && (
-            <div className="mb-4 p-2 bg-green-100 text-green-700 rounded dark:bg-green-900 dark:text-green-300">
-              Invitation sent successfully!
-            </div>
-          )}
-          
-          {error && (
-            <div className="mb-4 p-2 bg-red-100 text-red-700 rounded dark:bg-red-900 dark:text-red-300">
-              {error}
-            </div>
-          )}
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              label="Email"
-              name="email"
-              required
-              disabled={loading}
-            />
-            
-            <Input
-              type="text"
-              value={formData.firstName}
-              onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-              label="First Name"
-              name="firstName"
-              required
-              disabled={loading}
-            />
-            
-            <Input
-              type="text"
-              value={formData.lastName}
-              onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-              label="Last Name"
-              name="lastName"
-              required
-              disabled={loading}
-            />
+    <Dialog 
+      open={isOpen} 
+      onClose={onClose} 
+      maxWidth="sm" 
+      fullWidth
+      aria-labelledby="admin-invite-dialog-title"
+    >
+      <DialogTitle id="admin-invite-dialog-title">
+        Invite Admin User
+      </DialogTitle>
+      <DialogContent>
+        {success && (
+          <Alert 
+            severity="success" 
+            sx={{ mb: 3 }}
+          >
+            Invitation sent successfully! The user will receive an email with instructions.
+          </Alert>
+        )}
 
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Permissions</h3>
-              <div className="space-y-2">
-                {Object.keys(permissions).map((permission) => (
-                  <label key={permission} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={permissions[permission as keyof AdminPermissions]}
-                      onChange={() => handlePermissionChange(permission as keyof AdminPermissions)}
-                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-dark-secondary"
-                      disabled={loading}
+        {error && (
+          <Alert 
+            severity="error" 
+            sx={{ mb: 3 }}
+          >
+            {error}
+          </Alert>
+        )}
+
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField
+            label="Email Address"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            fullWidth
+            required
+            margin="dense"
+          />
+          <Grid container spacing={2}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
+              <TextField
+                label="First Name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                fullWidth
+                required
+                margin="dense"
+              />
+            </Grid>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
+              <TextField
+                label="Last Name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                fullWidth
+                required
+                margin="dense"
+              />
+            </Grid>
+          </Grid>
+
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              Permissions
+            </Typography>
+            <FormGroup>
+              {adminPermissions.map((permission) => (
+                <FormControlLabel
+                  key={permission.id}
+                  control={
+                    <Checkbox
+                      checked={selectedPermissions.includes(permission.id)}
+                      onChange={() => handleCheckboxChange(permission.id)}
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      {permission.replace(/([A-Z])/g, ' $1').trim()}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
+                  }
+                  label={
+                    <Box>
+                      <Typography variant="body2">{permission.label}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {permission.description}
+                      </Typography>
+                    </Box>
+                  }
+                />
+              ))}
+            </FormGroup>
+          </Box>
 
-            <div className="flex justify-end space-x-2 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:text-gray-300 dark:hover:bg-dark-accent"
-                disabled={loading}
-              >
-                CANCEL
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-indigo-500 dark:hover:bg-indigo-600"
-                disabled={loading}
-              >
-                {loading ? 'SENDING...' : 'SEND INVITATION'}
-              </button>
-            </div>
-          </form>
-        </Dialog.Panel>
-      </div>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3 }}>
+            <Button 
+              type="button" 
+              variant="outlined" 
+              color="inherit"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              variant="contained" 
+              color="primary"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Sending...' : 'Send Invitation'}
+            </Button>
+          </Box>
+        </Box>
+      </DialogContent>
     </Dialog>
   );
-};
-
-export default AdminInviteModal; 
+} 

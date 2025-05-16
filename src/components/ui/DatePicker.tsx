@@ -3,10 +3,9 @@
 import { forwardRef } from 'react';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/Calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/Popover';
-import { Button } from '@/components/ui/Button';
-import { cn } from '@/lib/utils';
-import { CalendarIcon } from 'lucide-react';
+import { Box, Button, Typography, Popover, IconButton } from '@mui/material';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import { useTheme } from '@mui/material/styles';
 
 interface DatePickerProps {
   label: string;
@@ -19,40 +18,113 @@ interface DatePickerProps {
 
 export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
   ({ label, value, onChange, error, disabled, className }, ref) => {
+    const theme = useTheme();
+    const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
+
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+      setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+      setAnchorEl(null);
+    };
+
+    const open = Boolean(anchorEl);
+
     return (
-      <div ref={ref} className={cn('relative w-full', className)}>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              disabled={disabled}
-              className={cn(
-                'w-full justify-start text-left font-normal',
-                !value && 'text-muted-foreground',
-                error && 'border-red-500'
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {value ? format(value, 'PPP') : <span>Pick a date</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={value}
-              onSelect={onChange}
-              disabled={(date) => date < new Date()}
-              initialFocus
-            />
-          </PopoverContent>
+      <Box 
+        ref={ref} 
+        sx={{ 
+          position: 'relative',
+          width: '100%',
+          ...(className && { className })
+        }}
+      >
+        <Button
+          variant="outlined"
+          disabled={disabled}
+          onClick={handleClick}
+          fullWidth
+          sx={{
+            justifyContent: 'flex-start',
+            textAlign: 'left',
+            fontWeight: 'normal',
+            borderColor: error ? 'error.main' : undefined,
+            '&:hover': {
+              borderColor: error ? 'error.main' : undefined,
+            }
+          }}
+        >
+          <CalendarTodayIcon sx={{ mr: 1, fontSize: 20 }} />
+          <Typography
+            sx={{
+              color: value ? 'text.primary' : 'text.secondary',
+              flex: 1,
+              textAlign: 'left'
+            }}
+          >
+            {value ? format(value, 'PPP') : 'Pick a date'}
+          </Typography>
+        </Button>
+
+        <Popover
+          open={open}
+          anchorEl={anchorEl}
+          onClose={handleClose}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'left',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'left',
+          }}
+          PaperProps={{
+            sx: {
+              mt: 1,
+              p: 0,
+              borderRadius: theme.shape.borderRadius,
+              boxShadow: theme.shadows[3]
+            }
+          }}
+        >
+          <Calendar
+            mode="single"
+            selected={value}
+            onSelect={(date) => {
+              onChange(date);
+              handleClose();
+            }}
+            disabled={(date) => date < new Date()}
+            initialFocus
+          />
         </Popover>
+
         {error && (
-          <span className="text-sm text-red-500 mt-1">{error}</span>
+          <Typography
+            variant="caption"
+            color="error"
+            sx={{ mt: 1, display: 'block' }}
+          >
+            {error}
+          </Typography>
         )}
-        <label className="absolute -top-2 left-2 -mt-px px-1 text-xs font-medium text-gray-600 bg-white">
+
+        <Typography
+          variant="caption"
+          sx={{
+            position: 'absolute',
+            top: -10,
+            left: 8,
+            px: 1,
+            bgcolor: 'background.paper',
+            color: 'text.secondary',
+            fontWeight: 500
+          }}
+        >
           {label}
-        </label>
-      </div>
+        </Typography>
+      </Box>
     );
   }
 );

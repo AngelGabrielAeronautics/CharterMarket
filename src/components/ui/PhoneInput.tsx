@@ -1,54 +1,119 @@
 'use client';
 
-import { useRef, useState, forwardRef, Ref } from 'react';
-import PhoneInput from 'react-phone-input-2';
+import { useState, forwardRef, Ref } from 'react';
+import ReactPhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Box, 
+  FormControl, 
+  FormHelperText, 
+  InputLabel, 
+  styled
+} from '@mui/material';
 
 interface PhoneInputProps {
   value: string;
   onChange: (value: string) => void;
   error?: string;
   helperText?: string;
-  className?: string;
   disabled?: boolean;
   required?: boolean;
 }
+
+// Styled wrapper for the phone input to match Material UI styling
+const StyledPhoneInputWrapper = styled(Box)(({ theme }) => ({
+  '& .react-tel-input': {
+    fontFamily: theme.typography.fontFamily,
+    
+    '& .form-control': {
+      width: '100%',
+      height: '56px',
+      padding: '16.5px 14px',
+      paddingLeft: '48px',
+      fontSize: theme.typography.body1.fontSize,
+      borderRadius: theme.shape.borderRadius,
+      backgroundColor: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+      border: `1px solid ${theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.23)' : 'rgba(255, 255, 255, 0.23)'}`,
+      transition: theme.transitions.create(['border-color', 'box-shadow']),
+      
+      '&:hover': {
+        borderColor: theme.palette.text.primary,
+      },
+      
+      '&:focus': {
+        borderColor: theme.palette.primary.main,
+        boxShadow: `0 0 0 2px ${theme.palette.primary.main}${theme.palette.mode === 'light' ? '20' : '30'}`,
+        outline: 'none',
+      },
+
+      '&.error': {
+        borderColor: theme.palette.error.main,
+      },
+      
+      '&.disabled': {
+        backgroundColor: theme.palette.action.disabledBackground,
+        color: theme.palette.action.disabled,
+      }
+    },
+    
+    '& .flag-dropdown': {
+      backgroundColor: 'transparent',
+      border: 'none',
+      borderRadius: `${theme.shape.borderRadius}px 0 0 ${theme.shape.borderRadius}px`,
+      
+      '& .selected-flag': {
+        backgroundColor: 'transparent',
+        padding: '0 0 0 12px',
+        
+        '&:hover, &:focus': {
+          backgroundColor: theme.palette.action.hover,
+        },
+      },
+      
+      '& .country-list': {
+        borderRadius: theme.shape.borderRadius,
+        boxShadow: theme.shadows[2],
+        backgroundColor: theme.palette.background.paper,
+        color: theme.palette.text.primary,
+        
+        '& .country': {
+          '&:hover': {
+            backgroundColor: theme.palette.action.hover,
+          },
+          
+          '&.highlight': {
+            backgroundColor: theme.palette.action.selected,
+          },
+        },
+      },
+    },
+  },
+}));
 
 const CustomPhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(({
   value,
   onChange,
   error,
   helperText,
-  className = '',
   disabled = false,
   required = false,
 }, ref) => {
-  const [isFocused, setIsFocused] = useState(false);
-  const showLabel = isFocused || value.length > 0;
-
   return (
-    <div className={`relative w-full ${className}`}>
-      <div className="relative">
-        <motion.label
-          initial={false}
-          animate={{
-            y: showLabel ? -24 : 0,
-            scale: showLabel ? 0.85 : 1,
-            color: error ? 'rgb(239, 68, 68)' : showLabel ? 'rgb(59, 130, 246)' : 'rgb(107, 114, 128)',
-          }}
-          className={`absolute left-2 origin-left transition-colors
-            ${showLabel ? 'pointer-events-none' : 'cursor-text'}`}
-          onClick={() => {
-            if (ref && typeof ref === 'object' && ref.current) {
-              ref.current.focus();
-            }
-          }}
-        >
-          Phone Number {required && '*'}
-        </motion.label>
-        <PhoneInput
-          ref={ref as Ref<HTMLInputElement>}
+    <FormControl fullWidth error={!!error} variant="outlined" required={required}>
+      <InputLabel 
+        shrink 
+        sx={{ 
+          transform: 'translate(0, -1.5px) scale(0.75)',
+          transformOrigin: 'top left'
+        }}
+      >
+        Phone Number
+      </InputLabel>
+      
+      <StyledPhoneInputWrapper>
+        <ReactPhoneInput
+          ref={ref}
           inputProps={{
             required,
             name: 'phone',
@@ -56,34 +121,22 @@ const CustomPhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(({
           country={'za'}
           value={value}
           onChange={onChange}
-          placeholder={!isFocused && !value ? helperText : ''}
+          placeholder={helperText || ''}
           disabled={disabled}
-          inputClass={`w-full py-2 px-3 rounded-lg border-2 transition-colors
-            ${error ? 'border-red-500 dark:border-red-400' : isFocused ? 'border-blue-500' : 'border-gray-300 dark:border-gray-600'}
-            ${disabled ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed' : 'bg-white dark:bg-gray-900'}`}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          containerClass="w-full"
-          buttonClass={`
-            ${error ? 'border-red-500 dark:border-red-400' : isFocused ? 'border-blue-500' : 'border-gray-300 dark:border-gray-600'}
-            ${disabled ? 'bg-gray-100 dark:bg-gray-800' : ''}`}
-          dropdownClass="bg-white dark:bg-gray-900 dark:text-white"
-          searchClass="bg-white dark:bg-gray-900 dark:text-white"
+          containerClass=""
+          inputClass={`form-control ${error ? 'error' : ''} ${disabled ? 'disabled' : ''}`}
+          buttonClass=""
+          dropdownClass=""
+          searchClass=""
         />
-      </div>
-      <AnimatePresence>
-        {error && (
-          <motion.p
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            className="mt-1 text-sm px-2 text-red-500 dark:text-red-400"
-          >
-            {error}
-          </motion.p>
-        )}
-      </AnimatePresence>
-    </div>
+      </StyledPhoneInputWrapper>
+      
+      {(error || helperText) && (
+        <FormHelperText error={!!error}>
+          {error || helperText}
+        </FormHelperText>
+      )}
+    </FormControl>
   );
 });
 

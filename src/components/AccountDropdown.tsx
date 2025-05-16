@@ -1,151 +1,330 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { signOut } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { UserRole } from '@/lib/userCode';
+import { 
+  Box, 
+  Button, 
+  Avatar, 
+  Typography, 
+  Paper, 
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  Popper,
+  Grow,
+  ClickAwayListener,
+  IconButton,
+  useTheme as useMuiTheme
+} from '@mui/material';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import { ListItemIcon } from '@mui/material';
+import PersonIcon from '@mui/icons-material/Person';
+import SettingsIcon from '@mui/icons-material/Settings';
+import HelpIcon from '@mui/icons-material/Help';
+import LogoutIcon from '@mui/icons-material/Logout';
+import DashboardIcon from '@mui/icons-material/Dashboard';
 
 interface AccountDropdownProps {
   userEmail: string;
   firstName: string;
+  compact?: boolean;
 }
 
-export default function AccountDropdown({ userEmail, firstName }: AccountDropdownProps) {
+export default function AccountDropdown({ userEmail, firstName, compact }: AccountDropdownProps) {
+  const theme = useMuiTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [userCode, setUserCode] = useState('');
   const [role, setRole] = useState<UserRole | ''>('');
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
+    if (userEmail) {
+      fetchUserDetails();
     }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    const fetchUserDetails = async () => {
-      try {
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('email', '==', userEmail));
-        const querySnapshot = await getDocs(q);
-        
-        if (!querySnapshot.empty) {
-          const userData = querySnapshot.docs[0].data();
-          setUserCode(userData.userCode);
-          setRole(userData.role);
-        }
-      } catch (error) {
-        console.error('Error fetching user details:', error);
-      }
-    };
-
-    fetchUserDetails();
   }, [userEmail]);
+
+  const fetchUserDetails = async () => {
+    if (!userEmail) return;
+
+    try {
+      const q = query(collection(db, 'users'), where('email', '==', userEmail));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const userData = querySnapshot.docs[0].data();
+        setUserCode(userData.userCode || '');
+        setRole(userData.role || '');
+      }
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+    }
+  };
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
-      router.push('/login');
+      await auth.signOut();
+      setIsOpen(false);
+      router.push('/');
     } catch (error) {
       console.error('Error signing out:', error);
     }
   };
 
+  const handleClose = (event: Event | React.SyntheticEvent) => {
+    if (
+      anchorRef.current &&
+      anchorRef.current.contains(event.target as HTMLElement)
+    ) {
+      return;
+    }
+    setIsOpen(false);
+  };
+
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
+    <Box>
+      <Button
+        ref={anchorRef}
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-dark-accent min-h-[44px] touch-manipulation"
+        sx={{
+          color: 'text.primary',
+          textTransform: 'none',
+          p: 1,
+          '&:hover': {
+            bgcolor: 'action.hover'
+          }
+        }}
       >
-        <div className="w-8 h-8 rounded-full bg-primary-600 dark:bg-primary-500 flex items-center justify-center">
-          <span className="text-white text-sm font-medium">
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1 
+        }}>
+          <Avatar
+            sx={{
+              width: theme.spacing(4),
+              height: theme.spacing(4),
+              bgcolor: 'primary.main',
+              fontSize: theme.typography.body2.fontSize,
+              fontWeight: theme.typography.body2.fontWeight
+            }}
+          >
             {firstName.charAt(0).toUpperCase()}
-          </span>
-        </div>
-        <span className="text-gray-700 dark:text-cream-200 hidden sm:block">{firstName}</span>
-        <svg
-          className={`w-4 h-4 text-gray-500 dark:text-cream-300 transition-transform ${
-            isOpen ? 'transform rotate-180' : ''
-          }`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
+          </Avatar>
+          {!compact && (
+            <Box sx={{ 
+              display: { xs: 'none', sm: 'block' },
+              textAlign: 'left'
+            }}>
+              <Typography variant="body2" color="text.primary" noWrap>
+                {firstName}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" noWrap>
+                {userCode}
+              </Typography>
+            </Box>
+          )}
+          {!compact && (
+            <KeyboardArrowDownIcon 
+              sx={{ 
+                color: 'text.secondary',
+                transition: 'transform 0.2s',
+                transform: isOpen ? 'rotate(180deg)' : 'none'
+              }} 
+            />
+          )}
+        </Box>
+      </Button>
 
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-screen sm:w-64 bg-white dark:bg-dark-secondary rounded-md shadow-lg border border-gray-200 dark:border-dark-border max-w-[calc(100vw-2rem)] sm:max-w-none">
-          <div className="py-2">
-            <Link
-              href="/dashboard"
-              className="block px-4 py-3 sm:py-2 border-b border-gray-200 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-accent"
-              onClick={() => setIsOpen(false)}
-            >
-              <p className="text-sm font-medium text-gray-900 dark:text-cream-100">Account Details</p>
-              <p className="text-sm text-gray-500 dark:text-cream-300 break-all">{userEmail}</p>
-              <p className="text-sm text-gray-500 dark:text-cream-300 mt-1">
-                <span className="font-medium">User Code:</span> {userCode}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-cream-300">
-                <span className="font-medium">Account Type:</span> <span className="capitalize">{role}</span>
-              </p>
-            </Link>
-            
-            <Link
-              href="/dashboard/profile"
-              className="block px-4 py-3 sm:py-2 text-sm text-gray-700 dark:text-cream-200 hover:bg-gray-100 dark:hover:bg-dark-accent min-h-[44px] flex items-center"
-              onClick={() => setIsOpen(false)}
-            >
-              USER PROFILE
-            </Link>
-            
-            <Link
-              href="/dashboard/guide"
-              className="block px-4 py-3 sm:py-2 text-sm text-gray-700 dark:text-cream-200 hover:bg-gray-100 dark:hover:bg-dark-accent min-h-[44px] flex items-center"
-              onClick={() => setIsOpen(false)}
-            >
-              SETUP GUIDE
-            </Link>
-            
-            <Link
-              href="/dashboard/support"
-              className="block px-4 py-3 sm:py-2 text-sm text-gray-700 dark:text-cream-200 hover:bg-gray-100 dark:hover:bg-dark-accent min-h-[44px] flex items-center"
-              onClick={() => setIsOpen(false)}
-            >
-              HELP & SUPPORT
-            </Link>
-
-            <Link
-              href="/dashboard/profile"
-              className="block px-4 py-3 sm:py-2 text-sm text-gray-700 dark:text-cream-200 hover:bg-gray-100 dark:hover:bg-dark-accent min-h-[44px] flex items-center border-t border-gray-200 dark:border-dark-border"
-              onClick={() => {
-                setIsOpen(false);
-                router.push('/dashboard/profile?action=change-password');
+      <Popper
+        open={isOpen}
+        anchorEl={anchorRef.current}
+        placement="bottom-end"
+        transition
+        sx={{ 
+          zIndex: theme.zIndex.modal,
+          width: { 
+            xs: `calc(100vw - ${theme.spacing(4)})`, 
+            sm: theme.spacing(32) 
+          }
+        }}
+      >
+        {({ TransitionProps }) => (
+          <Grow {...TransitionProps}>
+            <Paper 
+              elevation={4}
+              sx={{ 
+                mt: 1,
+                borderRadius: theme.shape.borderRadius,
+                overflow: 'hidden'
               }}
             >
-              CHANGE PASSWORD
-            </Link>
+              <ClickAwayListener onClickAway={handleClose}>
+                <Box>
+                  <Box sx={{ 
+                    p: 2,
+                    borderBottom: 1,
+                    borderColor: 'divider'
+                  }}>
+                    <Typography variant="subtitle2" color="text.primary">
+                      Account Details
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-all' }}>
+                      {userEmail}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                      <Box component="span" fontWeight="medium">User Code:</Box> {userCode}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      <Box component="span" fontWeight="medium">Account Type:</Box>{' '}
+                      <Box component="span" sx={{ textTransform: 'capitalize' }}>{role}</Box>
+                    </Typography>
+                  </Box>
 
-            <button
-              onClick={handleSignOut}
-              className="w-full text-left px-4 py-3 sm:py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-dark-accent min-h-[44px] flex items-center"
-            >
-              SIGN OUT
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+                  <List sx={{ p: 0 }}>
+                    <ListItem
+                      component={Link}
+                      href="/dashboard"
+                      onClick={() => setIsOpen(false)}
+                      sx={{
+                        px: 2,
+                        py: 1.5,
+                        '&:hover': { bgcolor: 'action.hover' }
+                      }}
+                    >
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        <DashboardIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Dashboard"
+                        primaryTypographyProps={{
+                          variant: 'body2',
+                          color: 'text.primary'
+                        }}
+                      />
+                    </ListItem>
+                    <ListItem 
+                      component={Link} 
+                      href="/dashboard/profile"
+                      onClick={() => setIsOpen(false)}
+                      sx={{ 
+                        px: 2, 
+                        py: 1.5,
+                        '&:hover': { bgcolor: 'action.hover' }
+                      }}
+                    >
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        <PersonIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary="User Profile" 
+                        primaryTypographyProps={{ 
+                          variant: 'body2',
+                          color: 'text.primary'
+                        }}
+                      />
+                    </ListItem>
+
+                    <ListItem 
+                      component={Link} 
+                      href="/dashboard/guide"
+                      onClick={() => setIsOpen(false)}
+                      sx={{ 
+                        px: 2, 
+                        py: 1.5,
+                        '&:hover': { bgcolor: 'action.hover' }
+                      }}
+                    >
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        <SettingsIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary="Setup Guide" 
+                        primaryTypographyProps={{ 
+                          variant: 'body2',
+                          color: 'text.primary'
+                        }}
+                      />
+                    </ListItem>
+
+                    <ListItem 
+                      component={Link} 
+                      href="/dashboard/support"
+                      onClick={() => setIsOpen(false)}
+                      sx={{ 
+                        px: 2, 
+                        py: 1.5,
+                        '&:hover': { bgcolor: 'action.hover' }
+                      }}
+                    >
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        <HelpIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary="Help & Support" 
+                        primaryTypographyProps={{ 
+                          variant: 'body2',
+                          color: 'text.primary'
+                        }}
+                      />
+                    </ListItem>
+
+                    <Divider />
+
+                    <ListItem 
+                      component={Link} 
+                      href="/dashboard/profile?action=change-password"
+                      onClick={() => setIsOpen(false)}
+                      sx={{ 
+                        px: 2, 
+                        py: 1.5,
+                        '&:hover': { bgcolor: 'action.hover' }
+                      }}
+                    >
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        <PersonIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary="Change Password" 
+                        primaryTypographyProps={{ 
+                          variant: 'body2',
+                          color: 'text.primary'
+                        }}
+                      />
+                    </ListItem>
+
+                    <ListItem 
+                      onClick={handleSignOut}
+                      sx={{ 
+                        px: 2, 
+                        py: 1.5,
+                        '&:hover': { bgcolor: 'action.hover' }
+                      }}
+                    >
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        <LogoutIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary="Sign Out" 
+                        primaryTypographyProps={{ 
+                          variant: 'body2',
+                          color: 'error.main'
+                        }}
+                      />
+                    </ListItem>
+                  </List>
+                </Box>
+              </ClickAwayListener>
+            </Paper>
+          </Grow>
+        )}
+      </Popper>
+    </Box>
   );
 } 

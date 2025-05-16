@@ -1,10 +1,12 @@
+"use client";
+
 import { useEffect, useState } from 'react';
-import { Bell, Check, Clock, AlertCircle, Info, X } from 'lucide-react';
+import { Check, Close as CloseIcon, AccessTime, Info as InfoIcon, Notifications as NotificationsIcon, Warning as WarningIcon } from '@mui/icons-material';
 import { Notification } from '@/types/notification';
 import { getUserNotifications, markNotificationAsRead } from '@/lib/notification';
 import { format } from 'date-fns';
 import Link from 'next/link';
-import { Button } from '@/components/ui/Button';
+import { Box, Paper, Typography, Stack, IconButton, CircularProgress, Button } from '@mui/material';
 
 interface NotificationListProps {
   userId: string;
@@ -52,21 +54,21 @@ export default function NotificationList({ userId, limit = 20 }: NotificationLis
       case 'REQUEST_SUBMITTED':
       case 'QUOTE_RECEIVED':
       case 'QUOTE_ACCEPTED':
-        return <Bell className="h-5 w-5" />;
+        return <NotificationsIcon fontSize="small" color="primary" />;
       case 'PAYMENT_REQUIRED':
       case 'PAYMENT_RECEIVED':
-        return <Check className="h-5 w-5" />;
+        return <Check fontSize="small" color="success" />;
       case 'FLIGHT_CONFIRMED':
       case 'FLIGHT_CANCELLED':
-        return <Clock className="h-5 w-5" />;
+        return <AccessTime fontSize="small" color="info" />;
       case 'DOCUMENTS_REQUIRED':
       case 'DOCUMENTS_APPROVED':
-        return <Info className="h-5 w-5" />;
+        return <InfoIcon fontSize="small" color="info" />;
       case 'FLIGHT_REMINDER':
       case 'FLIGHT_COMPLETED':
-        return <AlertCircle className="h-5 w-5" />;
+        return <WarningIcon fontSize="small" color="warning" />;
       default:
-        return <Info className="h-5 w-5" />;
+        return <InfoIcon fontSize="small" color="disabled" />;
     }
   };
 
@@ -74,92 +76,120 @@ export default function NotificationList({ userId, limit = 20 }: NotificationLis
     switch (type) {
       case 'REQUEST_SUBMITTED':
       case 'QUOTE_RECEIVED':
-        return 'bg-blue-100 text-blue-800';
+        return { bgcolor: 'info.lighter', color: 'info.dark' };
       case 'QUOTE_ACCEPTED':
       case 'PAYMENT_RECEIVED':
       case 'FLIGHT_CONFIRMED':
-        return 'bg-green-100 text-green-800';
+        return { bgcolor: 'success.lighter', color: 'success.dark' };
       case 'PAYMENT_REQUIRED':
       case 'DOCUMENTS_REQUIRED':
-        return 'bg-yellow-100 text-yellow-800';
+        return { bgcolor: 'warning.lighter', color: 'warning.dark' };
       case 'FLIGHT_CANCELLED':
-        return 'bg-red-100 text-red-800';
+        return { bgcolor: 'error.lighter', color: 'error.dark' };
       case 'DOCUMENTS_APPROVED':
       case 'FLIGHT_COMPLETED':
-        return 'bg-purple-100 text-purple-800';
+        return { bgcolor: 'secondary.lighter', color: 'secondary.dark' };
       case 'FLIGHT_REMINDER':
-        return 'bg-indigo-100 text-indigo-800';
+        return { bgcolor: 'primary.lighter', color: 'primary.dark' };
       default:
-        return 'bg-gray-100 text-gray-800';
+        return { bgcolor: 'grey.100', color: 'text.secondary' };
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-      </div>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4 }}>
+        <CircularProgress color="primary" size={32} />
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      <Paper sx={{ bgcolor: 'error.lighter', color: 'error.dark', p: 2, mb: 2, borderRadius: 2 }}>
         {error}
-      </div>
+      </Paper>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {notifications.map((notification) => (
-        <div
-          key={notification.id}
-          className={`p-4 rounded-lg shadow-sm border ${
-            notification.read ? 'bg-white' : 'bg-blue-50'
-          }`}
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex items-start space-x-3">
-              <div className={`p-2 rounded-full ${getNotificationColor(notification.type)}`}>
-                {getNotificationIcon(notification.type)}
-              </div>
-              <div className="flex-1">
-                <h3 className="text-sm font-medium text-gray-900">{notification.title}</h3>
-                <p className="mt-1 text-sm text-gray-500">{notification.message}</p>
-                <div className="mt-2 flex items-center space-x-4">
-                  <span className="text-xs text-gray-400">
-                    {format(notification.createdAt.toDate(), 'MMM d, yyyy h:mm a')}
-                  </span>
-                  {notification.link && (
-                    <Link
-                      href={notification.link}
-                      className="text-xs text-blue-600 hover:text-blue-800"
-                    >
-                      View Details
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </div>
-            {!notification.read && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleMarkAsRead(notification.id)}
-                className="text-gray-400 hover:text-gray-500"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-      ))}
+    <Stack spacing={2}>
+      {notifications.map((notification) => {
+        const color = getNotificationColor(notification.type);
+        return (
+          <Paper
+            key={notification.id}
+            elevation={notification.read ? 0 : 2}
+            sx={{
+              p: 2.5,
+              borderRadius: 2,
+              border: '1px solid',
+              borderColor: notification.read ? 'divider' : 'primary.light',
+              bgcolor: notification.read ? 'background.paper' : 'primary.lighter',
+              boxShadow: notification.read ? 0 : 2,
+              transition: 'background 0.2s',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                <Box
+                  sx={{
+                    p: 1,
+                    borderRadius: '50%',
+                    ...color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: 32,
+                    minHeight: 32,
+                  }}
+                >
+                  {getNotificationIcon(notification.type)}
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.primary">
+                    {notification.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" mt={0.5}>
+                    {notification.message}
+                  </Typography>
+                  <Stack direction="row" spacing={2} alignItems="center" mt={1}>
+                    <Typography variant="caption" color="text.disabled">
+                      {notification.createdAt?.toDate ? format(notification.createdAt.toDate(), 'MMM d, yyyy h:mm a') : '-'}
+                    </Typography>
+                    {notification.link && (
+                      <Button
+                        component={Link}
+                        href={notification.link}
+                        variant="text"
+                        size="small"
+                        sx={{ textTransform: 'none', fontSize: '0.8rem', color: 'primary.main', p: 0 }}
+                      >
+                        View Details
+                      </Button>
+                    )}
+                  </Stack>
+                </Box>
+              </Box>
+              {!notification.read && (
+                <IconButton
+                  size="small"
+                  onClick={() => handleMarkAsRead(notification.id)}
+                  sx={{ color: 'text.disabled', ml: 1 }}
+                  aria-label="Mark as read"
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              )}
+            </Box>
+          </Paper>
+        );
+      })}
       {notifications.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
+        <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
           No notifications found.
-        </div>
+        </Box>
       )}
-    </div>
+    </Stack>
   );
 } 

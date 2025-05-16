@@ -1,387 +1,307 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { registerUser, signInWithGoogle } from '@/lib/auth';
-import { UserRole } from '@/lib/utils';
-import Link from 'next/link';
-import PasswordStrengthChecker, { validatePassword } from '@/components/PasswordStrengthChecker';
-import EmailValidator, { validateEmail } from '@/components/EmailValidator';
-import RoleSelector from './RoleSelector';
-import { 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  TextField, 
-  Button, 
-  Grid, 
-  IconButton, 
-  FormControl,
-  Box,
-  Typography,
-  Alert,
-  InputAdornment
-} from '@mui/material';
+import { Dialog, Box, Typography, TextField, Button, IconButton, InputAdornment, Stepper, Step, StepLabel } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
-import GoogleIcon from '@mui/icons-material/Google';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useModal } from '@/contexts/ModalContext';
+import AnimatedBackground from './AnimatedBackground';
+import tokens from '@/styles/tokens';
+import Image from 'next/image';
+import Fade from '@mui/material/Fade';
+import { grey } from '@mui/material/colors';
+import { alpha } from '@mui/material/styles';
 
-interface RegisterModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export default function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
+export default function RegisterModal() {
+  const { isRegisterModalOpen, closeRegisterModal, openLoginModal } = useModal();
   const router = useRouter();
+
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    firstName: '',
-    lastName: '',
-    role: '' as UserRole,
-    company: '',
-  });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-  const [isConfirmPasswordFocused, setIsConfirmPasswordFocused] = useState(false);
-  const [isEmailFocused, setIsEmailFocused] = useState(false);
+  const [userType, setUserType] = useState<'passenger' | 'agent' | 'operator' | ''>('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [company, setCompany] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const accountImages: Record<'passenger'|'agent'|'operator', string> = {
+    passenger: '/images/register/passenger.mp4',
+    agent: '/images/register/agent.mp4',
+    operator: '/images/register/operator.png'
+  };
+  const accountDescriptions: Record<'passenger'|'agent'|'operator', string> = {
+    passenger: 'Book your flights quickly and easily.',
+    agent: 'Manage bookings and client relationships.',
+    operator: 'Oversee aircraft operations and schedules.'
   };
 
-  const handleRoleSelect = (role: UserRole) => {
-    setFormData(prev => ({
-      ...prev,
-      role,
-    }));
-  };
-
-  const handleNext = () => {
-    if (!formData.role) {
-      setError('Please select a role to continue');
-      return;
-    }
-    setError('');
-    setStep(2);
-  };
+  const handleTogglePassword = () => setShowPassword(prev => !prev);
+  const handleToggleConfirm = () => setShowConfirm(prev => !prev);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
-    if (!validateEmail(formData.email)) {
-      setError('Please enter a valid email address');
-      return;
-    }
-
-    if (!validatePassword(formData.password)) {
-      setError('Please ensure your password meets all requirements');
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
+    if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-
-    if ((formData.role === 'agent' || formData.role === 'operator') && !formData.company.trim()) {
-      setError('Company name is required for travel agents and aircraft operators');
-      return;
-    }
-
-    setLoading(true);
-
+    // TODO: call registration API with { userType, email, password, company }
+    setIsLoading(true);
     try {
-      const userData = await registerUser(
-        formData.email,
-        formData.password,
-        formData.firstName,
-        formData.lastName,
-        formData.role,
-        formData.company
-      );
-      
+      // await registerUser({ userType, email, password, company });
       router.push('/dashboard');
-      onClose();
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      setError(error.message);
+      closeRegisterModal();
+    } catch (err) {
+      setError('Registration failed');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setError('');
-    setLoading(true);
-
-    try {
-      if (!formData.role) {
-        setError('Please select a role before continuing with Google');
-        setLoading(false);
-        return;
-      }
-      
-      await signInWithGoogle();
-      router.push('/dashboard');
-      onClose();
-    } catch (error: any) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
+  const switchToLogin = () => {
+    closeRegisterModal();
+    openLoginModal();
   };
-
-  const passwordsMatch = formData.password === formData.confirmPassword;
-  const showPasswordMismatch = formData.confirmPassword.length > 0 && !passwordsMatch;
-  const showCompanyField = formData.role === 'agent' || formData.role === 'operator';
 
   return (
     <Dialog 
-      open={isOpen} 
-      onClose={onClose}
-      maxWidth="lg"
+      open={isRegisterModalOpen}
+      onClose={closeRegisterModal}
+      maxWidth="xl"
       fullWidth
+      BackdropProps={{
+        sx: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          backdropFilter: 'blur(5px)',
+          WebkitBackdropFilter: 'blur(5px)'
+        }
+      }}
       PaperProps={{
         sx: {
-          height: '90vh',
-          maxHeight: 640,
-          m: 2,
-          borderRadius: 2
+          borderRadius: tokens.borderRadius.md.value,
+          boxShadow: tokens.shadow.medium.value,
+          overflow: 'hidden',
+          m: { xs: tokens.spacing[2].value, sm: tokens.spacing[4].value },
+          maxWidth: '1200px',
+          width: { xs: '100%', md: '1200px' },
+          maxHeight: { xs: '60vh', md: '50vh' },
+          height: { xs: '60vh', md: '50vh' }
         }
       }}
     >
-      <DialogTitle sx={{ 
-        p: 3, 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        borderBottom: '1px solid',
-        borderColor: 'divider'
-      }}>
-        <Typography variant="h5" component="div" fontWeight="bold">
-          Create your account
-        </Typography>
-        <IconButton
-          onClick={onClose}
-          size="small"
-          sx={{ color: 'text.secondary' }}
+      {/* Two-column layout */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' },
+          height: '100%'
+        }}
+      >
+        {/* Left side - Image */}
+        <Box
+          component="div"
+          sx={{
+            display: { xs: 'none', md: 'block' },
+            position: 'relative',
+            overflow: 'hidden'
+          }}
         >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-
-      <DialogContent sx={{ p: 0 }}>
-        {error && (
-          <Alert severity="error" sx={{ mx: 3, mt: 3 }}>
-            {error}
-          </Alert>
-        )}
-
-        <Box sx={{ 
-          display: 'flex', 
-          height: '100%',
-          p: 3
-        }}>
-          {/* Left side - Role selector */}
-          <Box sx={{ width: '50%', pr: 2 }}>
-            <RoleSelector
-              selectedRole={formData.role || null}
-              onRoleSelect={handleRoleSelect}
-              showOptions={step === 1}
-            />
-          </Box>
-
-          {/* Right side - Form */}
-          <Box sx={{ width: '50%', pl: 2 }}>
+          {!userType ? (
+            <AnimatedBackground />
+          ) : (
+            <Fade in timeout={500} key={userType}>
+              <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
+                {accountImages[userType].endsWith('.mp4') ? (
+                  <video
+                    src={accountImages[userType]}
+                    autoPlay
+                    muted
+                    loop
+                    style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                  />
+                ) : (
+                  <Image
+                    key={userType}
+                    src={accountImages[userType]}
+                    alt={`${userType} illustration`}
+                    fill
+                    sizes="(min-width: 900px) 700px, 100vw"
+                    style={{ objectFit: 'cover' }}
+                    priority
+                  />
+                )}
+                {/* Overlay light logo */}
+                <Image
+                  src="/branding/logos/light/charter logo - dark mode.png"
+                  alt="Charter Logo"
+                  width={140}
+                  height={40}
+                  priority
+                  style={{
+                    objectFit: 'contain',
+                    position: 'absolute',
+                    bottom: tokens.spacing[3].value,
+                    left: tokens.spacing[3].value,
+                    zIndex: 2
+                  }}
+                />
+              </Box>
+            </Fade>
+          )}
+        </Box>
+        {/* Right side - Dynamic Form */}
+        <Box sx={{ position: 'relative', p: { xs: tokens.spacing[3].value, sm: tokens.spacing[4].value }, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+          <IconButton
+            onClick={closeRegisterModal}
+            sx={{ position: 'absolute', top: 8, right: 16, color: 'text.secondary' }}
+          >
+            <CloseIcon />
+          </IconButton>
+          <Stepper activeStep={step - 1} alternativeLabel sx={{ mb: 3, pt: 2 }}>
+            <Step key="select">
+              <StepLabel>Select Type</StepLabel>
+            </Step>
+            <Step key="details">
+              <StepLabel>Details</StepLabel>
+            </Step>
+          </Stepper>
+          {/* Content Area */}
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', overflow: 'auto', gap: 2 }}>
             {step === 1 ? (
-              <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="h6" gutterBottom>
-                  Select your role
-                </Typography>
-                <Box sx={{ mt: 'auto' }}>
+              <>
+                <Typography variant="h5" gutterBottom>Select your account type</Typography>
+                <Box sx={{ display: 'flex', gap: tokens.spacing[2].value, width: '100%' }}>
                   <Button
-                    onClick={handleNext}
-                    disabled={!formData.role}
-                    variant="contained"
-                    fullWidth
+                    color="primary"
+                    variant="outlined"
+                    onClick={() => setUserType('passenger')}
                     size="large"
+                    sx={(theme) => ({
+                      flex: 1,
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      py: tokens.spacing[4].value,
+                      backgroundColor: theme.palette.mode === 'dark' 
+                        ? alpha(theme.palette.common.white, 0.04)
+                        : 'transparent',
+                      '&:hover': {
+                        backgroundColor: theme.palette.mode === 'dark' 
+                          ? alpha(theme.palette.common.white, 0.08)
+                          : grey[100],
+                        borderColor: theme.palette.primary.main,
+                      },
+                      ...(userType === 'passenger' && {
+                        borderWidth: '3px',
+                        borderStyle: 'solid',
+                        borderColor: theme.palette.mode === 'dark'
+                          ? theme.palette.primary.contrastText
+                          : theme.palette.primary.main,
+                      })
+                    })}
                   >
-                    CONTINUE
+                    <Typography variant="h6" gutterBottom>Passenger</Typography>
+                    <Typography variant="body2" color="text.secondary">{accountDescriptions.passenger}</Typography>
+                  </Button>
+                  <Button
+                    color="primary"
+                    variant="outlined"
+                    onClick={() => setUserType('agent')}
+                    size="large"
+                    sx={(theme) => ({
+                      flex: 1,
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      py: tokens.spacing[4].value,
+                      backgroundColor: theme.palette.mode === 'dark' 
+                        ? alpha(theme.palette.common.white, 0.04)
+                        : 'transparent',
+                      '&:hover': {
+                        backgroundColor: theme.palette.mode === 'dark' 
+                          ? alpha(theme.palette.common.white, 0.08)
+                          : grey[100],
+                        borderColor: theme.palette.primary.main,
+                      },
+                      ...(userType === 'agent' && {
+                        borderWidth: '3px',
+                        borderStyle: 'solid',
+                        borderColor: theme.palette.mode === 'dark'
+                          ? theme.palette.primary.contrastText
+                          : theme.palette.primary.main,
+                      })
+                    })}
+                  >
+                    <Typography variant="h6" gutterBottom>Agent/Broker</Typography>
+                    <Typography variant="body2" color="text.secondary">{accountDescriptions.agent}</Typography>
+                  </Button>
+                  <Button
+                    color="primary"
+                    variant="outlined"
+                    onClick={() => setUserType('operator')}
+                    size="large"
+                    sx={(theme) => ({
+                      flex: 1,
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      py: tokens.spacing[4].value,
+                      backgroundColor: theme.palette.mode === 'dark' 
+                        ? alpha(theme.palette.common.white, 0.04)
+                        : 'transparent',
+                      '&:hover': {
+                        backgroundColor: theme.palette.mode === 'dark' 
+                          ? alpha(theme.palette.common.white, 0.08)
+                          : grey[100],
+                        borderColor: theme.palette.primary.main,
+                      },
+                      ...(userType === 'operator' && {
+                        borderWidth: '3px',
+                        borderStyle: 'solid',
+                        borderColor: theme.palette.mode === 'dark'
+                          ? theme.palette.primary.contrastText
+                          : theme.palette.primary.main,
+                      })
+                    })}
+                  >
+                    <Typography variant="h6" gutterBottom>Operator</Typography>
+                    <Typography variant="body2" color="text.secondary">{accountDescriptions.operator}</Typography>
                   </Button>
                 </Box>
-              </Box>
+              </>
             ) : (
-              <form onSubmit={handleSubmit} style={{ height: '100%' }}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                  <Box sx={{ flex: 1, overflow: 'auto' }}>
-                    <Grid container spacing={2}>
-                      <Grid component="div" xs={6}>
-                        <FormControl fullWidth>
-                          <TextField
-                            label="First name"
-                            name="firstName"
-                            required
-                            value={formData.firstName}
-                            onChange={handleChange}
-                            helperText="Enter your legal first name"
-                            autoComplete="given-name"
-                          />
-                        </FormControl>
-                      </Grid>
-                      <Grid component="div" xs={6}>
-                        <FormControl fullWidth>
-                          <TextField
-                            label="Last name"
-                            name="lastName"
-                            required
-                            value={formData.lastName}
-                            onChange={handleChange}
-                            helperText="Enter your legal last name"
-                            autoComplete="family-name"
-                          />
-                        </FormControl>
-                      </Grid>
-
-                      <Grid component="div" xs={12}>
-                        <FormControl fullWidth>
-                          <TextField
-                            label="Email"
-                            type="email"
-                            name="email"
-                            required
-                            value={formData.email}
-                            onChange={handleChange}
-                            onFocus={() => setIsEmailFocused(true)}
-                            onBlur={() => setIsEmailFocused(false)}
-                            helperText="This will be your login email"
-                            autoComplete="email"
-                          />
-                        </FormControl>
-                        {isEmailFocused && <EmailValidator email={formData.email} isVisible={isEmailFocused} />}
-                      </Grid>
-
-                      <Grid component="div" xs={12}>
-                        <FormControl fullWidth>
-                          <TextField
-                            label="Password"
-                            type={showPassword ? 'text' : 'password'}
-                            name="password"
-                            required
-                            value={formData.password}
-                            onChange={handleChange}
-                            onFocus={() => setIsPasswordFocused(true)}
-                            onBlur={() => setIsPasswordFocused(false)}
-                            helperText="Create a strong password"
-                            autoComplete="new-password"
-                            InputProps={{
-                              endAdornment: (
-                                <InputAdornment position="end">
-                                  <IconButton
-                                    aria-label="toggle password visibility"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    onMouseDown={(e) => e.preventDefault()}
-                                    edge="end"
-                                  >
-                                    {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                                  </IconButton>
-                                </InputAdornment>
-                              ),
-                            }}
-                          />
-                        </FormControl>
-                        <PasswordStrengthChecker 
-                          password={formData.password}
-                          isVisible={isPasswordFocused || formData.password.length > 0}
-                        />
-                      </Grid>
-
-                      <Grid component="div" xs={12}>
-                        <FormControl fullWidth>
-                          <TextField
-                            label="Confirm Password"
-                            type={showConfirmPassword ? 'text' : 'password'}
-                            name="confirmPassword"
-                            required
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            onFocus={() => setIsConfirmPasswordFocused(true)}
-                            onBlur={() => setIsConfirmPasswordFocused(false)}
-                            error={showPasswordMismatch}
-                            helperText={showPasswordMismatch ? "Passwords don't match" : "Re-enter your password"}
-                            autoComplete="new-password"
-                            InputProps={{
-                              endAdornment: (
-                                <InputAdornment position="end">
-                                  <IconButton
-                                    aria-label="toggle confirm password visibility"
-                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    onMouseDown={(e) => e.preventDefault()}
-                                    edge="end"
-                                  >
-                                    {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                                  </IconButton>
-                                </InputAdornment>
-                              ),
-                            }}
-                          />
-                        </FormControl>
-                      </Grid>
-
-                      {showCompanyField && (
-                        <Grid component="div" xs={12}>
-                          <FormControl fullWidth>
-                            <TextField
-                              label="Company"
-                              name="company"
-                              required
-                              value={formData.company}
-                              onChange={handleChange}
-                              helperText="Enter your company or organization name"
-                              autoComplete="organization"
-                            />
-                          </FormControl>
-                        </Grid>
-                      )}
-                    </Grid>
-                  </Box>
-
-                  <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Button
-                      type="submit"
-                      disabled={loading}
-                      variant="contained"
-                      size="large"
-                      fullWidth
-                    >
-                      {loading ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT'}
-                    </Button>
-                    <Button
-                      onClick={handleGoogleSignIn}
-                      disabled={loading}
-                      variant="outlined"
-                      size="large"
-                      fullWidth
-                      startIcon={<GoogleIcon />}
-                    >
-                      {loading ? 'SIGNING IN...' : 'CONTINUE WITH GOOGLE'}
-                    </Button>
-                  </Box>
-                </Box>
-              </form>
+              <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Button variant="text" onClick={() => setStep(1)} startIcon={<ArrowBackIcon />} sx={{ textTransform: 'none' }}>Back</Button>
+                <Typography variant="h5" mb={2}>Register as {userType.charAt(0).toUpperCase() + userType.slice(1)}</Typography>
+                {error && <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>}
+                {(userType === 'agent' || userType === 'operator') && (
+                  <TextField label="Company Name" fullWidth size="small" value={company} onChange={e => setCompany(e.target.value)} required />
+                )}
+                <TextField label={userType === 'agent' || userType === 'operator' ? 'Responsible Person First Name' : 'First Name'} fullWidth size="small" value={firstName} onChange={e => setFirstName(e.target.value)} required />
+                <TextField label={userType === 'agent' || userType === 'operator' ? 'Responsible Person Last Name' : 'Last Name'} fullWidth size="small" value={lastName} onChange={e => setLastName(e.target.value)} required />
+                <TextField label="Email" type="email" fullWidth size="small" value={email} onChange={e => setEmail(e.target.value)} required />
+                <TextField label="Password" type={showPassword ? 'text' : 'password'} fullWidth size="small" value={password} onChange={e => setPassword(e.target.value)} required InputProps={{ endAdornment: (<InputAdornment position="end"><IconButton onClick={handleTogglePassword} edge="end">{showPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>) }} />
+                <TextField label="Confirm Password" type={showConfirm ? 'text' : 'password'} fullWidth size="small" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required InputProps={{ endAdornment: (<InputAdornment position="end"><IconButton onClick={handleToggleConfirm} edge="end">{showConfirm ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>) }} />
+              </Box>
+            )}
+          </Box>
+          {/* Footer Area */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {step === 1 ? (
+              <>
+                {userType && (<Button fullWidth variant="contained" onClick={() => setStep(2)}>Next</Button>)}
+                <Button fullWidth variant="text" onClick={switchToLogin} sx={{ textTransform: 'none' }}>Already have an account? Sign In</Button>
+              </>
+            ) : (
+              <>
+                <Button type="submit" fullWidth variant="contained" color="primary" disabled={isLoading}>{isLoading ? 'Registering...' : 'Register'}</Button>
+                <Button fullWidth variant="text" onClick={switchToLogin} sx={{ textTransform: 'none' }}>Already have an account? Sign In</Button>
+              </>
             )}
           </Box>
         </Box>
-      </DialogContent>
+      </Box>  {/* end two-column grid */}
     </Dialog>
   );
 } 

@@ -2,12 +2,11 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from '@/lib/firebase';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { logoutUser } from '@/lib/auth';
 import { UserRole } from '@/lib/userCode';
 import { User as CustomUser, UserProfile } from '@/types/user';
-import { User as FirebaseUser } from 'firebase/auth';
-import { logAuthEvent } from '@/lib/events';
+import { logAuthEvent } from '@/utils/eventLogger';
 import { EventType, EventSeverity } from '@/types/event';
 
 interface AuthContextType {
@@ -54,27 +53,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               role: userData.role,
             } as CustomUser);
             setUserRole(userData.role);
-            setProfile({
-              ...userData,
-              createdAt: userData.createdAt.toDate(),
-              updatedAt: userData.updatedAt.toDate(),
-            } as UserProfile);
+            // Map Firestore data to UserProfile, converting Timestamps
+            const raw = querySnapshot.docs[0].data();
+            const profileData: UserProfile = {
+              email: raw.email,
+              firstName: raw.firstName,
+              lastName: raw.lastName,
+              role: raw.role,
+              userCode: raw.userCode,
+              company: raw.company ?? null,
+              createdAt: (raw.createdAt as Timestamp).toDate(),
+              updatedAt: (raw.updatedAt as Timestamp).toDate(),
+              emailVerified: raw.emailVerified,
+              lastReminderSent: raw.lastReminderSent ? (raw.lastReminderSent as Timestamp).toDate() : null,
+              reminderCount: raw.reminderCount,
+              profileIncompleteDate: raw.profileIncompleteDate ? (raw.profileIncompleteDate as Timestamp).toDate() : null,
+              status: raw.status,
+              isProfileComplete: raw.isProfileComplete,
+              hasAircraft: raw.hasAircraft,
+              dormantDate: raw.dormantDate ? (raw.dormantDate as Timestamp).toDate() : null,
+            };
+            setProfile(profileData);
 
             // Log successful login
             await logAuthEvent(
               EventType.LOGIN,
-              EventSeverity.INFO,
-              firebaseUser.uid,
-              userData.userCode,
-              userData.role,
-              `User ${userData.userCode} logged in successfully`,
               {
-                email: firebaseUser.email,
-                provider: firebaseUser.providerData[0]?.providerId || 'email'
+                severity: EventSeverity.INFO,
+                userId: firebaseUser.uid,
+                userCode: userData.userCode,
+                userRole: userData.role,
+                description: `User ${userData.userCode} logged in successfully`,
+                data: {
+                  email: firebaseUser.email,
+                  provider: firebaseUser.providerData[0]?.providerId || 'email',
+                },
               }
             );
           } else {
-            console.log('No user data found in Firestore for email:', firebaseUser.email);
+            // No user data found in Firestore
             setUser(null);
             setUserRole(null);
             setProfile(undefined);
@@ -89,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false);
         }
       } else {
-        console.log('No Firebase user');
+        // No Firebase user
         setUser(null);
         setUserRole(null);
         setProfile(undefined);
@@ -107,13 +124,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Log logout event before actually logging out
         await logAuthEvent(
           EventType.LOGOUT,
-          EventSeverity.INFO,
-          currentUser.uid,
-          currentUser.userCode,
-          currentUser.role,
-          `User ${currentUser.userCode} logged out`,
           {
-            email: currentUser.email
+            severity: EventSeverity.INFO,
+            userId: currentUser.uid,
+            userCode: currentUser.userCode,
+            userRole: currentUser.role,
+            description: `User ${currentUser.userCode} logged out`,
+            data: { email: currentUser.email },
           }
         );
       }

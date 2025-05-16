@@ -1,5 +1,5 @@
 import { ButtonHTMLAttributes, forwardRef } from 'react';
-import { cn } from '@/lib/utils';
+import { Box, Button, useTheme } from '@mui/material';
 
 interface VideoButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   videoSrcWebm?: string;
@@ -10,18 +10,30 @@ interface VideoButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const VideoButton = forwardRef<HTMLButtonElement, VideoButtonProps>(
   ({ videoSrcWebm, videoSrcMp4, label, className, ...props }, ref) => {
+    const theme = useTheme();
+
     return (
-      <button
+      <Button
         ref={ref}
-        className={cn(
-          'relative overflow-hidden rounded-lg',
-          'min-w-[120px] min-h-[40px]',
-          'flex items-center justify-center',
-          'text-white font-medium',
-          'transition-all duration-200',
-          'hover:scale-[1.02]',
-          className
-        )}
+        sx={{
+          position: 'relative',
+          overflow: 'hidden',
+          borderRadius: theme.shape.borderRadius,
+          minWidth: 120,
+          minHeight: 40,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontWeight: theme.typography.fontWeightMedium,
+          transition: theme.transitions.create(['transform'], {
+            duration: theme.transitions.duration.shorter,
+          }),
+          '&:hover': {
+            transform: 'scale(1.02)',
+          },
+          ...(className && { className })
+        }}
         {...props}
       >
         <video
@@ -29,7 +41,13 @@ const VideoButton = forwardRef<HTMLButtonElement, VideoButtonProps>(
           muted
           loop
           playsInline
-          className="absolute inset-0 w-full h-full object-cover"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover'
+          }}
           poster={props.disabled ? undefined : '/path-to-fallback-image.jpg'} // Optional: Add a poster image
         >
           {videoSrcWebm && <source src={videoSrcWebm} type="video/webm" />}
@@ -37,11 +55,21 @@ const VideoButton = forwardRef<HTMLButtonElement, VideoButtonProps>(
         </video>
         
         {/* Semi-transparent overlay */}
-        <div className="absolute inset-0 bg-black/20 hover:bg-black/30 transition-colors" />
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.2)',
+            transition: theme.transitions.create('background-color'),
+            '&:hover': {
+              backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            }
+          }}
+        />
         
         {/* Button content */}
-        <span className="relative z-10">{label}</span>
-      </button>
+        <Box sx={{ position: 'relative', zIndex: 10 }}>{label}</Box>
+      </Button>
     );
   }
 );

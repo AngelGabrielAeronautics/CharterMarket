@@ -1,7 +1,6 @@
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, doc, getDoc, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { Operator, OperatorSearchResult } from '@/types/operator';
-import { Airport } from '@/types/airport';
 import { getAirportByICAO } from '@/lib/airport';
 
 export const findAvailableOperators = async (

@@ -1,7 +1,7 @@
 declare module 'react-imask' {
-  import { ComponentType, ForwardRefExoticComponent, RefAttributes } from 'react';
+  import { ComponentType, ForwardRefExoticComponent, RefAttributes, InputHTMLAttributes } from 'react';
 
-  export interface IMaskInputProps {
+  export interface IMaskInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'defaultValue' | 'onChange'> {
     mask: string | RegExp | Array<string | RegExp>;
     definitions?: Record<string, RegExp>;
     value?: string;
@@ -10,7 +10,6 @@ declare module 'react-imask' {
     onComplete?: (value: string) => void;
     inputRef?: React.Ref<HTMLInputElement>;
     overwrite?: boolean;
-    [key: string]: any;
   }
 
   export const IMaskInput: ForwardRefExoticComponent<IMaskInputProps & RefAttributes<HTMLInputElement>>;

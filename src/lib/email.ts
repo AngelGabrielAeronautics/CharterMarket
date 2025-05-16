@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, addDoc, serverTimestamp, doc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // Types for notifications
 export interface EmailNotification {
@@ -59,7 +59,7 @@ export async function sendVerificationEmail(email: string, userId: string, userC
       status: 'sent',
     });
 
-  } catch (error: any) {
+  } catch (error) {
     // Store failed notification
     await storeEmailNotification({
       userId,
@@ -68,7 +68,7 @@ export async function sendVerificationEmail(email: string, userId: string, userC
       emailType: 'VERIFICATION_EMAIL',
       sentTo: email,
       status: 'failed',
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     });
     throw error;
   }
@@ -99,7 +99,7 @@ export async function sendWelcomeEmail(email: string, userId: string, userCode: 
       status: 'sent',
     });
 
-  } catch (error: any) {
+  } catch (error) {
     // Store failed notification
     await storeEmailNotification({
       userId,
@@ -108,7 +108,7 @@ export async function sendWelcomeEmail(email: string, userId: string, userCode: 
       emailType: 'WELCOME_EMAIL',
       sentTo: email,
       status: 'failed',
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     });
     throw error;
   }
@@ -137,7 +137,7 @@ export async function sendAdminInvitationEmail(email: string, firstName: string,
       sentTo: email,
       status: 'sent',
     });
-  } catch (error: any) {
+  } catch (error) {
     await storeEmailNotification({
       userId,
       userCode,
@@ -145,7 +145,7 @@ export async function sendAdminInvitationEmail(email: string, firstName: string,
       emailType: 'ADMIN_INVITATION_EMAIL',
       sentTo: email,
       status: 'failed',
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     });
     throw error;
   }
@@ -174,7 +174,7 @@ export async function sendAdminApprovalEmail(email: string, firstName: string, u
       sentTo: email,
       status: 'sent',
     });
-  } catch (error: any) {
+  } catch (error) {
     await storeEmailNotification({
       userId,
       userCode,
@@ -182,7 +182,7 @@ export async function sendAdminApprovalEmail(email: string, firstName: string, u
       emailType: 'ADMIN_APPROVAL_EMAIL',
       sentTo: email,
       status: 'failed',
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     });
     throw error;
   }
@@ -211,7 +211,7 @@ export async function sendAdminSuspensionEmail(email: string, firstName: string,
       sentTo: email,
       status: 'sent',
     });
-  } catch (error: any) {
+  } catch (error) {
     await storeEmailNotification({
       userId,
       userCode,
@@ -219,7 +219,7 @@ export async function sendAdminSuspensionEmail(email: string, firstName: string,
       emailType: 'ADMIN_SUSPENSION_EMAIL',
       sentTo: email,
       status: 'failed',
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     });
     throw error;
   }
@@ -248,7 +248,7 @@ export async function sendAdminPermissionsUpdateEmail(email: string, firstName: 
       sentTo: email,
       status: 'sent',
     });
-  } catch (error: any) {
+  } catch (error) {
     await storeEmailNotification({
       userId,
       userCode,
@@ -256,7 +256,7 @@ export async function sendAdminPermissionsUpdateEmail(email: string, firstName: 
       emailType: 'ADMIN_PERMISSIONS_EMAIL',
       sentTo: email,
       status: 'failed',
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     });
     throw error;
   }
@@ -301,7 +301,7 @@ export async function sendAdminNotification(
       status: 'sent',
     });
 
-  } catch (error: any) {
+  } catch (error) {
     // Store failed notification
     await storeEmailNotification({
       userId: 'system',
@@ -310,7 +310,7 @@ export async function sendAdminNotification(
       emailType: 'ADMIN_NOTIFICATION_EMAIL',
       sentTo: 'noreply@chartermarket.app',
       status: 'failed',
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     });
     throw error;
   }
@@ -356,7 +356,7 @@ export async function sendRegistrationReminderEmail(
       reminderNumber
     });
 
-  } catch (error: any) {
+  } catch (error) {
     // Store failed notification
     await storeEmailNotification({
       userId,
@@ -365,7 +365,7 @@ export async function sendRegistrationReminderEmail(
       emailType: 'REGISTRATION_REMINDER_EMAIL',
       sentTo: email,
       status: 'failed',
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
       reminderNumber
     });
     throw error;

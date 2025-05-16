@@ -1,6 +1,6 @@
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { db } from './firebase';
-import type { UserRole } from '@/types/user';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../src/lib/firebase';
+import type { UserRole } from '../src/lib/userCode';
 
 const generateRandomString = (length: number): string => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

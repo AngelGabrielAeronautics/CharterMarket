@@ -12,8 +12,6 @@
  * - Agent/Broker Client: CL-AGENTCODE-XXXX (for clients of an agent/broker)
  */
 
-import { Timestamp } from 'firebase/firestore';
-
 /**
  * Generates a random alphanumeric string of specified length
  */
@@ -123,7 +121,7 @@ export function isValidQuoteId(id: string): boolean {
   return /^QT-[A-Z0-9]+-\d{8}-[A-Z0-9]{4}$/.test(id);
 }
 export function parseQuoteId(id: string) {
-  const [_, operatorCode, date, unique] = id.split('-');
+  const [, operatorCode, date, unique] = id.split('-');
   return { operatorCode, date, unique };
 }
 
@@ -132,7 +130,7 @@ export function isValidInvoiceId(id: string): boolean {
   return /^INV-[A-Z0-9]+-\d{8}-[A-Z0-9]{8}$/.test(id);
 }
 export function parseInvoiceId(id: string) {
-  const [_, flightCode, date, unique] = id.split('-');
+  const [, flightCode, date, unique] = id.split('-');
   return { flightCode, date, unique };
 }
 
@@ -141,7 +139,7 @@ export function isValidFlightId(id: string): boolean {
   return /^FLT-[A-Z0-9]+-\d{8}-[A-Z0-9]{4}$/.test(id);
 }
 export function parseFlightId(id: string) {
-  const [_, operatorCode, date, unique] = id.split('-');
+  const [, operatorCode, date, unique] = id.split('-');
   return { operatorCode, date, unique };
 }
 
@@ -150,7 +148,7 @@ export function isValidAircraftId(id: string): boolean {
   return /^AC-[A-Z0-9]+-[A-Z0-9]{4}$/.test(id);
 }
 export function parseAircraftId(id: string) {
-  const [_, operatorCode, unique] = id.split('-');
+  const [, operatorCode, unique] = id.split('-');
   return { operatorCode, unique };
 }
 
@@ -159,7 +157,7 @@ export function isValidDocumentId(id: string): boolean {
   return /^DOC-[A-Z0-9]+-[A-Z0-9]{4}$/.test(id);
 }
 export function parseDocumentId(id: string) {
-  const [_, userCode, unique] = id.split('-');
+  const [, userCode, unique] = id.split('-');
   return { userCode, unique };
 }
 
@@ -168,7 +166,7 @@ export function isValidPassengerRecordIdByAgent(id: string): boolean {
   return /^PAX-[A-Z0-9]+-[A-Z0-9]{4}$/.test(id);
 }
 export function parsePassengerRecordIdByAgent(id: string) {
-  const [_, agentCode, unique] = id.split('-');
+  const [, agentCode, unique] = id.split('-');
   return { agentCode, unique };
 }
 
@@ -177,7 +175,7 @@ export function isValidPassengerRecordIdByPassenger(id: string): boolean {
   return /^PAX-[A-Z0-9]+-[A-Z0-9]{4}$/.test(id);
 }
 export function parsePassengerRecordIdByPassenger(id: string) {
-  const [_, userCode, unique] = id.split('-');
+  const [, userCode, unique] = id.split('-');
   return { userCode, unique };
 }
 
@@ -186,6 +184,6 @@ export function isValidClientId(id: string): boolean {
   return /^CL-[A-Z0-9]+-[A-Z0-9]{4}$/.test(id);
 }
 export function parseClientId(id: string) {
-  const [_, agentCode, unique] = id.split('-');
+  const [, agentCode, unique] = id.split('-');
   return { agentCode, unique };
 } 

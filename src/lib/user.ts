@@ -1,6 +1,7 @@
 import { db } from './firebase';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 import { UserStatus } from '@/types/user';
+import type { OnboardingFormData } from '@/types/user';
 
 export async function updateUserStatus(userId: string, status: UserStatus) {
   try {
@@ -83,6 +84,17 @@ export async function markEmailVerified(userCode: string) {
     await checkRegistrationCompletion(userCode);
   } catch (error) {
     console.error('Error marking email verified:', error);
+    throw error;
+  }
+}
+
+export async function createUserProfile(
+  profile: OnboardingFormData & { createdAt: string; updatedAt: string; status: string }
+): Promise<void> {
+  try {
+    await setDoc(doc(db, 'users', profile.userCode), profile, { merge: true });
+  } catch (error) {
+    console.error('Error creating user profile:', error);
     throw error;
   }
 } 

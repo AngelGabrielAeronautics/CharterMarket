@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { MaintenanceSchedule } from '@/types/aircraft';
 import { Button } from '@/components/ui/Button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/Dialog';
-import { Plus, Tool, Check, X } from 'lucide-react';
+import { Plus, Wrench, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/Calendar';
 
@@ -202,7 +202,7 @@ export default function MaintenanceScheduleComponent({ aircraftId }: Maintenance
             <div className="flex justify-between items-start">
               <div>
                 <div className="flex items-center space-x-2">
-                  <Tool className="h-5 w-5" />
+                  <Wrench className="h-5 w-5" />
                   <h4 className="font-medium">
                     {maintenance.description}
                   </h4>

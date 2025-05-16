@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDoc, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDoc, getDocs, query, where, orderBy, Timestamp } from 'firebase/firestore';
 import { FlightRequest, FlightRequestFormData, FlightStatus } from '@/types/flight';
 import { generateFlightRequestCode } from '@/lib/serials';
 
@@ -19,6 +19,7 @@ export const createFlightRequest = async (
       ...data,
       requestCode,
       clientId,
+      operatorId,
       status: 'draft' as FlightStatus,
       routing: {
         departureAirport: data.departureAirport,
@@ -130,5 +131,27 @@ export const cancelFlightRequest = async (id: string): Promise<void> => {
   } catch (error) {
     console.error('Error cancelling flight request:', error);
     throw new Error('Failed to cancel flight request');
+  }
+};
+
+/**
+ * Fetches flight requests for a given operator
+ * @param operatorId The operator's user code
+ */
+export const getOperatorFlightRequests = async (operatorId: string): Promise<FlightRequest[]> => {
+  try {
+    const q = query(
+      collection(db, 'flightRequests'),
+      where('operatorId', '==', operatorId),
+      orderBy('createdAt', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as FlightRequest[];
+  } catch (error) {
+    console.error('Error fetching operator flight requests:', error);
+    throw new Error('Failed to fetch operator flight requests');
   }
 }; 

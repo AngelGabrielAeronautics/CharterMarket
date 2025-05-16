@@ -1,0 +1,43 @@
+{
+  "color": {
+    "background": { "value": "#f9efe4" },
+    "background-light": { "value": "#fdfaf6" },
+    "foreground": { "value": "#0b3746" },
+    "card": { "value": "#fdfaf6" },
+    "card-foreground": { "value": "#0b3746" },
+    "primary": { "value": "#0b3746" },
+    "primary-light": { "value": "#0f4657" },
+    "primary-dark": { "value": "#072530" },
+    "primary-foreground": { "value": "#f9efe4" },
+    "secondary": { "value": "#0f4657" },
+    "secondary-foreground": { "value": "#f9efe4" },
+    "border": { "value": "#e6d2b4" }
+  },
+  "spacing": {
+    "1": { "value": "4px" },
+    "2": { "value": "8px" },
+    "3": { "value": "16px" },
+    "4": { "value": "24px" }
+  },
+  "borderRadius": {
+    "sm": { "value": "2px" },
+    "md": { "value": "4px" },
+    "lg": { "value": "4px" },
+    "full": { "value": "9999px" }
+  },
+  "fontSize": {
+    "sm": { "value": "0.875rem" },
+    "base": { "value": "1rem" },
+    "lg": { "value": "1.25rem" },
+    "xl": { "value": "1.5rem" }
+  },
+  "shadow": {
+    "soft": { "value": "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)" },
+    "regular": { "value": "0px 2px 4px rgba(0,0,0,0.14), 0px 1px 3px rgba(0,0,0,0.20), 0px 1px 1px rgba(0,0,0,0.12)" },
+    "medium": { "value": "0px 4px 8px rgba(0,0,0,0.15), 0px 2px 4px rgba(0,0,0,0.12)" },
+    "heavy": { "value": "0px 8px 16px rgba(0,0,0,0.20), 0px 4px 8px rgba(0,0,0,0.14), 0px 2px 4px rgba(0,0,0,0.12)" }
+  },
+  "lineHeight": {
+    "base": { "value": "1.5" }
+  }
+} 

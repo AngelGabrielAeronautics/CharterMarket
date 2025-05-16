@@ -45,14 +45,14 @@ export default function NewAircraftPage() {
   };
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <LoadingSpinner fullscreen />;
   }
 
   if (!user) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box sx={{ maxWidth: '4xl', mx: 'auto' }}>
-          <Box sx={{ bgcolor: 'error.light', border: '1px solid', borderColor: 'error.main', color: 'error.main', p: 2, borderRadius: 1 }}>
+          <Box sx={{ bgcolor: 'error.light', border: '1px solid', borderColor: 'error.main', color: 'error.main', p: 2, borderRadius: 2 }}>
             Please sign in to create an aircraft.
           </Box>
         </Box>
@@ -70,12 +70,12 @@ export default function NewAircraftPage() {
         </Box>
         
         {error && (
-          <Box sx={{ bgcolor: 'error.light', border: '1px solid', borderColor: 'error.main', color: 'error.main', p: 2, borderRadius: 1, mb: 3 }}>
+          <Box sx={{ bgcolor: 'error.light', border: '1px solid', borderColor: 'error.main', color: 'error.main', p: 2, borderRadius: 2, mb: 3 }}>
             {error}
           </Box>
         )}
 
-        <Box sx={{ bgcolor: 'background.paper', boxShadow: 1, borderRadius: 1, p: 3 }}>
+        <Box sx={{ bgcolor: 'background.paper', boxShadow: 1, borderRadius: 2, p: 3 }}>
           <AircraftFormMaterial 
             onSubmit={handleSubmit} 
             onClose={handleClose}

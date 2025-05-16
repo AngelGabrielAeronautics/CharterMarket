@@ -3,59 +3,13 @@
 @tailwind utilities;
 
 @layer base {
-:root {
-    /* Light mode colors */
-    --background: #FFFFFF;
-    --foreground: #0F3744;
-    --card: #FAF6F0;
-    --card-foreground: #0F3744;
-    --popover: #FFFFFF;
-    --popover-foreground: #0F3744;
-    --primary: #0F3744;
-    --primary-foreground: #FFFFFF;
-    --secondary: #D4B47F;
-    --secondary-foreground: #0F3744;
-    --muted: #F5EDE0;
-    --muted-foreground: #544732;
-    --accent: #D4B47F;
-    --accent-foreground: #0F3744;
-    --destructive: #F43F5E;
-    --destructive-foreground: #FFFFFF;
-    --border: #E6D2B2;
-    --input: #E6D2B2;
-    --ring: #0F3744;
-  }
-
-  .dark {
-    /* Dark mode colors */
-    --background: #0F3744;
-    --foreground: #FAF6F0;
-    --card: #0C2C36;
-    --card-foreground: #FAF6F0;
-    --popover: #0C2C36;
-    --popover-foreground: #FAF6F0;
-    --primary: #D4B47F;
-    --primary-foreground: #0F3744;
-    --secondary: #1A4D5E;
-    --secondary-foreground: #FAF6F0;
-    --muted: #1A4D5E;
-    --muted-foreground: #E6D2B2;
-    --accent: #1A4D5E;
-    --accent-foreground: #FAF6F0;
-    --destructive: #FB7185;
-    --destructive-foreground: #FAF6F0;
-    --border: #1F5A6E;
-    --input: #1F5A6E;
-    --ring: #D4B47F;
-  }
-}
-
-@layer base {
   * {
     @apply border-[#E6D2B2] dark:border-[#1F5A6E];
   }
   body {
     @apply bg-[var(--background)] text-[var(--foreground)] text-base leading-relaxed transition-colors duration-300;
+    color: var(--foreground);
+    background: var(--background);
   }
   h1 {
     @apply text-5xl leading-tight tracking-tight font-bold text-[var(--primary)] dark:text-[var(--primary-foreground)] mb-6;
@@ -88,11 +42,11 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-primary-700 dark:bg-[var(--primary)] dark:text-[var(--primary-foreground)] dark:hover:bg-primary-400 px-4 py-2 rounded-md transition-colors duration-200;
+    @apply bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--secondary)] dark:bg-[var(--primary)] dark:text-[var(--primary-foreground)] dark:hover:bg-[var(--secondary)] px-4 py-2 rounded-md transition-colors duration-200;
   }
   
   .btn-secondary {
-    @apply bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-secondary-700 dark:bg-[var(--secondary)] dark:text-[var(--secondary-foreground)] dark:hover:bg-secondary-400 px-4 py-2 rounded-md transition-colors duration-200;
+    @apply bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--accent)] dark:bg-[var(--secondary)] dark:text-[var(--secondary-foreground)] dark:hover:bg-[var(--accent)] px-4 py-2 rounded-md transition-colors duration-200;
   }
 
   .card {
@@ -100,7 +54,7 @@
   }
 
   .input {
-    @apply bg-[var(--background)] border-[var(--input)] text-[var(--foreground)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--ring)];
+    @apply bg-[var(--input)] border-[var(--border)] text-[var(--foreground)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2 focus:ring-offset-[var(--background)];
   }
 
   .text-caption {
@@ -108,12 +62,58 @@
   }
 
   .text-display {
-    @apply text-5xl leading-tight tracking-tight font-bold text-[var(--primary)] dark:text-[var(--primary-foreground)];
+    @apply text-5xl leading-tight tracking-tight font-bold text-[var(--foreground)];
   }
 
   .text-subtitle {
     @apply text-lg leading-relaxed font-medium text-[var(--muted-foreground)];
   }
+}
+
+/* Global styles for the Charter application */
+
+/* Reset styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Ensure proper display of Next.js app */
+html,
+body {
+  height: 100%;
+  width: 100%;
+}
+
+/* Animations - These are custom animations that aren't part of Material-UI */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Animation classes */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.slide-in {
+  animation: slideInFromBottom 0.4s ease-in-out;
 }
 
 /* Custom scrollbar styles */
@@ -123,22 +123,183 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-[var(--muted)];
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--primary);
-  opacity: 0.5;
-  border-radius: 9999px;
-  transition: opacity 0.2s;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  opacity: 0.7;
+  background-color: rgba(0, 0, 0, 0.3);
 }
 
-/* Smooth transitions for dark mode */
+/* For animated backgrounds */
+.animated-background {
+  position: relative;
+  background: linear-gradient(-45deg, #0b3746, #0f4657, #0b3746, #0d3e4f);
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+}
+
+.animated-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(249, 239, 228, 0.15) 1%, transparent 1%),
+    radial-gradient(circle at 75% 75%, rgba(249, 239, 228, 0.15) 1%, transparent 1%);
+  background-size: 100px 100px;
+  opacity: 0.5;
+  animation: dots 10s linear infinite;
+}
+
+.animated-background::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, transparent 0%, rgba(11, 55, 70, 0.6) 100%);
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes dots {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 100px 100px;
+  }
+}
+
+.animated-circles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.circle {
+  position: absolute;
+  background: rgba(249, 239, 228, 0.08);
+  border: 1px solid rgba(249, 239, 228, 0.1);
+  border-radius: 50%;
+  animation: float 8s infinite;
+}
+
+.circle:nth-child(1) {
+  width: 150px;
+  height: 150px;
+  top: -75px;
+  left: -75px;
+}
+
+.circle:nth-child(2) {
+  width: 200px;
+  height: 200px;
+  top: 50%;
+  right: -100px;
+  animation-delay: -2s;
+}
+
+.circle:nth-child(3) {
+  width: 100px;
+  height: 100px;
+  bottom: -50px;
+  left: 30%;
+  animation-delay: -4s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(10deg);
+  }
+}
+
+/* Smooth transitions for theme changes */
 .transition-theme {
-  @apply transition-all duration-300;
+  @apply transition-colors duration-300;
+}
+
+/* Form styles */
+.form-input {
+  @apply bg-[var(--input)] border-[var(--border)] text-[var(--foreground)] rounded-md px-3 py-2;
+}
+
+.form-input:focus {
+  @apply outline-none ring-2 ring-[var(--ring)] ring-offset-2 ring-offset-[var(--background)];
+}
+
+.form-label {
+  @apply block text-sm font-medium text-[var(--foreground)] mb-1;
+}
+
+.form-helper-text {
+  @apply mt-1 text-sm text-[var(--muted-foreground)];
+}
+
+/* Button styles */
+.btn {
+  @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+}
+
+.btn-icon {
+  @apply h-10 w-10 rounded-full flex items-center justify-center;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0b3746;
+    --background-light: #0f4657;
+    --foreground: #f9efe4;
+    --primary: #f9efe4;
+    --primary-light: #fdfaf6;
+    --primary-dark: #e6d2b4;
+    --primary-foreground: #0b3746;
+  }
+  :root.dark {
+    --background: #0b3746;
+    --background-light: #0f4657;
+    --foreground: #f9efe4;
+    --primary: #f9efe4;
+    --primary-light: #fdfaf6;
+    --primary-dark: #e6d2b4;
+    --primary-foreground: #0b3746;
+  }
+}
+
+:root {
+  /* Light mode CSS variable defaults from tokens */
+  --background: var(--color-background-light);
+  --background-light: var(--color-background-light);
+  --foreground: var(--color-foreground);
+  --primary: var(--color-primary);
+  --primary-light: var(--color-primary-light);
+  --primary-dark: var(--color-primary-dark);
+  --primary-foreground: var(--color-primary-foreground);
+  --border: var(--color-border);
+  --input: var(--color-card);
+  --ring: var(--color-primary);
+  --muted-foreground: var(--color-secondary-foreground);
 }
 

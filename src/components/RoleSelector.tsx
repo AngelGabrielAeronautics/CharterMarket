@@ -3,7 +3,15 @@
 import { UserRole } from '@/lib/utils';
 import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/Button';
+import { 
+  Box, 
+  Typography, 
+  Button, 
+  Card, 
+  CardContent, 
+  CardActionArea,
+  SvgIcon
+} from '@mui/material';
 
 interface RoleSelectorProps {
   selectedRole: UserRole | null;
@@ -36,9 +44,9 @@ const roles: RoleData[] = [
     },
     placeholderColor: '#4A90E2', // Blue
     icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <SvgIcon>
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-      </svg>
+      </SvgIcon>
     ),
   },
   {
@@ -48,9 +56,9 @@ const roles: RoleData[] = [
     image: '/images/agent-role.jpg',
     placeholderColor: '#50C878', // Emerald Green
     icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <SvgIcon>
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-      </svg>
+      </SvgIcon>
     ),
   },
   {
@@ -60,9 +68,9 @@ const roles: RoleData[] = [
     image: '/images/operator-role.jpg',
     placeholderColor: '#FF7F50', // Coral
     icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <SvgIcon>
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-      </svg>
+      </SvgIcon>
     ),
   },
 ];
@@ -73,12 +81,18 @@ interface ImagePlaceholderProps {
 
 function ImagePlaceholder({ role }: ImagePlaceholderProps) {
   return (
-    <div
-      className="w-full h-full flex items-center justify-center"
-      style={{ backgroundColor: role.placeholderColor }}
+    <Box
+      sx={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: role.placeholderColor
+      }}
     >
-      <div className="text-white">{role.icon}</div>
-    </div>
+      <Box sx={{ color: 'white' }}>{role.icon}</Box>
+    </Box>
   );
 }
 
@@ -109,9 +123,20 @@ export default function RoleSelector({ selectedRole, onRoleSelect, showOptions, 
   const currentImage = selectedRoleData?.image || roles[0].image;
 
   return (
-    <div className="flex flex-col md:flex-row rounded-lg overflow-hidden bg-white">
+    <Box sx={{ 
+      display: 'flex', 
+      flexDirection: { xs: 'column', md: 'row' },
+      borderRadius: 2,
+      overflow: 'hidden',
+      bgcolor: 'background.paper'
+    }}>
       {/* Left side - Video/Image */}
-      <div className="w-full md:w-1/2 relative h-[300px] md:h-[520px]">
+      <Box sx={{ 
+        width: '100%', 
+        height: { xs: '300px', md: '520px' },
+        position: 'relative',
+        flex: { md: '0 0 50%' }
+      }}>
         {selectedRoleData?.id === 'passenger' && selectedRoleData.video && !videoError ? (
           <video
             ref={videoRef}
@@ -119,7 +144,13 @@ export default function RoleSelector({ selectedRole, onRoleSelect, showOptions, 
             muted
             loop
             playsInline
-            className="absolute inset-0 w-full h-full object-cover"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover'
+            }}
             poster={currentImage}
             onError={handleVideoError}
           >
@@ -134,7 +165,7 @@ export default function RoleSelector({ selectedRole, onRoleSelect, showOptions, 
               src={currentImage}
               alt="Role illustration"
               fill
-              className="object-cover"
+              style={{ objectFit: 'cover' }}
               priority
               onError={() => handleImageError(selectedRole || 'passenger')}
             />
@@ -142,55 +173,77 @@ export default function RoleSelector({ selectedRole, onRoleSelect, showOptions, 
             <ImagePlaceholder role={selectedRoleData || roles[0]} />
           )
         )}
-      </div>
+      </Box>
 
       {/* Right side - Form */}
-      <div className="w-full md:w-1/2 bg-white flex flex-col">
-        <div className="p-8 flex flex-col h-full">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Create your account</h2>
+      <Box sx={{ 
+        width: '100%', 
+        flex: { md: '0 0 50%' },
+        bgcolor: 'background.paper',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <Typography variant="h5" gutterBottom sx={{ color: 'text.primary', fontWeight: 600, mb: 2 }}>
+            Create your account
+          </Typography>
           
-          <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Select your role</h3>
-            <div className="space-y-2">
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" gutterBottom sx={{ color: 'text.secondary', mb: 1.5 }}>
+              Select your role
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {roles.map((role) => (
-                <button
+                <Card 
                   key={role.id}
-                  onClick={() => onRoleSelect(role.id as UserRole)}
-                  className={`w-full relative p-3 rounded-lg border transition-all duration-200 text-left hover:shadow-md ${
-                    selectedRole === role.id
-                      ? 'border-primary-600 bg-primary-50 dark:bg-dark-accent dark:border-primary-400'
-                      : 'border-gray-200 dark:border-dark-border hover:border-primary-300 dark:hover:border-primary-600'
-                  }`}
+                  variant="outlined"
+                  sx={{
+                    borderColor: selectedRole === role.id ? 'primary.main' : 'divider',
+                    bgcolor: selectedRole === role.id ? 'primary.lighter' : 'background.paper',
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      borderColor: 'primary.light',
+                      boxShadow: 1
+                    }
+                  }}
                 >
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 text-primary-600 dark:text-primary-400">
-                      {role.icon}
-                    </div>
-                    <div className="ml-3">
-                      <h3 className="text-sm font-medium text-primary-900 dark:text-cream-100">
-                        {role.title}
-                      </h3>
-                      <p className="text-xs text-primary-500 dark:text-cream-200">
-                        {role.description}
-                      </p>
-                    </div>
-                  </div>
-                </button>
+                  <CardActionArea
+                    onClick={() => onRoleSelect(role.id as UserRole)}
+                    sx={{ p: 1.5, textAlign: 'left' }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Box sx={{ color: 'primary.main' }}>
+                        {role.icon}
+                      </Box>
+                      <Box sx={{ ml: 2 }}>
+                        <Typography variant="subtitle2" sx={{ color: 'text.primary', fontWeight: 500 }}>
+                          {role.title}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                          {role.description}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardActionArea>
+                </Card>
               ))}
-            </div>
-          </div>
+            </Box>
+          </Box>
 
-          <div className="mt-auto">
+          <Box sx={{ mt: 'auto' }}>
             <Button
               onClick={onContinue}
               disabled={!selectedRole}
-              className="w-full bg-primary-600 text-white py-2.5 rounded-lg hover:bg-primary-700 transition-colors"
+              variant="contained"
+              fullWidth
+              size="large"
+              sx={{ py: 1.5 }}
             >
               CONTINUE
             </Button>
-          </div>
-        </div>
-      </div>
-    </div>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 } 

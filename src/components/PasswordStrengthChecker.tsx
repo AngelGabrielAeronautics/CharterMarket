@@ -1,5 +1,9 @@
 'use client';
 
+import { Box, Typography, List, ListItem, ListItemIcon, ListItemText, Paper } from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+
 interface PasswordRequirement {
   label: string;
   test: (password: string) => boolean;
@@ -33,37 +37,39 @@ export default function PasswordStrengthChecker({ password, isVisible }: Passwor
   if (!isVisible) return null;
 
   return (
-    <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
-      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+    <Paper variant="outlined" sx={{ 
+      mt: 1.5, 
+      p: 2, 
+      bgcolor: 'background.paper',
+      borderRadius: 2 
+    }}>
+      <Typography variant="subtitle2" fontWeight="medium" sx={{ mb: 1, color: 'text.secondary' }}>
         Password Requirements:
-      </h4>
-      <ul className="space-y-1">
+      </Typography>
+
+      <List disablePadding dense>
         {passwordRequirements.map((requirement, index) => {
           const isMet = requirement.test(password);
           return (
-            <li
-              key={index}
-              className="flex items-center text-sm"
-            >
-              <span className={`mr-2 ${isMet ? 'text-green-500' : 'text-gray-400'}`}>
-                {isMet ? (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                )}
-              </span>
-              <span className={`${isMet ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500 dark:text-gray-400'}`}>
-                {requirement.label}
-              </span>
-            </li>
+            <ListItem key={index} disablePadding disableGutters sx={{ mb: 0.5 }}>
+              <ListItemIcon sx={{ minWidth: 30, color: isMet ? 'success.main' : 'text.disabled' }}>
+                {isMet ? <CheckIcon fontSize="small" /> : <CloseIcon fontSize="small" />}
+              </ListItemIcon>
+              <ListItemText 
+                primary={requirement.label} 
+                sx={{ 
+                  m: 0,
+                  '& .MuiTypography-root': {
+                    fontSize: '0.875rem',
+                    color: isMet ? 'text.primary' : 'text.secondary'
+                  }
+                }}
+              />
+            </ListItem>
           );
         })}
-      </ul>
-    </div>
+      </List>
+    </Paper>
   );
 }
 

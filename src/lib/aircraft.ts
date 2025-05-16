@@ -3,7 +3,7 @@ import { collection, addDoc, updateDoc, deleteDoc, doc, getDoc, getDocs, query, 
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Aircraft, AircraftFormData, AircraftAvailability, MaintenanceSchedule, AircraftImage, AircraftDocument } from '@/types/aircraft';
 import { generateAircraftId } from '@/lib/serials';
-import { logEvent } from '@/lib/events';
+import { logEvent } from '@/utils/eventLogger';
 import { EventCategory, EventType, EventSeverity } from '@/types/event';
 
 // Check if registration already exists
@@ -40,15 +40,15 @@ export const createAircraft = async (data: AircraftFormData, operatorCode: strin
     await setDoc(aircraftRef, formattedData);
 
     // Log the aircraft creation event
-    await logEvent(
-      EventCategory.AIRCRAFT,
-      EventType.AIRCRAFT_CREATED,
-      EventSeverity.INFO,
-      aircraftRef.id,
-      operatorCode,
-      'operator',
-      `Aircraft ${data.registration} created`,
-      {
+    await logEvent({
+      category: EventCategory.AIRCRAFT,
+      type: EventType.AIRCRAFT_CREATED,
+      severity: EventSeverity.INFO,
+      userId: aircraftRef.id,
+      userCode: operatorCode,
+      userRole: 'operator',
+      description: `Aircraft ${data.registration} created`,
+      data: {
         aircraftId: aircraftRef.id,
         registration: data.registration,
         type: data.type,
@@ -56,9 +56,9 @@ export const createAircraft = async (data: AircraftFormData, operatorCode: strin
         model: data.model,
         year: data.year,
         baseAirport: data.baseAirport,
-        status: data.status
-      }
-    );
+        status: data.status,
+      },
+    });
 
     return aircraftRef.id;
   } catch (error) {

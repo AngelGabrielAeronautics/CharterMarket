@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Combobox } from '@headlessui/react';
-import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid';
+import { Box, TextField, Autocomplete, Typography, CircularProgress, useTheme } from '@mui/material';
 import { Airport } from '@/types/airport';
 
 interface AirportSelectProps {
@@ -24,6 +23,7 @@ export default function AirportSelect({
   placeholder = 'Search for an airport...',
   className = '',
 }: AirportSelectProps) {
+  const theme = useTheme();
   const [query, setQuery] = useState('');
   const [airports, setAirports] = useState<Airport[]>([]);
   const [loading, setLoading] = useState(false);
@@ -48,88 +48,74 @@ export default function AirportSelect({
     return () => clearTimeout(debounceTimer);
   }, [query]);
 
-  const filteredAirports = airports.filter((airport) =>
-    airport.iata.toLowerCase().includes(query.toLowerCase()) ||
-    airport.name.toLowerCase().includes(query.toLowerCase()) ||
-    airport.city.toLowerCase().includes(query.toLowerCase())
-  );
-
   const selectedAirport = airports.find((airport) => airport.iata === value);
 
   return (
-    <div className={className}>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
-      <Combobox value={value} onChange={onChange}>
-        <div className="relative">
-          <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
-            <Combobox.Input
-              className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0"
-              displayValue={(airport: string) => {
-                const found = airports.find(a => a.iata === airport);
-                return found ? `${found.iata} - ${found.name}, ${found.city}` : airport;
-              }}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={placeholder}
-            />
-            <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
-              <ChevronUpDownIcon
-                className="h-5 w-5 text-gray-400"
-                aria-hidden="true"
-              />
-            </Combobox.Button>
-          </div>
-          <Combobox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm z-10">
-            {loading ? (
-              <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
-                Loading...
-              </div>
-            ) : filteredAirports.length === 0 ? (
-              <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
-                No airports found.
-              </div>
-            ) : (
-              filteredAirports.map((airport) => (
-                <Combobox.Option
-                  key={airport.iata}
-                  className={({ active }) =>
-                    `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                      active ? 'bg-teal-600 text-white' : 'text-gray-900'
-                    }`
-                  }
-                  value={airport.iata}
-                >
-                  {({ selected, active }) => (
-                    <>
-                      <span
-                        className={`block truncate ${
-                          selected ? 'font-medium' : 'font-normal'
-                        }`}
-                      >
-                        {airport.iata} - {airport.name}, {airport.city}
-                      </span>
-                      {selected ? (
-                        <span
-                          className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
-                            active ? 'text-white' : 'text-teal-600'
-                          }`}
-                        >
-                          <CheckIcon className="h-5 w-5" aria-hidden="true" />
-                        </span>
-                      ) : null}
-                    </>
-                  )}
-                </Combobox.Option>
-              ))
-            )}
-          </Combobox.Options>
-        </div>
-      </Combobox>
-      {error && (
-        <p className="mt-1 text-sm text-red-600">{error}</p>
-      )}
-    </div>
+    <Box sx={{ width: '100%', ...(className && { className }) }}>
+      <Autocomplete
+        value={selectedAirport || null}
+        onChange={(_, newValue) => {
+          onChange(newValue?.iata || '');
+        }}
+        inputValue={query}
+        onInputChange={(_, newInputValue) => {
+          setQuery(newInputValue);
+        }}
+        options={airports}
+        getOptionLabel={(option) => 
+          option ? `${option.iata} - ${option.name}, ${option.city}` : ''
+        }
+        loading={loading}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label={label}
+            required={required}
+            error={!!error}
+            helperText={error}
+            placeholder={placeholder}
+            InputProps={{
+              ...params.InputProps,
+              endAdornment: (
+                <>
+                  {loading ? (
+                    <CircularProgress
+                      color="inherit"
+                      size={20}
+                      sx={{ mr: 1 }}
+                    />
+                  ) : null}
+                  {params.InputProps.endAdornment}
+                </>
+              ),
+            }}
+          />
+        )}
+        renderOption={(props, option) => (
+          <Box component="li" {...props}>
+            <Box>
+              <Typography variant="body1">
+                {option.iata} - {option.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {option.city}, {option.country}
+              </Typography>
+            </Box>
+          </Box>
+        )}
+        noOptionsText={
+          query.length < 2
+            ? 'Type at least 2 characters to search'
+            : 'No airports found'
+        }
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: error ? theme.palette.error.main : theme.palette.primary.main,
+            },
+          },
+        }}
+      />
+    </Box>
   );
 } 

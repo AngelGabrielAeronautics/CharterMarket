@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/Calendar';
-import { Button } from '@/components/ui/Button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/Dialog';
-import { Plus } from 'lucide-react';
+import { Box, Paper, Typography, Stack, Grid, Select, MenuItem, TextField, Alert, Button, Dialog, DialogTitle, DialogContent, DialogActions, DialogProps, IconButton, CircularProgress } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import { AircraftAvailability } from '@/types/aircraft';
 import { getAircraftAvailability, createAvailabilityBlock } from '@/lib/aircraft';
 import { addDays, format } from 'date-fns';
@@ -96,72 +95,71 @@ export default function AircraftAvailabilityCalendar({ aircraftId }: AircraftAva
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 384 }}>
+        <CircularProgress color="primary" size={32} />
+      </Box>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Availability Calendar</h2>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Block
-            </Button>
-          </DialogTrigger>
+    <Box sx={{ p: { xs: 2, sm: 4 }, maxWidth: 1200, mx: 'auto' }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
+        <Typography variant="h5" fontWeight="bold">Availability Calendar</Typography>
+        <Dialog open={isAddingBlock} onClose={() => setIsAddingBlock(false)}>
+          <DialogTitle>Add Availability Block</DialogTitle>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Availability Block</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Block Type
-                </label>
-                <select
+            <Stack spacing={3} py={2}>
+              <Box>
+                <Typography variant="caption" color="text.secondary" mb={1} display="block">Block Type</Typography>
+                <Select
                   value={blockType}
-                  onChange={(e) => setBlockType(e.target.value as 'blocked' | 'maintenance' | 'charter')}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  onChange={e => setBlockType(e.target.value as 'blocked' | 'maintenance' | 'charter')}
+                  fullWidth
+                  size="small"
                 >
-                  <option value="blocked">Blocked</option>
-                  <option value="maintenance">Maintenance</option>
-                  <option value="charter">Charter</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Notes
-                </label>
-                <textarea
+                  <MenuItem value="blocked">Blocked</MenuItem>
+                  <MenuItem value="maintenance">Maintenance</MenuItem>
+                  <MenuItem value="charter">Charter</MenuItem>
+                </Select>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary" mb={1} display="block">Notes</Typography>
+                <TextField
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                  rows={3}
+                  onChange={e => setNotes(e.target.value)}
+                  multiline
+                  minRows={3}
+                  fullWidth
+                  size="small"
+                  variant="outlined"
                 />
-              </div>
-              <Button
-                onClick={handleAddBlock}
-                disabled={isAddingBlock || selectedDates.length !== 2}
-                className="w-full"
-              >
-                {isAddingBlock ? 'Adding...' : 'Add Block'}
-              </Button>
-            </div>
+              </Box>
+            </Stack>
           </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={() => setIsAddingBlock(false)} color="inherit">Cancel</Button>
+            <Button
+              onClick={handleAddBlock}
+              disabled={isAddingBlock || selectedDates.length !== 2}
+              variant="contained"
+              color="primary"
+            >
+              {isAddingBlock ? 'Adding...' : 'Add Block'}
+            </Button>
+          </DialogActions>
         </Dialog>
-      </div>
-
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setIsAddingBlock(true)}
+        >
+          Add Block
+        </Button>
+      </Stack>
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
-          {error}
-        </div>
+        <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
       )}
-
-      <div className="bg-white rounded-lg shadow">
+      <Paper elevation={1} sx={{ borderRadius: 2, p: 2, mb: 4 }}>
         <Calendar
           mode="range"
           selected={selectedDates}
@@ -172,32 +170,43 @@ export default function AircraftAvailabilityCalendar({ aircraftId }: AircraftAva
             day: date => getDateClass(date),
           }}
         />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      </Paper>
+      <Grid container spacing={3}>
         {availability.map((block) => (
-          <div
+          <Grid
             key={block.id}
-            className={`p-4 rounded-lg border ${
-              block.type === 'blocked' ? 'border-red-200 bg-red-50' :
-              block.type === 'maintenance' ? 'border-yellow-200 bg-yellow-50' :
-              'border-blue-200 bg-blue-50'
-            }`}
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="font-medium capitalize">{block.type}</h4>
-                <p className="text-sm text-gray-500">
-                  {format(block.startDate.toDate(), 'MMM d, yyyy')} - {format(block.endDate.toDate(), 'MMM d, yyyy')}
-                </p>
-              </div>
-            </div>
-            {block.notes && (
-              <p className="mt-2 text-sm text-gray-600">{block.notes}</p>
-            )}
-          </div>
+            size={{
+              xs: 12,
+              md: 4
+            }}>
+            <Paper
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor:
+                  block.type === 'blocked' ? 'error.light' :
+                  block.type === 'maintenance' ? 'warning.light' :
+                  'info.light',
+                bgcolor:
+                  block.type === 'blocked' ? 'error.lighter' :
+                  block.type === 'maintenance' ? 'warning.lighter' :
+                  'info.lighter',
+              }}
+            >
+              <Typography variant="subtitle1" fontWeight="medium" textTransform="capitalize">
+                {block.type}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {format(block.startDate.toDate(), 'MMM d, yyyy')} - {format(block.endDate.toDate(), 'MMM d, yyyy')}
+              </Typography>
+              {block.notes && (
+                <Typography variant="body2" color="text.secondary" mt={1}>{block.notes}</Typography>
+              )}
+            </Paper>
+          </Grid>
         ))}
-      </div>
-    </div>
+      </Grid>
+    </Box>
   );
 } 

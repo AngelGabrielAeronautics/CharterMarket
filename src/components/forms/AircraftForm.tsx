@@ -6,10 +6,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Input from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { AircraftFormData, AircraftType, AircraftStatus, AircraftStatusValues } from '@/types/aircraft';
+import { AircraftFormData, AircraftType, AircraftStatus } from '@/types/aircraft';
 import Select from '@/components/ui/Select';
 import AircraftImageGallery from '@/components/AircraftImageGallery';
-import AirportSelect from '@/components/ui/AirportSelect';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
@@ -66,8 +65,6 @@ export default function AircraftForm({ initialData, onSubmit, onClose, aircraftI
     handleSubmit,
     formState: { errors, isDirty },
     reset,
-    watch,
-    setValue,
     getValues,
   } = useForm<AircraftFormData>({
     resolver: zodResolver(aircraftSchema),

@@ -1,201 +1,234 @@
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { signInWithGoogle } from '@/lib/auth';
-import Input from '@/components/ui/Input';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import Banner from '@/components/ui/Banner';
+'use client';
 
-interface LoginModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+import React, { useState } from 'react'
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
+import { useRouter } from 'next/navigation'
+import { FaGoogle } from 'react-icons/fa'
+import { toast } from 'react-hot-toast'
+import { 
+  Dialog, 
+  Box,
+  Typography,
+  TextField,
+  Button,
+  IconButton,
+  InputAdornment,
+  Alert,
+  LinearProgress,
+  CircularProgress,
+  Divider
+} from '@mui/material'
+import { Visibility, VisibilityOff } from '@mui/icons-material'
+import CloseIcon from '@mui/icons-material/Close'
 
-export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
-  const router = useRouter();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+import { auth } from '@/lib/firebase'
+import { useModal } from '@/contexts/ModalContext'
+import AnimatedBackground from './AnimatedBackground'
+import tokens from '@/styles/tokens'
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-    // Clear error when user starts typing
-    if (error) setError('');
-  };
+const LoginModal = () => {
+  const { isLoginModalOpen, closeLoginModal, openRegisterModal } = useModal()
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
+
+  const togglePasswordVisibility = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    setShowPassword(!showPassword)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+    e.preventDefault()
+    setIsLoading(true)
+    setErrorMsg('')
 
     try {
-      await signInWithEmailAndPassword(auth, formData.email, formData.password);
-      router.push('/dashboard');
-      onClose();
+      await signInWithEmailAndPassword(auth, email, password)
+      toast.success('Logged in successfully!')
+      closeLoginModal()
+      router.push('/dashboard')
     } catch (error: any) {
-      console.error('Login error:', error);
-      setError(
-        error.code === 'auth/invalid-credential'
-          ? 'Invalid email or password'
-          : error.message
-      );
-    } finally {
-      setLoading(false);
+      setIsLoading(false)
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        setErrorMsg('Invalid email or password')
+      } else if (error.code === 'auth/too-many-requests') {
+        setErrorMsg('Too many failed login attempts. Please try again later')
+      } else {
+        setErrorMsg('Something went wrong. Please try again')
+      }
     }
-  };
+  }
 
   const handleGoogleSignIn = async () => {
-    setError('');
-    setLoading(true);
-
+    setIsGoogleLoading(true)
+    setErrorMsg('')
+    
     try {
-      await signInWithGoogle();
-      router.push('/dashboard');
-      onClose();
+      const provider = new GoogleAuthProvider()
+      await signInWithPopup(auth, provider)
+      toast.success('Logged in successfully!')
+      closeLoginModal()
+      router.push('/dashboard')
     } catch (error: any) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
+      setIsGoogleLoading(false)
+      if (error.code === 'auth/popup-closed-by-user') {
+        setErrorMsg('Sign-in cancelled')
+      } else {
+        setErrorMsg('Failed to sign in with Google')
+      }
     }
-  };
+  }
 
-  if (!isOpen) return null;
+  const onToggle = () => {
+    closeLoginModal()
+    openRegisterModal()
+  }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      <div className="flex min-h-screen items-center justify-center p-4">
-        {/* Background overlay */}
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={onClose}></div>
-
-        {/* Modal panel */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.2 }}
-          className="relative w-[480px] bg-white dark:bg-dark-secondary rounded-lg shadow-xl"
-        >
-          {/* Close button */}
-          <button
-            type="button"
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-full p-1"
-            onClick={onClose}
-          >
-            <span className="sr-only">Close</span>
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-
-          {/* Content */}
-          <div className="p-8">
-            <h2 className="text-2xl font-bold text-primary-900 dark:text-cream-100 text-center mb-8">
-              Sign in to your account
-            </h2>
-
-            <AnimatePresence>
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <Banner variant="error" className="mb-6">
-                    {error}
-                  </Banner>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <Input
-                label="Email address"
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                helperText="Enter your registered email address"
-                disabled={loading}
+    <Dialog 
+      open={isLoginModalOpen} 
+      onClose={closeLoginModal}
+      maxWidth="xl"
+      fullWidth
+      BackdropProps={{
+        sx: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          backdropFilter: 'blur(5px)'
+        }
+      }}
+      PaperProps={{
+        sx: {
+          borderRadius: tokens.borderRadius.md.value,
+          boxShadow: tokens.shadow.medium.value,
+          overflow: 'hidden',
+          m: { xs: tokens.spacing[2].value, sm: tokens.spacing[4].value },
+          maxWidth: '1200px',
+          width: { xs: '100%', md: '1200px' },
+          maxHeight: { xs: '60vh', md: '50vh' },
+          height: { xs: '60vh', md: '50vh' }
+        }
+      }}
+    >
+      {/* Loading indicator */}
+      {(isLoading || isGoogleLoading) && <LinearProgress />}
+      {/* Two-column CSS grid: hidden on xs for left, form on right */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' }, height: '100%' }}>
+        {/* Left side - Image */}
+        <Box component="div" sx={{ 
+            display: { xs: 'none', md: 'block' },
+            position: 'relative',
+            overflow: 'hidden'
+        }}>
+          <AnimatedBackground>
+            <Box 
+              sx={{ 
+                position: 'relative',
+                zIndex: 1,
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                p: 4,
+                color: 'white'
+              }}
+            >
+              <Box
+                component="img"
+                src="/branding/logos/light/charter logo - dark mode.png"
+                alt="Charter Logo"
+                sx={{ mb: 3, width: 150, height: 'auto' }}
               />
+              <Typography variant="h4" fontWeight={600} mb={2} textAlign="center">
+                Welcome to Charter
+              </Typography>
+              <Typography variant="body1" textAlign="center" sx={{ maxWidth: '300px', mb: 3 }}>
+                Your premier private jet charter marketplace
+              </Typography>
+              
+              <Box 
+                sx={{ 
+                  mt: 4,
+                  p: 2,
+                  borderRadius: tokens.borderRadius.sm.value,
+                  bgcolor: 'rgba(255, 255, 255, 0.15)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  width: '100%',
+                  maxWidth: '300px'
+                }}
+              >
+                <Typography variant="body2" sx={{ fontStyle: 'italic', textAlign: 'center' }}>
+                  &quot;Charter has revolutionized how we book private jets. The interface is intuitive and the service is exceptional.&quot;
+                </Typography>
+                <Typography variant="caption" sx={{ display: 'block', textAlign: 'right', mt: 1, opacity: 0.8 }}>
+                  — Michael R., CEO
+                </Typography>
+              </Box>
+            </Box>
+          </AnimatedBackground>
+        </Box>
 
-              <Input
-                label="Password"
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                helperText="Enter your account password"
-                disabled={loading}
-              />
+        {/* Right side - Login Form */}
+        <Box component="div" sx={{ 
+            position: 'relative', 
+            p: { xs: 3, sm: 4 }, 
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            height: '100%'
+          }}>
+          {/* Header */}
+          <Box sx={{ position: 'relative' }}>
+            <IconButton
+              onClick={closeLoginModal}
+              sx={{ position: 'absolute', right: 16, top: 8, color: 'text.secondary' }}
+            >
+              <CloseIcon />
+            </IconButton>
+            <Box sx={{ mt: 2, mb: 4 }}>
+              <Typography variant="h5" fontWeight={600} gutterBottom>Sign in to your account</Typography>
+              <Typography variant="body2" color="text.secondary">Enter your details below</Typography>
+            </Box>
+          </Box>
+          {/* Content Area */}
+          <Box sx={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 2 }}>
+            {errorMsg && <Alert severity="error" sx={{ mb: 3 }}>{errorMsg}</Alert>}
+            <TextField autoFocus label="Email" type="email" fullWidth size="small" value={email} onChange={e => setEmail(e.target.value)} required disabled={isLoading} />
+            <TextField label="Password" type={showPassword ? 'text' : 'password'} fullWidth size="small" value={password} onChange={e => setPassword(e.target.value)} required disabled={isLoading}
+              InputProps={{ endAdornment: (<InputAdornment position="end"><IconButton aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={togglePasswordVisibility} onMouseDown={e => e.preventDefault()} edge="end">{showPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>) }}
+            />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing[2].value, alignItems: 'flex-start' }}>
+              <Button variant="text" size="small" onClick={() => { closeLoginModal(); router.push('/forgot-password'); }}>Forgot password?</Button>
+              <Button variant="text" size="small" onClick={() => { closeLoginModal(); router.push('/forgot-username'); }}>Forgot username?</Button>
+            </Box>
+          </Box>
+          {/* Footer Area */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Button type="submit" variant="contained" color="primary" size="large" fullWidth disabled={isLoading} onClick={handleSubmit}>{isLoading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}</Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="large"
+              fullWidth
+              startIcon={<FaGoogle style={{ color: 'inherit' }} />}
+              onClick={handleGoogleSignIn}
+              disabled={isGoogleLoading}
+            >
+              {isGoogleLoading ? <CircularProgress size={24} color="inherit" /> : 'Sign in with Google'}
+            </Button>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary">Don't have an account? <Button variant="text" color="primary" onClick={onToggle}>Register</Button></Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </Dialog>
+  )
+}
 
-              <div className="space-y-4">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                >
-                  {loading ? 'SIGNING IN...' : 'SIGN IN'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleGoogleSignIn}
-                  disabled={loading}
-                  className="w-full flex justify-center items-center py-3 px-4 border border-gray-300 dark:border-dark-border rounded-lg shadow-sm text-sm font-medium text-primary-700 dark:text-cream-200 bg-white dark:bg-dark-primary hover:bg-gray-50 dark:hover:bg-dark-accent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                >
-                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                    <path
-                      fill="currentColor"
-                      d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73 12.2,4.73C15.29,4.73 17.1,6.7 17.1,6.7L19,4.72C19,4.72 16.56,2 12.1,2C6.42,2 2.03,6.8 2.03,12C2.03,17.05 6.16,22 12.25,22C17.6,22 21.5,18.33 21.5,12.91C21.5,11.76 21.35,11.1 21.35,11.1V11.1Z"
-                    />
-                  </svg>
-                  {loading ? 'SIGNING IN...' : 'CONTINUE WITH GOOGLE'}
-                </button>
-              </div>
-
-              <div className="text-center space-y-4">
-                <Link
-                  href="/forgot-password"
-                  className="block font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 text-sm transition-colors duration-200"
-                >
-                  FORGOT YOUR PASSWORD?
-                </Link>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Don't have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onClose();
-                      // Add a small delay to prevent modal flicker
-                      setTimeout(() => {
-                        document.querySelector<HTMLButtonElement>('[data-register-button]')?.click();
-                      }, 100);
-                    }}
-                    className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded"
-                  >
-                    Register now
-                  </button>
-                </p>
-              </div>
-            </form>
-          </div>
-        </motion.div>
-      </div>
-    </div>
-  );
-} 
+export default LoginModal

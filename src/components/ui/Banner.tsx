@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
-import { cn } from '@/lib/utils';
+import { Box, Paper, Typography, Button, IconButton, CircularProgress } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
 export type BannerVariant = 'info' | 'success' | 'warning' | 'error';
 
@@ -16,11 +16,11 @@ interface BannerProps {
   className?: string;
 }
 
-const variantStyles: Record<BannerVariant, string> = {
-  info: 'bg-blue-50 border-blue-400 text-blue-700 dark:bg-blue-900/50 dark:border-blue-700 dark:text-blue-200',
-  success: 'bg-green-50 border-green-400 text-green-700 dark:bg-green-900/50 dark:border-green-700 dark:text-green-200',
-  warning: 'bg-yellow-50 border-yellow-400 text-yellow-700 dark:bg-yellow-900/50 dark:border-yellow-700 dark:text-yellow-200',
-  error: 'bg-red-50 border-red-400 text-red-700 dark:bg-red-900/50 dark:border-red-700 dark:text-red-200'
+const variantStyles: Record<BannerVariant, { bgcolor: string; borderColor: string; color: string; actionColor: string }> = {
+  info:    { bgcolor: 'info.lighter',    borderColor: 'info.light',    color: 'info.dark',    actionColor: 'info.main' },
+  success: { bgcolor: 'success.lighter', borderColor: 'success.light', color: 'success.dark', actionColor: 'success.main' },
+  warning: { bgcolor: 'warning.lighter', borderColor: 'warning.light', color: 'warning.dark', actionColor: 'warning.main' },
+  error:   { bgcolor: 'error.lighter',   borderColor: 'error.light',   color: 'error.dark',   actionColor: 'error.main' },
 };
 
 export default function Banner({ 
@@ -30,44 +30,51 @@ export default function Banner({
   onDismiss,
   className 
 }: BannerProps) {
+  const styles = variantStyles[variant];
   return (
-    <div className={cn(
-      'border-l-4 p-4 mb-4',
-      variantStyles[variant],
-      className
-    )}>
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex-1 text-sm sm:text-base">
-          {children}
-        </div>
-        <div className="flex items-center space-x-4">
-          {action && (
-            <button
-              onClick={action.onClick}
-              disabled={action.loading}
-              className={cn(
-                'text-sm font-medium whitespace-nowrap',
-                'hover:opacity-80 disabled:opacity-50',
-                variant === 'info' && 'text-blue-600 dark:text-blue-400',
-                variant === 'success' && 'text-green-600 dark:text-green-400',
-                variant === 'warning' && 'text-yellow-600 dark:text-yellow-400',
-                variant === 'error' && 'text-red-600 dark:text-red-400'
-              )}
-            >
-              {action.loading ? 'LOADING...' : action.label}
-            </button>
-          )}
-          {onDismiss && (
-            <button
-              onClick={onDismiss}
-              className="text-current opacity-60 hover:opacity-100"
-            >
-              <span className="sr-only">Dismiss</span>
-              <XMarkIcon className="h-5 w-5" />
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+    <Paper
+      elevation={0}
+      sx={{
+        borderLeft: 4,
+        borderColor: styles.borderColor,
+        bgcolor: styles.bgcolor,
+        color: styles.color,
+        p: 2,
+        mb: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 2,
+      }}
+      className={className}
+    >
+      <Box sx={{ flex: 1, fontSize: { xs: '0.95rem', sm: '1rem' } }}>
+        {children}
+      </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        {action && (
+          <Button
+            onClick={action.onClick}
+            disabled={action.loading}
+            size="small"
+            sx={{
+              color: styles.actionColor,
+              fontWeight: 500,
+              textTransform: 'none',
+              minWidth: 100,
+              opacity: action.loading ? 0.7 : 1,
+            }}
+          >
+            {action.loading ? <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} /> : null}
+            {action.loading ? 'LOADING...' : action.label}
+          </Button>
+        )}
+        {onDismiss && (
+          <IconButton onClick={onDismiss} size="small" sx={{ color: styles.color, opacity: 0.6, '&:hover': { opacity: 1 } }} aria-label="Dismiss">
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        )}
+      </Box>
+    </Paper>
   );
 } 

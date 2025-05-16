@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { EventLog, EventCategory, EventType, EventSeverity, EventLogFilter } from '@/types/event';
-import { getEventLogs, searchEventLogs } from '@/lib/events';
+import { getEventLogs, searchEventLogs } from '@/utils/eventLogger';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -36,8 +36,8 @@ export default function EventLogsPage() {
   const fetchEventLogs = async () => {
     try {
       setLoading(true);
-      const logs = await getEventLogs(filter);
-      setEventLogs(logs);
+      const response = await getEventLogs(filter);
+      setEventLogs(response.events);
     } catch (error) {
       console.error('Error fetching event logs:', error);
     } finally {
@@ -88,13 +88,14 @@ export default function EventLogsPage() {
             label="Search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            icon={<Search className="h-4 w-4" />}
+            endAdornment={<Search className="h-4 w-4" />}
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           />
           <Select
             label="Category"
+            name="category"
             value={filter.category}
-            onChange={(value) => setFilter({ ...filter, category: value as EventCategory })}
+            onChange={(e) => setFilter({ ...filter, category: e.target.value as EventCategory })}
             options={Object.values(EventCategory).map(category => ({
               value: category,
               label: category.replace('_', ' ')
@@ -102,8 +103,9 @@ export default function EventLogsPage() {
           />
           <Select
             label="Type"
+            name="type"
             value={filter.type}
-            onChange={(value) => setFilter({ ...filter, type: value as EventType })}
+            onChange={(e) => setFilter({ ...filter, type: e.target.value as EventType })}
             options={Object.values(EventType).map(type => ({
               value: type,
               label: type.replace('_', ' ')
@@ -111,8 +113,9 @@ export default function EventLogsPage() {
           />
           <Select
             label="Severity"
+            name="severity"
             value={filter.severity}
-            onChange={(value) => setFilter({ ...filter, severity: value as EventSeverity })}
+            onChange={(e) => setFilter({ ...filter, severity: e.target.value as EventSeverity })}
             options={Object.values(EventSeverity).map(severity => ({
               value: severity,
               label: severity
@@ -182,8 +185,8 @@ export default function EventLogsPage() {
                   <TableCell>{log.description}</TableCell>
                   <TableCell>
                     <Button
-                      variant="outline"
-                      size="sm"
+                      variant="outlined"
+                      size="small"
                       onClick={() => {
                         // TODO: Implement details modal
                         console.log(log.data);

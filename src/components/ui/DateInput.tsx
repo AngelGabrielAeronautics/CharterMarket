@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Box, TextField, Typography, Fade } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 
 interface DateInputProps {
   label: string;
@@ -36,10 +37,9 @@ export default function DateInput({
   min,
   max,
 }: DateInputProps) {
+  const theme = useTheme();
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const isLabelFloating = isFocused || value.length > 0;
 
   const handleFocus = () => {
     setIsFocused(true);
@@ -52,91 +52,92 @@ export default function DateInput({
   };
 
   return (
-    <div className={`relative ${className}`}>
-      <div
-        className={`
-          relative flex items-center
-          border rounded-lg
-          ${error 
-            ? 'border-red-500 dark:border-red-400' 
-            : isFocused 
-              ? 'border-primary-500 dark:border-primary-400' 
-              : 'border-gray-300 dark:border-dark-border'
+    <Box 
+      sx={{ 
+        position: 'relative',
+        ...(className && { className })
+      }}
+    >
+      <TextField
+        ref={inputRef}
+        id={id || name}
+        name={name}
+        type="date"
+        value={value}
+        onChange={onChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        disabled={disabled}
+        required={required}
+        error={!!error}
+        helperText={error || helperText}
+        label={label}
+        min={min}
+        max={max}
+        fullWidth
+        variant="outlined"
+        InputLabelProps={{
+          shrink: true,
+          sx: {
+            color: error 
+              ? 'error.main'
+              : isFocused 
+                ? 'primary.main'
+                : 'text.secondary',
+            bgcolor: 'background.paper',
+            px: 1
           }
-          ${disabled ? 'bg-gray-100 dark:bg-dark-accent' : 'bg-white dark:bg-dark-primary'}
-          transition-colors duration-200
-        `}
-      >
-        <input
-          ref={inputRef}
-          id={id || name}
-          name={name}
-          type="date"
-          value={value}
-          onChange={onChange}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          disabled={disabled}
-          min={min}
-          max={max}
-          className={`
-            w-full px-4 py-3
-            bg-transparent
-            text-primary-900 dark:text-cream-100
-            placeholder-transparent
-            focus:outline-none
-            disabled:opacity-50 disabled:cursor-not-allowed
-            [&::-webkit-calendar-picker-indicator]:opacity-100
-            [&::-webkit-calendar-picker-indicator]:cursor-pointer
-            [&::-webkit-calendar-picker-indicator]:dark:invert
-          `}
-          placeholder={label}
-        />
-        <AnimatePresence>
-          {isLabelFloating && (
-            <motion.label
-              initial={{ y: 0, scale: 1 }}
-              animate={{ y: -24, scale: 0.85 }}
-              exit={{ y: 0, scale: 1 }}
-              transition={{ duration: 0.2 }}
-              htmlFor={id || name}
-              className={`
-                absolute left-0 px-2
-                ${error 
-                  ? 'text-red-500 dark:text-red-400' 
-                  : isFocused 
-                    ? 'text-primary-500 dark:text-primary-400' 
-                    : 'text-gray-500 dark:text-gray-400'
-                }
-                bg-white dark:bg-dark-primary
-                pointer-events-none
-                origin-left
-              `}
-            >
-              {label}
-              {required && <span className="text-red-500 ml-1">*</span>}
-            </motion.label>
-          )}
-        </AnimatePresence>
-      </div>
-      <AnimatePresence>
-        {(error || helperText) && (
-          <motion.p
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            className={`
-              mt-1 text-sm px-2
-              ${error ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}
-            `}
-          >
-            {error || helperText}
-          </motion.p>
-        )}
-      </AnimatePresence>
-      {required && !isLabelFloating && (
-        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500">*</span>
+        }}
+        InputProps={{
+          sx: {
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: error 
+                ? 'error.main'
+                : isFocused 
+                  ? 'primary.main'
+                  : 'divider',
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: error 
+                ? 'error.main'
+                : isFocused 
+                  ? 'primary.main'
+                  : 'divider',
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: error 
+                ? 'error.main'
+                : 'primary.main',
+            },
+            '& input[type="date"]::-webkit-calendar-picker-indicator': {
+              opacity: 1,
+              cursor: 'pointer',
+              filter: theme.palette.mode === 'dark' ? 'invert(1)' : 'none'
+            }
+          }
+        }}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            bgcolor: disabled ? 'action.disabledBackground' : 'background.paper',
+            transition: theme.transitions.create(['border-color', 'box-shadow']),
+          }
+        }}
+      />
+      {required && !value && (
+        <Typography
+          component="span"
+          color="error"
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            pointerEvents: 'none'
+          }}
+        >
+          *
+        </Typography>
       )}
-    </div>
+    </Box>
   );
 } 

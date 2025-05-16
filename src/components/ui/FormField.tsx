@@ -1,4 +1,5 @@
 import React from 'react';
+import { Box, Typography } from '@mui/material';
 
 interface FormFieldProps {
   label: string;
@@ -16,16 +17,16 @@ export default function FormField({
   children 
 }: FormFieldProps) {
   return (
-    <div className={`${className}`}>
-      <label className="block text-sm font-medium text-primary-900 dark:text-cream-100 mb-1">
+    <Box className={className} sx={{ mb: 2 }}>
+      <Typography variant="body2" fontWeight={500} color="text.primary" mb={0.5} component="label">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
+        {required && <Box component="span" sx={{ color: 'error.main', ml: 0.5 }}>*</Box>}
+      </Typography>
       {children}
       {error && (
-        <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
+        <Typography variant="caption" color="error" mt={0.5} display="block">{error}</Typography>
       )}
-    </div>
+    </Box>
   );
 }
 

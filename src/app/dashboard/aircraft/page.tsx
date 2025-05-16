@@ -1,26 +1,17 @@
 'use client';
 
+/* eslint-disable no-console */
+/* eslint-disable react-hooks/exhaustive-deps */
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { AircraftFormData, AircraftStatus, AircraftType } from '@/types/aircraft';
-import { Button } from '@/components/ui/Button';
-import { Plus, Search, Filter, ChevronDown, X } from 'lucide-react';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { Button, Box, Typography, Paper, Stack, Grid, TextField, MenuItem, Alert, Avatar } from '@mui/material';
+import { Plus, Search, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'next/link';
 
 interface Aircraft extends AircraftFormData {
   id: string;
@@ -118,128 +109,147 @@ export default function AircraftPage() {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Aircraft Management</h1>
-        <Button onClick={() => router.push('/dashboard/aircraft/new')}>
-          <Plus className="mr-2 h-4 w-4" />
+    <Box sx={{ width: '100%', maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 4 }, py: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h4" fontWeight="bold" color="primary.main">
+          Aircraft Management
+        </Typography>
+        <Button variant="contained" onClick={() => router.push('/dashboard/aircraft/new')} startIcon={<Plus />}>
           Add Aircraft
         </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <Input
+      </Box>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={4}>
+          <TextField
             label="Search aircraft"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            fullWidth
+            InputProps={{
+              startAdornment: <Search style={{ marginRight: 8, color: 'grey' }} />,
+            }}
           />
-        </div>
-        <Select
-          label="Aircraft Type"
-          name="aircraftType"
-          value={selectedType}
-          onChange={(e) => setSelectedType(e.target.value as AircraftType)}
-          options={[{ value: '', label: 'All Types' }, ...aircraftTypes]}
-        />
-        <Select
-          label="Status"
-          name="status"
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value as AircraftStatus)}
-          options={[{ value: '', label: 'All Statuses' }, ...statusOptions]}
-        />
-        <Button
-          variant="outline"
-          onClick={resetFilters}
-          className="h-[42px] self-end"
-          disabled={!searchTerm && !selectedType && !selectedStatus}
-        >
-          <X className="mr-2 h-4 w-4" />
-          Reset Filters
-        </Button>
-      </div>
-
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[100px]">Image</TableHead>
-              <TableHead>Registration</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Make & Model</TableHead>
-              <TableHead>Year</TableHead>
-              <TableHead>Base</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
-                  Loading...
-                </TableCell>
-              </TableRow>
-            ) : filteredAircraft.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
-                  No aircraft found
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredAircraft.map((ac) => (
-                <TableRow key={ac.id}>
-                  <TableCell>
-                    <div className="relative w-16 h-16">
-                      {ac.images && ac.images.length > 0 ? (
-                        <Image
-                          src={ac.images[0]}
-                          alt={`${ac.make} ${ac.model}`}
-                          fill
-                          className="object-cover rounded"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
-                          <span className="text-gray-400 text-xs">No Image</span>
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">{ac.registration}</TableCell>
-                  <TableCell>{ac.type}</TableCell>
-                  <TableCell>{ac.make} {ac.model}</TableCell>
-                  <TableCell>{ac.year}</TableCell>
-                  <TableCell>{ac.baseAirport}</TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(ac.status)}>
-                      {ac.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        onClick={() => router.push(`/dashboard/aircraft/${ac.id}`)}
-                      >
-                        View Details
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => router.push(`/dashboard/aircraft/${ac.id}/edit`)}
-                      >
-                        Edit
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <TextField
+            select
+            label="Aircraft Type"
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value as AircraftType)}
+            fullWidth
+          >
+            <MenuItem value="">All Types</MenuItem>
+            {aircraftTypes.map((type) => (
+              <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <TextField
+            select
+            label="Status"
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value as AircraftStatus)}
+            fullWidth
+          >
+            <MenuItem value="">All Statuses</MenuItem>
+            {statusOptions.map((status) => (
+              <MenuItem key={status.value} value={status.value}>{status.label}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid item xs={12} md={2} sx={{ display: 'flex', alignItems: 'flex-end' }}>
+          <Button
+            variant="outlined"
+            onClick={resetFilters}
+            startIcon={<X />}
+            fullWidth
+            disabled={!searchTerm && !selectedType && !selectedStatus}
+          >
+            Reset Filters
+          </Button>
+        </Grid>
+      </Grid>
+      <Paper sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, overflow: 'hidden' }}>
+        <Box sx={{ width: '100%', overflowX: 'auto' }}>
+          <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
+            <Box component="thead">
+              <Box component="tr">
+                <Box component="th" sx={{ width: 100, p: 2, textAlign: 'left', fontWeight: 'medium', color: 'text.secondary' }}>Image</Box>
+                <Box component="th" sx={{ p: 2, textAlign: 'left', fontWeight: 'medium', color: 'text.secondary' }}>Registration</Box>
+                <Box component="th" sx={{ p: 2, textAlign: 'left', fontWeight: 'medium', color: 'text.secondary' }}>Type</Box>
+                <Box component="th" sx={{ p: 2, textAlign: 'left', fontWeight: 'medium', color: 'text.secondary' }}>Make & Model</Box>
+                <Box component="th" sx={{ p: 2, textAlign: 'left', fontWeight: 'medium', color: 'text.secondary' }}>Year</Box>
+                <Box component="th" sx={{ p: 2, textAlign: 'left', fontWeight: 'medium', color: 'text.secondary' }}>Base</Box>
+                <Box component="th" sx={{ p: 2, textAlign: 'left', fontWeight: 'medium', color: 'text.secondary' }}>Status</Box>
+                <Box component="th" sx={{ p: 2, textAlign: 'left', fontWeight: 'medium', color: 'text.secondary' }}>Actions</Box>
+              </Box>
+            </Box>
+            <Box component="tbody">
+              {loading ? (
+                <Box component="tr">
+                  <Box component="td" colSpan={8} sx={{ textAlign: 'center', py: 6 }}>
+                    <Typography>Loading...</Typography>
+                  </Box>
+                </Box>
+              ) : filteredAircraft.length === 0 ? (
+                <Box component="tr">
+                  <Box component="td" colSpan={8} sx={{ textAlign: 'center', py: 6 }}>
+                    <Typography>No aircraft found</Typography>
+                  </Box>
+                </Box>
+              ) : (
+                filteredAircraft.map((ac) => (
+                  <Box component="tr" key={ac.id} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
+                    <Box component="td" sx={{ p: 2 }}>
+                      <Box sx={{ width: 64, height: 64, position: 'relative' }}>
+                        {ac.images && ac.images.length > 0 ? (
+                          <Avatar
+                            src={ac.images[0]}
+                            alt={`${ac.make} ${ac.model}`}
+                            variant="rounded"
+                            sx={{ width: 64, height: 64, bgcolor: 'background.default' }}
+                          />
+                        ) : (
+                          <Box sx={{ width: 64, height: 64, bgcolor: 'grey.100', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 1 }}>
+                            <Typography color="text.disabled" variant="caption">No Image</Typography>
+                          </Box>
+                        )}
+                      </Box>
+                    </Box>
+                    <Box component="td" sx={{ p: 2, fontWeight: 'medium' }}>{ac.registration}</Box>
+                    <Box component="td" sx={{ p: 2 }}>{ac.type}</Box>
+                    <Box component="td" sx={{ p: 2 }}>{ac.make} {ac.model}</Box>
+                    <Box component="td" sx={{ p: 2 }}>{ac.year}</Box>
+                    <Box component="td" sx={{ p: 2 }}>{ac.baseAirport}</Box>
+                    <Box component="td" sx={{ p: 2 }}>
+                      <Box sx={{ display: 'inline-block', px: 1.5, py: 0.5, borderRadius: 1, bgcolor: ac.status === 'ACTIVE' ? 'success.light' : ac.status === 'MAINTENANCE' ? 'warning.light' : 'error.light', color: ac.status === 'ACTIVE' ? 'success.dark' : ac.status === 'MAINTENANCE' ? 'warning.dark' : 'error.dark', fontWeight: 500, fontSize: 13 }}>
+                        {ac.status}
+                      </Box>
+                    </Box>
+                    <Box component="td" sx={{ p: 2 }}>
+                      <Stack direction="row" spacing={1}>
+                        <Button
+                          variant="text"
+                          onClick={() => router.push(`/dashboard/aircraft/${ac.id}`)}
+                        >
+                          View Details
+                        </Button>
+                        <Button
+                          variant="text"
+                          onClick={() => router.push(`/dashboard/aircraft/${ac.id}/edit`)}
+                        >
+                          Edit
+                        </Button>
+                      </Stack>
+                    </Box>
+                  </Box>
+                ))
+              )}
+            </Box>
+          </Box>
+        </Box>
+      </Paper>
+    </Box>
   );
 } 

@@ -1,15 +1,41 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Input from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
-import { Aircraft } from '@/types/aircraft';
-import { Search, SlidersHorizontal, X, Image as ImageIcon } from 'lucide-react';
+import { Aircraft, AircraftType } from '@/types/aircraft';
 import Link from 'next/link';
 import Image from 'next/image';
+import { 
+  Box, 
+  TextField, 
+  Button, 
+  Typography, 
+  Grid, 
+  Paper, 
+  Stack, 
+  InputAdornment, 
+  Chip,
+  Card, 
+  CardContent, 
+  CardMedia 
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import TuneIcon from '@mui/icons-material/Tune';
+import CloseIcon from '@mui/icons-material/Close';
+import ImageIcon from '@mui/icons-material/Image';
+
+// Extend Aircraft interface with additional properties used in this component
+interface ExtendedAircraft extends Aircraft {
+  manufacturer: string;
+  maxPassengers: number;
+  maxRange: number;
+  registration: string;
+  model: string;
+  status: string;
+  images: string[];
+}
 
 interface AircraftSearchProps {
-  aircraft: Aircraft[];
+  aircraft: ExtendedAircraft[];
   onSearch: (filters: AircraftSearchFilters) => void;
 }
 
@@ -97,171 +123,229 @@ export default function AircraftSearch({ aircraft, onSearch }: AircraftSearchPro
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col space-y-4">
-        <div className="flex items-center space-x-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <Input
-              type="text"
-              placeholder="Search aircraft by model, manufacturer, or registration"
-              value={filters.searchTerm}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilterChange('searchTerm', e.target.value)}
-              className="pl-10"
-            />
-          </div>
+    <Stack spacing={3}>
+      <Stack spacing={2}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <TextField
+            fullWidth
+            placeholder="Search aircraft by model, manufacturer, or registration"
+            value={filters.searchTerm}
+            onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+            }}
+            size="small"
+          />
           <Button
-            variant="outline"
-            onClick={() => setActiveFilter('advanced')}
+            variant="outlined"
+            onClick={() => setActiveFilter(activeFilter === 'advanced' ? 'basic' : 'advanced')}
+            startIcon={<TuneIcon />}
           >
-            <SlidersHorizontal className="h-5 w-5 mr-2" />
-            Advanced Search
+            Advanced
           </Button>
           {(filters.searchTerm || filters.manufacturer || filters.status) && (
             <Button
-              variant="ghost"
+              variant="text"
               onClick={resetFilters}
+              startIcon={<CloseIcon />}
             >
-              <X className="h-5 w-5 mr-2" />
               Reset
             </Button>
           )}
-        </div>
+        </Box>
 
         {activeFilter === 'advanced' && (
-          <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="text-sm font-medium mb-2">Passenger Capacity</h4>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    type="number"
-                    placeholder="Min"
-                    value={filters.minPassengers || ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilterChange('minPassengers', parseInt(e.target.value) || 0)}
-                    className="w-24"
-                  />
-                  <span>to</span>
-                  <Input
-                    type="number"
-                    placeholder="Max"
-                    value={filters.maxPassengers || ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilterChange('maxPassengers', parseInt(e.target.value) || 100)}
-                    className="w-24"
-                  />
-                </div>
-              </div>
+          <Paper sx={{ p: 3, bgcolor: 'background.neutral' }} variant="outlined">
+            <Stack spacing={3}>
+              <Grid container spacing={3}>
+                <Grid
+                  component="div"
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
+                    Passenger Capacity
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TextField
+                      type="number"
+                      placeholder="Min"
+                      value={filters.minPassengers || ''}
+                      onChange={(e) => handleFilterChange('minPassengers', parseInt(e.target.value) || 0)}
+                      size="small"
+                      sx={{ width: 100 }}
+                    />
+                    <Typography variant="body2">to</Typography>
+                    <TextField
+                      type="number"
+                      placeholder="Max"
+                      value={filters.maxPassengers || ''}
+                      onChange={(e) => handleFilterChange('maxPassengers', parseInt(e.target.value) || 100)}
+                      size="small"
+                      sx={{ width: 100 }}
+                    />
+                  </Box>
+                </Grid>
 
-              <div>
-                <h4 className="text-sm font-medium mb-2">Range (nm)</h4>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    type="number"
-                    placeholder="Min"
-                    value={filters.minRange || ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilterChange('minRange', parseInt(e.target.value) || 0)}
-                    className="w-24"
-                  />
-                  <span>to</span>
-                  <Input
-                    type="number"
-                    placeholder="Max"
-                    value={filters.maxRange || ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilterChange('maxRange', parseInt(e.target.value) || 10000)}
-                    className="w-24"
-                  />
-                </div>
-              </div>
-            </div>
+                <Grid
+                  component="div"
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
+                    Range (nm)
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TextField
+                      type="number"
+                      placeholder="Min"
+                      value={filters.minRange || ''}
+                      onChange={(e) => handleFilterChange('minRange', parseInt(e.target.value) || 0)}
+                      size="small"
+                      sx={{ width: 100 }}
+                    />
+                    <Typography variant="body2">to</Typography>
+                    <TextField
+                      type="number"
+                      placeholder="Max"
+                      value={filters.maxRange || ''}
+                      onChange={(e) => handleFilterChange('maxRange', parseInt(e.target.value) || 10000)}
+                      size="small"
+                      sx={{ width: 100 }}
+                    />
+                  </Box>
+                </Grid>
+              </Grid>
 
-            <div>
-              <h4 className="text-sm font-medium mb-2">Manufacturer</h4>
-              <div className="flex flex-wrap gap-2">
-                {manufacturers.map((manufacturer) => (
-                  <Button
-                    key={manufacturer}
-                    variant={filters.manufacturer === manufacturer ? 'primary' : 'outline'}
-                    size="sm"
-                    onClick={() => toggleManufacturer(manufacturer)}
-                  >
-                    {manufacturer}
-                  </Button>
-                ))}
-              </div>
-            </div>
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
+                  Manufacturer
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {manufacturers.map((manufacturer) => (
+                    <Chip
+                      key={manufacturer}
+                      label={manufacturer}
+                      onClick={() => toggleManufacturer(manufacturer)}
+                      color={filters.manufacturer === manufacturer ? 'primary' : 'default'}
+                      variant={filters.manufacturer === manufacturer ? 'filled' : 'outlined'}
+                    />
+                  ))}
+                </Box>
+              </Box>
 
-            <div>
-              <h4 className="text-sm font-medium mb-2">Status</h4>
-              <div className="flex flex-wrap gap-2">
-                {statuses.map((status) => (
-                  <Button
-                    key={status}
-                    variant={filters.status === status ? 'primary' : 'outline'}
-                    size="sm"
-                    onClick={() => toggleStatus(status)}
-                  >
-                    {status}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
+                  Status
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {statuses.map((status) => (
+                    <Chip
+                      key={status}
+                      label={status}
+                      onClick={() => toggleStatus(status)}
+                      color={filters.status === status ? 'primary' : 'default'}
+                      variant={filters.status === status ? 'filled' : 'outlined'}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            </Stack>
+          </Paper>
         )}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      </Stack>
+      <Grid container spacing={3}>
         {filteredAircraft.map((aircraft) => (
-          <Link
+          <Grid
             key={aircraft.id}
-            href={`/dashboard/aircraft/${aircraft.id}`}
-            className="block group"
-          >
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden transition-shadow hover:shadow-lg">
-              <div className="aspect-w-16 aspect-h-9 relative">
+            component="div"
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 4
+            }}>
+            <Card 
+              component={Link} 
+              href={`/dashboard/aircraft/${aircraft.id}`}
+              sx={{ 
+                height: '100%', 
+                textDecoration: 'none',
+                transition: 'box-shadow 0.3s',
+                '&:hover': {
+                  boxShadow: 6
+                }
+              }}
+            >
+              <Box sx={{ position: 'relative', paddingTop: '56.25%' }}> {/* 16:9 aspect ratio */}
                 {aircraft.images[0] ? (
-                  <Image
-                    src={aircraft.images[0]}
+                  <CardMedia
+                    component="img"
+                    image={aircraft.images[0]}
                     alt={`${aircraft.manufacturer} ${aircraft.model}`}
-                    fill
-                    className="object-cover"
+                    sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-                    <ImageIcon className="h-12 w-12 text-gray-400" />
-                  </div>
+                  <Box sx={{ 
+                    position: 'absolute', 
+                    top: 0, 
+                    left: 0, 
+                    width: '100%', 
+                    height: '100%', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    bgcolor: 'background.neutral'
+                  }}>
+                    <ImageIcon sx={{ fontSize: 48, color: 'text.disabled' }} />
+                  </Box>
                 )}
-                <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 text-xs rounded">
-                  {aircraft.status}
-                </div>
-              </div>
-              <div className="p-4">
-                <h3 className="text-lg font-medium text-gray-900 group-hover:text-blue-600">
+                <Chip
+                  label={aircraft.status}
+                  size="small"
+                  sx={{ 
+                    position: 'absolute', 
+                    top: 8, 
+                    right: 8, 
+                    bgcolor: 'rgba(0, 0, 0, 0.7)', 
+                    color: 'white' 
+                  }}
+                />
+              </Box>
+              <CardContent>
+                <Typography variant="h6" color="text.primary" gutterBottom>
                   {aircraft.manufacturer} {aircraft.model}
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
                   Registration: {aircraft.registration}
-                </p>
-                <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-500">Passengers</p>
-                    <p className="font-medium">{aircraft.maxPassengers}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Range</p>
-                    <p className="font-medium">{aircraft.maxRange} nm</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Link>
+                </Typography>
+                <Grid container spacing={2} sx={{ mt: 1 }}>
+                  <Grid component="div" size={6}>
+                    <Typography variant="body2" color="text.secondary">Passengers</Typography>
+                    <Typography variant="body1" fontWeight="medium">{aircraft.maxPassengers}</Typography>
+                  </Grid>
+                  <Grid component="div" size={6}>
+                    <Typography variant="body2" color="text.secondary">Range</Typography>
+                    <Typography variant="body1" fontWeight="medium">{aircraft.maxRange} nm</Typography>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
         ))}
-      </div>
-
+      </Grid>
       {filteredAircraft.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500">No aircraft found matching your criteria</p>
-        </div>
+        <Box sx={{ py: 6, textAlign: 'center' }}>
+          <Typography color="text.secondary">
+            No aircraft found matching your criteria
+          </Typography>
+        </Box>
       )}
-    </div>
+    </Stack>
   );
 } 

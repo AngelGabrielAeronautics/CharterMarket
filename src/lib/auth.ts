@@ -4,11 +4,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  updateProfile,
   updatePassword,
   EmailAuthProvider,
   reauthenticateWithCredential,
-  User,
   GoogleAuthProvider,
   signInWithPopup,
   AuthError,
@@ -24,11 +22,9 @@ import {
   getDocs,
   serverTimestamp,
 } from 'firebase/firestore';
-import { sendVerificationEmail, sendWelcomeEmail, sendAdminNotification } from './email';
-import { logAuthEvent } from './events';
+import { sendWelcomeEmail, sendAdminNotification } from './email';
+import { logAuthEvent, logSystemError } from '@/utils/eventLogger';
 import { EventType, EventSeverity } from '@/types/event';
-import { getAuth } from 'firebase-admin/auth';
-import { UserRole } from './userCode';
 import { UserStatus } from '@/types/user';
 
 export interface UserData {
@@ -110,20 +106,22 @@ export const registerUser = async (
     // Save user data to Firestore
     await setDoc(doc(db, 'users', userCode), userData);
 
-    // Log registration event
+    // Log registration event using the new type-safe logging utility
     await logAuthEvent(
       EventType.REGISTER,
-      EventSeverity.INFO,
-      user.uid,
-      userCode,
-      role,
-      `New user ${userCode} registered successfully`,
       {
-        email,
-        firstName,
-        lastName,
-        role,
-        company: company || null
+        userId: user.uid,
+        userCode,
+        userRole: role,
+        description: `New user ${userCode} registered successfully`,
+        severity: EventSeverity.INFO,
+        data: {
+          email,
+          firstName,
+          lastName,
+          role,
+          company: company || null
+        }
       }
     );
 
@@ -137,36 +135,48 @@ export const registerUser = async (
         body: JSON.stringify({ email }),
       });
 
-      // Log successful verification email
+      // Log successful verification email with type-safe logging
       await logAuthEvent(
         EventType.VERIFICATION_EMAIL_SENT,
-        EventSeverity.INFO,
-        user.uid,
-        userCode,
-        role,
-        `Verification email sent to ${email}`,
-        { email }
+        {
+          userId: user.uid,
+          userCode,
+          userRole: role,
+          description: `Verification email sent to ${email}`,
+          severity: EventSeverity.INFO,
+          data: { email }
+        }
       );
-    } catch (error) {
-      console.error('Error sending verification email:', error);
-      // Log failed verification email
+    } catch (error: unknown) {
+      // Log failed verification email with type-safe logging
       await logAuthEvent(
         EventType.VERIFICATION_EMAIL_FAILED,
-        EventSeverity.ERROR,
-        user.uid,
-        userCode,
-        role,
-        `Failed to send verification email to ${email}`,
-        { email, error: error.message }
+        {
+          userId: user.uid,
+          userCode,
+          userRole: role,
+          description: `Failed to send verification email to ${email}`,
+          severity: EventSeverity.ERROR,
+          data: { email, errorMessage: error instanceof Error ? error.message : String(error) }
+        }
       );
     }
 
     // Send welcome email
     try {
       await sendWelcomeEmail(email, user.uid, userCode, firstName);
-    } catch (error) {
-      console.error('Error sending welcome email:', error);
-      // Don't block registration if email sending fails
+    } catch (error: unknown) {
+      // Log the welcome email error but don't block registration
+      logSystemError(
+        `Failed to send welcome email to ${email}`,
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          userId: user.uid,
+          userCode,
+          userRole: role,
+          data: { email, firstName }
+        }
+      );
     }
 
     // Send admin notification
@@ -179,9 +189,17 @@ export const registerUser = async (
         userCode,
         company
       );
-    } catch (error) {
-      console.error('Error sending admin notification:', error);
-      // Don't block registration if notification fails
+    } catch (error: unknown) {
+      // Log the admin notification error but don't block registration
+      logSystemError(
+        `Failed to send admin notification for new user ${email}`,
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          userId: user.uid,
+          userCode,
+          userRole: role
+        }
+      );
     }
 
     return userData;

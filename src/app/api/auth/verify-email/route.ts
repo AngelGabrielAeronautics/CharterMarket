@@ -1,14 +1,21 @@
 import { NextResponse } from 'next/server';
-import { adminAuth } from '@/lib/firebase-admin';
+import { getAdminAuth } from '@/lib/firebase-admin';
 import sgMail from '@sendgrid/mail';
 
-if (!process.env.SENDGRID_API_KEY) {
-  throw new Error('SENDGRID_API_KEY is not set in environment variables');
-}
-
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
 export async function POST(request: Request) {
+  // Validate SendGrid API key at request time
+  const sendgridKey = process.env.SENDGRID_API_KEY;
+  if (!sendgridKey) {
+    return NextResponse.json(
+      { error: 'SENDGRID_API_KEY is not set in environment variables' },
+      { status: 500 }
+    );
+  }
+  sgMail.setApiKey(sendgridKey);
+
+  // Initialize Firebase Admin auth on demand
+  const adminAuth = getAdminAuth();
+
   try {
     const { email } = await request.json();
 

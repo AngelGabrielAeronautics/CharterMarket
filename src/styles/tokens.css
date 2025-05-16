@@ -1,0 +1,35 @@
+/**
+ * Do not edit directly, this file was auto-generated.
+ */
+
+:root {
+  --color-background: #f9efe4;
+  --color-background-light: #fdfaf6;
+  --color-foreground: #0b3746;
+  --color-card: #fdfaf6;
+  --color-card-foreground: #0b3746;
+  --color-primary: #0b3746;
+  --color-primary-light: #0f4657;
+  --color-primary-dark: #072530;
+  --color-primary-foreground: #f9efe4;
+  --color-secondary: #0f4657;
+  --color-secondary-foreground: #f9efe4;
+  --color-border: #e6d2b4;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 16px;
+  --spacing-4: 24px;
+  --border-radius-sm: 2px;
+  --border-radius-md: 4px;
+  --border-radius-lg: 4px;
+  --border-radius-full: 9999px;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+  --shadow-soft: 0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24);
+  --shadow-regular: 0px 2px 4px rgba(0,0,0,0.14), 0px 1px 3px rgba(0,0,0,0.20), 0px 1px 1px rgba(0,0,0,0.12);
+  --shadow-medium: 0px 4px 8px rgba(0,0,0,0.15), 0px 2px 4px rgba(0,0,0,0.12);
+  --shadow-heavy: 0px 8px 16px rgba(0,0,0,0.20), 0px 4px 8px rgba(0,0,0,0.14), 0px 2px 4px rgba(0,0,0,0.12);
+  --line-height-base: 1.5;
+}

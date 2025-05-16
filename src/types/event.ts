@@ -114,13 +114,22 @@ export interface EventMetadata {
   requestId?: string;
 }
 
+// Define a type for generic object values
+export type JsonValue = 
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
 export interface EventData {
-  [key: string]: any;
+  [key: string]: JsonValue | undefined;
   // Common fields that might be present in most events
   entityId?: string;
   entityType?: string;
-  previousValue?: any;
-  newValue?: any;
+  previousValue?: JsonValue;
+  newValue?: JsonValue;
   reason?: string;
   affectedUsers?: string[];
   duration?: number;

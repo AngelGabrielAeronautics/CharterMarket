@@ -1,19 +1,21 @@
 import { useModal } from '@/contexts/ModalContext';
+import { Button, ButtonProps } from '@mui/material';
 
-interface RegisterButtonProps {
-  className?: string;
+interface RegisterButtonProps extends ButtonProps {
   children?: React.ReactNode;
 }
 
-export default function RegisterButton({ className = '', children }: RegisterButtonProps) {
+export default function RegisterButton({ children, ...props }: RegisterButtonProps) {
   const { openRegisterModal } = useModal();
 
   return (
-    <button
+    <Button
+      variant="contained"
+      color="primary"
       onClick={openRegisterModal}
-      className={`inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 ${className}`}
+      {...props}
     >
       {children || 'REGISTER'}
-    </button>
+    </Button>
   );
 } 

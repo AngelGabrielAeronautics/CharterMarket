@@ -1,45 +1,53 @@
-import { useDarkMode } from '@/contexts/DarkModeContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import { Box, Typography } from '@mui/material';
 
 interface LogoProps {
   href?: string;
   height?: number;
-  className?: string;
+  sx?: any;
+  srcOverride?: string;
 }
 
-export default function Logo({ href, height = 40, className = '' }: LogoProps) {
-  const { isDarkMode } = useDarkMode();
+export default function Logo({ href, height = 40, sx = {}, srcOverride }: LogoProps) {
+  const { isDarkMode } = useTheme();
   const [imageError, setImageError] = useState(false);
   
-  const logoSrc = isDarkMode 
-    ? '/branding/logos/light/charter logo - dark mode.png'
-    : '/branding/logos/dark/charter logo - light mode.png';
+  const logoSrc = srcOverride
+    ? srcOverride
+    : isDarkMode 
+      ? '/branding/logos/light/charter logo - dark mode.png'
+      : '/branding/logos/dark/charter logo - light mode.png';
     
   const logoComponent = (
-    <div className={`relative transition-opacity duration-200 ${className}`}>
+    <Box sx={{ position: 'relative', transition: 'opacity 200ms', ...sx }}>
       {imageError ? (
-        <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        <Typography 
+          variant="h4" 
+          fontWeight="bold" 
+          color={isDarkMode ? 'common.white' : 'text.primary'}
+        >
           CHARTER
-        </h1>
+        </Typography>
       ) : (
         <Image
           src={logoSrc}
           alt="Charter Logo"
           height={height}
           width={height * 3.5}
-          className="object-contain"
+          style={{ objectFit: 'contain' }}
           priority
           onError={() => setImageError(true)}
         />
       )}
-    </div>
+    </Box>
   );
 
   if (href) {
     return (
-      <Link href={href} className="hover:opacity-80 transition-opacity duration-200">
+      <Link href={href} style={{ textDecoration: 'none', '&:hover': { opacity: 0.8 }, transition: 'opacity 200ms' }}>
         {logoComponent}
       </Link>
     );

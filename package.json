@@ -3,13 +3,24 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "predev": "npm run build:tokens",
+    "dev": "npm run build:tokens && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\"",
     "optimize-images": "node scripts/optimize-images.js",
     "tokens:watch": "node style-dictionary/watch.js",
-    "tokens:build": "style-dictionary build --config style-dictionary/config.json"
+    "tokens:build": "style-dictionary build --config style-dictionary/config.json",
+    "prepare": "husky",
+    "analyze": "ANALYZE=true next build",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "find-console-logs": "node scripts/remove-console-logs.js",
+    "remove-console-logs": "node scripts/remove-console-logs.js --fix",
+    "build:tokens": "style-dictionary build --config style-dictionary/config.json"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
@@ -21,10 +32,12 @@
     "@mui/icons-material": "^7.0.2",
     "@mui/material": "^7.0.2",
     "@mui/material-nextjs": "^7.0.2",
+    "@mui/x-date-pickers": "^8.3.1",
     "@radix-ui/react-dialog": "^1.1.7",
     "@radix-ui/react-popover": "^1.1.7",
     "@radix-ui/react-tabs": "^1.1.4",
     "@sendgrid/mail": "^8.1.5",
+    "airports": "^1.0.0",
     "chokidar": "^4.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -42,24 +55,44 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.55.0",
     "react-hot-toast": "^2.5.2",
+    "react-icons": "^5.5.0",
     "react-phone-input-2": "^2.15.1",
     "react-phone-number-input": "^3.4.12",
     "sharp": "^0.33.5",
     "sonner": "^2.0.3",
     "style-dictionary": "^4.3.3",
     "tailwind-merge": "^3.2.0",
+    "web-vitals": "^4.2.4",
     "zod": "^3.24.3"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^15.3.1",
     "@types/node": "^20.17.30",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
     "autoprefixer": "^10.4.17",
     "eslint": "^8.56.0",
     "eslint-config-next": "15.3.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "husky": "^9.1.7",
+    "jest-watch-typeahead": "^2.2.2",
+    "lint-staged": "^15.5.1",
     "postcss": "^8.4.35",
+    "prettier": "^3.2.4",
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css}": [
+      "prettier --write"
+    ]
   }
 }

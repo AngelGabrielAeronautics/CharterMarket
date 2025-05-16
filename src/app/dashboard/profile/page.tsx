@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { auth, db } from '@/lib/firebase';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { UserRole } from '@/lib/userCode';
+import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { changePassword } from '@/lib/auth';
 import { validatePassword } from '@/components/PasswordStrengthChecker';
 import PasswordStrengthChecker from '@/components/PasswordStrengthChecker';
@@ -12,6 +10,18 @@ import DarkModeToggle from '@/components/DarkModeToggle';
 import Input from '@/components/ui/Input';
 import PhoneInput from '@/components/ui/PhoneInput';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import {
+  Box,
+  Typography,
+  Button,
+  Grid,
+  Paper,
+  Alert,
+  Chip,
+  Stack,
+  Container
+} from '@mui/material';
+import { UserRole } from '@/lib/userCode';
 
 interface UserProfile {
   uid: string;        // Firebase Authentication UID
@@ -78,8 +88,8 @@ export default function ProfilePage() {
             phoneNumber: userData.phoneNumber || '',
           });
         }
-      } catch (error: any) {
-        setError(error.message);
+      } catch (error) {
+        setError(error instanceof Error ? error.message : String(error));
       } finally {
         setLoading(false);
       }
@@ -133,8 +143,8 @@ export default function ProfilePage() {
       
       setIsEditing(false);
       setSuccess('Profile updated successfully');
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : String(error));
     } finally {
       setLoading(false);
     }
@@ -170,271 +180,346 @@ export default function ProfilePage() {
       });
       setIsChangingPassword(false);
       setSuccess('Password changed successfully');
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : String(error));
     } finally {
       setLoading(false);
     }
   };
 
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <LoadingSpinner fullscreen />
+    );
   }
 
   if (!profile) {
     return (
-      <div className="text-center text-red-500">
+      <Typography 
+        color="error" 
+        variant="h6" 
+        align="center" 
+        sx={{ mt: 4 }}
+      >
         Profile not found
-      </div>
+      </Typography>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-primary-900 dark:text-cream-100">
+    <Box sx={{ width: '100%', maxWidth: 1200, mx: 'auto', px: { xs: 2, sm: 4 }, py: 4 }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" fontWeight="bold" color="primary.main" gutterBottom>
           {profile.firstName} {profile.lastName}
-        </h1>
-        <div className="mt-2 space-y-1">
-          <p className="text-sm text-primary-600 dark:text-cream-200">
-            <span className="font-medium">User Code:</span> {profile.userCode}
-          </p>
-          <p className="text-sm text-primary-600 dark:text-cream-200">
-            <span className="font-medium">Account Type:</span> <span className="capitalize">{profile.role}</span>
-          </p>
-        </div>
-      </div>
+        </Typography>
+        <Stack spacing={1}>
+          <Typography variant="body2" color="text.secondary">
+            <Box component="span" fontWeight="medium">User Code:</Box> {profile.userCode}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            <Box component="span" fontWeight="medium">Account Type:</Box> {' '}
+            <Box component="span" sx={{ textTransform: 'capitalize' }}>{profile.role}</Box>
+          </Typography>
+        </Stack>
+      </Box>
 
-      <div className="space-y-8">
+      <Stack spacing={3}>
         {(error || success) && (
-          <div className={`p-4 rounded-md ${
-            error 
-              ? 'bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400'
-              : 'bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-500/20 text-green-700 dark:text-green-400'
-          }`}>
+          <Alert 
+            severity={error ? "error" : "success"}
+            sx={{ mb: 2 }}
+          >
             {error || success}
-          </div>
+          </Alert>
         )}
 
         {/* User Profile Information Section */}
-        <div className="bg-white dark:bg-dark-secondary shadow rounded-lg p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-primary-900 dark:text-cream-100">User Profile Information</h2>
-            <button
+        <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6" fontWeight="medium" color="text.primary">
+              User Profile Information
+            </Typography>
+            <Button
               onClick={() => setIsEditing(true)}
-              className="px-4 py-3 border border-gray-300 dark:border-dark-border rounded-lg shadow-sm text-sm font-medium text-primary-700 dark:text-cream-200 bg-white dark:bg-dark-primary hover:bg-gray-50 dark:hover:bg-dark-accent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
+              variant="outlined"
+              color="primary"
+              size="medium"
+              disabled={isEditing}
             >
-              EDIT PROFILE
-            </button>
-          </div>
+              Edit Profile
+            </Button>
+          </Box>
 
           {isEditing ? (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <Input
-                label="First Name"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                required
-                helperText="Your legal first name"
-              />
-              <Input
-                label="Last Name"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                required
-                helperText="Your legal last name"
-              />
-              <PhoneInput
-                value={formData.phoneNumber}
-                onChange={(value) => handleChange({ target: { name: 'phoneNumber', value } } as any)}
-                required={profile.role === 'operator' || profile.role === 'agent'}
-                helperText="Your contact phone number"
-              />
-              {(profile.role === 'operator' || profile.role === 'agent') && (
-                <Input
-                  label="Company"
-                  name="company"
-                  value={formData.company}
-                  onChange={handleChange}
-                  required={profile.role === 'agent' || profile.role === 'operator'}
-                  helperText="Your company or organization name"
-                />
-              )}
-              <div className="flex justify-end space-x-4">
-                <button
+            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Input
+                    label="First Name"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    required
+                    helperText="Your legal first name"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} component="div">
+                  <Input
+                    label="Last Name"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    required
+                    helperText="Your legal last name"
+                  />
+                </Grid>
+                <Grid item xs={12} component="div">
+                  <PhoneInput
+                    value={formData.phoneNumber}
+                    onChange={(value) => handleChange({ target: { name: 'phoneNumber', value } } as any)}
+                    required={profile.role === 'operator' || profile.role === 'agent'}
+                    helperText="Your contact phone number"
+                  />
+                </Grid>
+                {(profile.role === 'operator' || profile.role === 'agent') && (
+                  <Grid item xs={12}>
+                    <Input
+                      label="Company"
+                      name="company"
+                      value={formData.company}
+                      onChange={handleChange}
+                      required={profile.role === 'agent' || profile.role === 'operator'}
+                      helperText="Your company or organization name"
+                    />
+                  </Grid>
+                )}
+              </Grid>
+              
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
+                <Button
                   type="button"
+                  variant="outlined"
+                  color="inherit"
                   onClick={() => setIsEditing(false)}
-                  className="px-4 py-3 border border-gray-300 dark:border-dark-border rounded-lg text-primary-700 dark:text-cream-200 hover:bg-gray-50 dark:hover:bg-dark-accent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
                 >
-                  CANCEL
-                </button>
-                <button
+                  Cancel
+                </Button>
+                <Button
                   type="submit"
+                  variant="contained"
+                  color="primary"
                   disabled={loading}
-                  className="px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                 >
-                  {loading ? 'UPDATING...' : 'UPDATE PROFILE'}
-                </button>
-              </div>
-            </form>
+                  {loading ? 'Updating...' : 'Update Profile'}
+                </Button>
+              </Box>
+            </Box>
           ) : (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-primary-700 dark:text-cream-200">
-                  Email
-                </label>
-                <p className="mt-1 text-sm text-primary-900 dark:text-cream-100">{profile.email}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-primary-700 dark:text-cream-200">
-                  Phone Number
-                </label>
-                <p className="mt-1 text-sm text-primary-900 dark:text-cream-100">
-                  {profile.phoneNumber || 'Not provided'}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-primary-700 dark:text-cream-200">
-                  First Name
-                </label>
-                <p className="mt-1 text-sm text-primary-900 dark:text-cream-100">{profile.firstName}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-primary-700 dark:text-cream-200">
-                  Last Name
-                </label>
-                <p className="mt-1 text-sm text-primary-900 dark:text-cream-100">{profile.lastName}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-primary-700 dark:text-cream-200">
-                  Role
-                </label>
-                <p className="mt-1 text-sm text-primary-900 dark:text-cream-100 capitalize">{profile.role}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-primary-700 dark:text-cream-200">
-                  User Code
-                </label>
-                <p className="mt-1 text-sm text-primary-900 dark:text-cream-100">{profile.userCode}</p>
-              </div>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <Stack spacing={1}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Email
+                  </Typography>
+                  <Typography variant="body1">{profile.email}</Typography>
+                </Stack>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Stack spacing={1}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Phone Number
+                  </Typography>
+                  <Typography variant="body1">
+                    {profile.phoneNumber || 'Not provided'}
+                  </Typography>
+                </Stack>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Stack spacing={1}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    First Name
+                  </Typography>
+                  <Typography variant="body1">{profile.firstName}</Typography>
+                </Stack>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Stack spacing={1}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Last Name
+                  </Typography>
+                  <Typography variant="body1">{profile.lastName}</Typography>
+                </Stack>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Stack spacing={1}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Role
+                  </Typography>
+                  <Typography variant="body1" sx={{ textTransform: 'capitalize' }}>
+                    {profile.role}
+                  </Typography>
+                </Stack>
+              </Grid>
+              <Grid item xs={12} sm={6} component="div">
+                <Stack spacing={1}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    User Code
+                  </Typography>
+                  <Typography variant="body1">{profile.userCode}</Typography>
+                </Stack>
+              </Grid>
+              
               {(profile.role === 'operator' || profile.role === 'agent') && (
-                <div>
-                  <label className="block text-sm font-medium text-primary-700 dark:text-cream-200">
-                    Company
-                  </label>
-                  <p className="mt-1 text-sm text-primary-900 dark:text-cream-100">{profile.company}</p>
-                </div>
+                <Grid item xs={12} sm={6}>
+                  <Stack spacing={1}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Company
+                    </Typography>
+                    <Typography variant="body1">{profile.company}</Typography>
+                  </Stack>
+                </Grid>
               )}
-              <div>
-                <label className="block text-sm font-medium text-primary-700 dark:text-cream-200">
-                  Email Verification
-                </label>
-                <p className="mt-1 text-sm">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    profile.emailVerified
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
-                  }`}>
-                    {profile.emailVerified ? 'Verified' : 'Not Verified'}
-                  </span>
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-primary-700 dark:text-cream-200">
-                  Account Created
-                </label>
-                <p className="mt-1 text-sm text-primary-900 dark:text-cream-100">
-                  {profile.createdAt.toLocaleDateString()}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-primary-700 dark:text-cream-200">
-                  Last Updated
-                </label>
-                <p className="mt-1 text-sm text-primary-900 dark:text-cream-100">
-                  {profile.updatedAt.toLocaleDateString()} at {profile.updatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
-            </div>
+              
+              <Grid item xs={12} sm={6}>
+                <Stack spacing={1}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Email Verification
+                  </Typography>
+                  <Chip 
+                    label={profile.emailVerified ? 'Verified' : 'Not Verified'} 
+                    color={profile.emailVerified ? 'success' : 'warning'}
+                    size="small"
+                  />
+                </Stack>
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <Stack spacing={1}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Account Created
+                  </Typography>
+                  <Typography variant="body1">
+                    {profile.createdAt.toLocaleDateString()}
+                  </Typography>
+                </Stack>
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <Stack spacing={1}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Last Updated
+                  </Typography>
+                  <Typography variant="body1">
+                    {profile.updatedAt.toLocaleDateString()} at {profile.updatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Typography>
+                </Stack>
+              </Grid>
+            </Grid>
           )}
-        </div>
+        </Paper>
 
         {/* Password Maintenance Section */}
-        <div className="bg-white dark:bg-dark-secondary shadow rounded-lg p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-primary-900 dark:text-cream-100">Password Maintenance</h2>
+        <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6" fontWeight="medium" color="text.primary">
+              Password Maintenance
+            </Typography>
             {!isEditing && !isChangingPassword && (
-              <button
+              <Button
                 onClick={() => setIsChangingPassword(true)}
-                className="px-4 py-2 border border-gray-300 dark:border-dark-border rounded-md shadow-sm text-sm font-medium text-primary-700 dark:text-cream-200 bg-white dark:bg-dark-primary hover:bg-gray-50 dark:hover:bg-dark-accent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                variant="outlined"
+                color="primary"
+                size="medium"
               >
-                CHANGE PASSWORD
-              </button>
+                Change Password
+              </Button>
             )}
-          </div>
+          </Box>
 
           {isChangingPassword && (
-            <form onSubmit={handlePasswordSubmit} className="space-y-6">
-              <Input
-                label="Current Password"
-                type="password"
-                name="currentPassword"
-                value={passwordData.currentPassword}
-                onChange={handlePasswordChange}
-                required
-                helperText="Enter your current password"
-                autoComplete="current-password"
-              />
-              <Input
-                label="New Password"
-                type="password"
-                name="newPassword"
-                value={passwordData.newPassword}
-                onChange={handlePasswordChange}
-                onFocus={() => setIsPasswordFocused(true)}
-                onBlur={() => setIsPasswordFocused(false)}
-                required
-                helperText="Create a new strong password"
-                autoComplete="new-password"
-              />
-              <PasswordStrengthChecker 
-                password={passwordData.newPassword}
-                isVisible={isPasswordFocused || passwordData.newPassword.length > 0}
-              />
-              <div className="flex justify-end space-x-4">
-                <button
+            <Box component="form" onSubmit={handlePasswordSubmit} sx={{ mt: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <Input
+                    label="Current Password"
+                    type="password"
+                    name="currentPassword"
+                    value={passwordData.currentPassword}
+                    onChange={handlePasswordChange}
+                    required
+                    helperText="Enter your current password"
+                    autoComplete="current-password"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Input
+                    label="New Password"
+                    type="password"
+                    name="newPassword"
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordChange}
+                    onFocus={() => setIsPasswordFocused(true)}
+                    onBlur={() => setIsPasswordFocused(false)}
+                    required
+                    helperText="Create a new strong password"
+                    autoComplete="new-password"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <PasswordStrengthChecker 
+                    password={passwordData.newPassword}
+                    isVisible={isPasswordFocused || passwordData.newPassword.length > 0}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Input
+                    label="Confirm New Password"
+                    type="password"
+                    name="confirmNewPassword"
+                    value={passwordData.confirmNewPassword}
+                    onChange={handlePasswordChange}
+                    required
+                    helperText="Re-enter your new password"
+                    autoComplete="new-password"
+                    error={passwordData.confirmNewPassword !== '' && 
+                           passwordData.newPassword !== passwordData.confirmNewPassword 
+                           ? "Passwords don't match" : ""}
+                  />
+                </Grid>
+              </Grid>
+              
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
+                <Button
                   type="button"
+                  variant="outlined"
+                  color="inherit"
                   onClick={() => setIsChangingPassword(false)}
-                  className="px-4 py-3 border border-gray-300 dark:border-dark-border rounded-lg text-primary-700 dark:text-cream-200 hover:bg-gray-50 dark:hover:bg-dark-accent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
                 >
-                  CANCEL
-                </button>
-                <button
+                  Cancel
+                </Button>
+                <Button
                   type="submit"
+                  variant="contained"
+                  color="primary"
                   disabled={loading}
-                  className="px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                 >
-                  {loading ? 'UPDATING...' : 'UPDATE PASSWORD'}
-                </button>
-              </div>
-            </form>
+                  {loading ? 'Updating...' : 'Update Password'}
+                </Button>
+              </Box>
+            </Box>
           )}
-        </div>
+        </Paper>
 
         {/* Display Preferences Section */}
-        <div className="bg-white dark:bg-dark-secondary shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h2 className="text-xl font-semibold text-primary-900 dark:text-cream-100 mb-4">Display Preferences</h2>
-            <div className="mt-4 max-w-xl">
-              <div className="space-y-4">
-                <DarkModeToggle />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
+          <Typography variant="h6" fontWeight="medium" color="text.primary" sx={{ mb: 3 }}>
+            Display Preferences
+          </Typography>
+          <Box sx={{ maxWidth: 400 }}>
+            <DarkModeToggle />
+          </Box>
+        </Paper>
+      </Stack>
+    </Box>
   );
 } 

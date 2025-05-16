@@ -16,7 +16,7 @@ const runStyleDictionary = (event, path) => {
   });
 };
 
-chokidar.watch('./tokens').on('all', (event, path) => {
+chokidar.watch('style-dictionary/tokens').on('all', (event, path) => {
   if (['add', 'change'].includes(event) && path.includes('.json')) {
     runStyleDictionary(event, path);
   }

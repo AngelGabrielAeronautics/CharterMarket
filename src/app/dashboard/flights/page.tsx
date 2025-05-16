@@ -1,42 +1,30 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useClientFlightRequests } from '@/hooks/useFlights';
 import { FlightRequest } from '@/types/flight';
-import { getClientFlightRequests } from '@/lib/flight';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { PlusIcon, Loader2 } from 'lucide-react';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
 export default function FlightRequestsPage() {
   const { user } = useAuth();
-  const [requests, setRequests] = useState<FlightRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchRequests = async () => {
-      if (!user) return;
-
-      try {
-        const fetchedRequests = await getClientFlightRequests(user.uid);
-        setRequests(fetchedRequests);
-      } catch (err) {
-        console.error('Error fetching requests:', err);
-        setError('Failed to load flight requests');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRequests();
-  }, [user]);
+  const { requests, loading, error } = useClientFlightRequests(user?.uid);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        {error}
       </div>
     );
   }
@@ -74,75 +62,46 @@ export default function FlightRequestsPage() {
         </Link>
       </div>
 
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
-
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Request Code
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Route
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Passengers
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Request Code</TableHead>
+              <TableHead>Route</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Passengers</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {requests.map((request) => (
-              <tr key={request.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {request.requestCode}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {request.routing.departureAirport} → {request.routing.arrivalAirport}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {format(request.routing.departureDate.toDate(), 'dd MMM yyyy')}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {request.passengerCount}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+              <TableRow key={request.id}>
+                <TableCell>{request.requestCode}</TableCell>
+                <TableCell>{request.routing.departureAirport} → {request.routing.arrivalAirport}</TableCell>
+                <TableCell>{format(request.routing.departureDate.toDate(), 'dd MMM yyyy')}</TableCell>
+                <TableCell>{request.passengerCount}</TableCell>
+                <TableCell>
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(request.status)}`}>
                     {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                   </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <Link
-                    href={`/dashboard/flights/${request.id}`}
-                    className="text-indigo-600 hover:text-indigo-900"
-                  >
+                </TableCell>
+                <TableCell>
+                  <Link href={`/dashboard/flights/${request.id}`} className="text-indigo-600 hover:text-indigo-900">
                     View Details
                   </Link>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
             {requests.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+              <TableRow>
+                <TableCell colSpan={6} className="text-center">
                   No flight requests found.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

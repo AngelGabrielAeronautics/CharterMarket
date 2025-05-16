@@ -37,6 +37,18 @@ export function generateFlightId(operatorCode: string): string {
 }
 
 /**
+ * Generates a flight request code
+ * @param operatorCode The operator's code
+ * @returns Flight request code in format RQ-OPERATORCODE-YYYYMMDD-XXXX
+ */
+export function generateFlightRequestCode(operatorCode: string): string {
+  const date = new Date();
+  const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
+  const random = generateRandomString(4);
+  return `RQ-${operatorCode}-${dateStr}-${random}`;
+}
+
+/**
  * Generates an aircraft ID
  * @param operatorCode The operator's code
  * @returns Aircraft ID in format AC-OPERATORCODE-XXXX
@@ -106,4 +118,13 @@ export const patterns = {
   document: /^[A-Z0-9]+-[A-Z0-9]{4}$/,
   passenger: /^[A-Z0-9]+-[A-Z0-9]{4}$/,
   client: /^[A-Z0-9]+-[A-Z0-9]{4}$/,
-}; 
+  booking: /^[A-Z0-9]+-\d{8}-[A-Z0-9]{4}$/,
+};
+
+// Add Booking ID generator
+export function generateBookingId(operatorCode: string): string {
+  const date = new Date();
+  const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
+  const random = generateRandomString(4);
+  return `BK-${operatorCode}-${dateStr}-${random}`;
+} 

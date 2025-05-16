@@ -16,6 +16,7 @@ export interface FlightRequest {
   id: string;
   requestCode: string;       // Format: FLT-OPERATORCODE-YYYYMMDD-XXXX
   clientId: string;         // User ID of the requesting client
+  operatorId: string;       // User code or ID of the operator handling this request
   tripType: TripType;
   routing: FlightRouting;
   passengerCount: number;

@@ -19,7 +19,7 @@ export interface UserProfile {
   status: UserStatus;
   isProfileComplete: boolean;
   hasAircraft?: boolean; // Only relevant for operators
-  dormantDate?: Date;
+  dormantDate: Date | null;
 }
 
 export interface User extends FirebaseUser {
@@ -28,4 +28,15 @@ export interface User extends FirebaseUser {
   firstName?: string;
   profile?: UserProfile;
   emailVerified: boolean;
+}
+
+export interface OnboardingFormData {
+  userId: string;
+  operatorId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  userCode: string;
+  company: string | null;
 } 
