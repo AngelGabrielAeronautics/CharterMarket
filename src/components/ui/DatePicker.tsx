@@ -1,6 +1,6 @@
 'use client';
 
-import { forwardRef } from 'react';
+import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/Calendar';
 import { Box, Button, Typography, Popover, IconButton } from '@mui/material';
@@ -32,12 +32,12 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
     const open = Boolean(anchorEl);
 
     return (
-      <Box 
-        ref={ref} 
-        sx={{ 
+      <Box
+        ref={ref}
+        sx={{
           position: 'relative',
           width: '100%',
-          ...(className && { className })
+          ...(className && { className }),
         }}
       >
         <Button
@@ -52,7 +52,7 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
             borderColor: error ? 'error.main' : undefined,
             '&:hover': {
               borderColor: error ? 'error.main' : undefined,
-            }
+            },
           }}
         >
           <CalendarTodayIcon sx={{ mr: 1, fontSize: 20 }} />
@@ -60,7 +60,7 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
             sx={{
               color: value ? 'text.primary' : 'text.secondary',
               flex: 1,
-              textAlign: 'left'
+              textAlign: 'left',
             }}
           >
             {value ? format(value, 'PPP') : 'Pick a date'}
@@ -84,8 +84,8 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
               mt: 1,
               p: 0,
               borderRadius: theme.shape.borderRadius,
-              boxShadow: theme.shadows[3]
-            }
+              boxShadow: theme.shadows[3],
+            },
           }}
         >
           <Calendar
@@ -101,11 +101,7 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
         </Popover>
 
         {error && (
-          <Typography
-            variant="caption"
-            color="error"
-            sx={{ mt: 1, display: 'block' }}
-          >
+          <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
             {error}
           </Typography>
         )}
@@ -119,7 +115,7 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
             px: 1,
             bgcolor: 'background.paper',
             color: 'text.secondary',
-            fontWeight: 500
+            fontWeight: 500,
           }}
         >
           {label}
@@ -129,4 +125,4 @@ export const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
   }
 );
 
-DatePicker.displayName = 'DatePicker'; 
+DatePicker.displayName = 'DatePicker';

@@ -1,78 +1,203 @@
-import { useState, useEffect } from 'react';
-import { FlightRequest } from '@/types/flight';
+import { useState, useEffect, useCallback } from 'react';
+import { QuoteRequest } from '@/types/flight';
 import { Quote } from '@/types/quote';
 import {
-  getClientFlightRequests,
-  getOperatorFlightRequests,
-  getFlightRequest,
+  getClientQuoteRequests,
+  getOperatorQuoteRequests,
+  getOperatorQuoteRequestsFallback,
+  getQuoteRequest,
 } from '@/lib/flight';
-import { getQuotesForRequest } from '@/lib/quote';
+import { getQuotesForRequest, getOperatorSubmittedQuotes } from '@/lib/quote';
 
 /**
- * Hook to fetch flight requests for a client
+ * Hook to fetch quote requests for a client
  */
-export function useClientFlightRequests(clientId?: string) {
-  const [requests, setRequests] = useState<FlightRequest[]>([]);
+export function useClientQuoteRequests(clientUserCode?: string) {
+  const [requests, setRequests] = useState<QuoteRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!clientId) {
+    if (!clientUserCode) {
       setLoading(false);
       return;
     }
     (async () => {
       setLoading(true);
       try {
-        const rs = await getClientFlightRequests(clientId);
+        const rs = await getClientQuoteRequests(clientUserCode);
         setRequests(rs);
       } catch (err) {
         console.error(err);
-        setError('Failed to load flight requests');
+        setError('Failed to load quote requests');
       } finally {
         setLoading(false);
       }
     })();
-  }, [clientId]);
+  }, [clientUserCode]);
 
   return { requests, loading, error };
 }
 
 /**
- * Hook to fetch flight requests for an operator
+ * Hook to fetch quote requests for an operator
  */
-export function useOperatorFlightRequests(operatorCode?: string) {
-  const [requests, setRequests] = useState<FlightRequest[]>([]);
+export function useOperatorQuoteRequests(operatorCode?: string) {
+  const [requests, setRequests] = useState<QuoteRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastRefresh, setLastRefresh] = useState(Date.now());
+  const [indexError, setIndexError] = useState(false);
+  const [indexUrl, setIndexUrl] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [useFallback, setUseFallback] = useState(false);
+
+  // Add a function to force refresh
+  const refreshRequests = useCallback(() => {
+    setLastRefresh(Date.now());
+    setError(null);
+    setRetryCount((prev) => prev + 1);
+  }, []);
 
   useEffect(() => {
     if (!operatorCode) {
       setLoading(false);
       return;
     }
-    (async () => {
-      setLoading(true);
-      try {
-        const rs = await getOperatorFlightRequests(operatorCode);
-        setRequests(rs);
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load incoming flight requests');
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [operatorCode]);
 
-  return { requests, loading, error };
+    let isMounted = true;
+
+    const fetchRequests = async () => {
+      try {
+        console.log(
+          `[useOperatorQuoteRequests] Fetching quote requests for operator: ${operatorCode}`
+        );
+
+        let rs: QuoteRequest[] = [];
+        let errorOccurred = false;
+
+        // First try the fallback method immediately, as it's guaranteed to work
+        try {
+          console.log('Using fallback method to get immediate results');
+          rs = await getOperatorQuoteRequestsFallback(operatorCode);
+
+          if (rs.length > 0 && isMounted) {
+            console.log(`Got ${rs.length} results using fallback method`);
+            setRequests(rs);
+            setLoading(false); // Show results immediately
+            setUseFallback(true);
+            // Don't clear errors yet - we'll try the main method next
+          }
+        } catch (fallbackErr) {
+          console.error('Fallback method failed:', fallbackErr);
+          errorOccurred = true;
+          // Continue to try the main method
+        }
+
+        // Then try the main method (even if we got fallback results)
+        try {
+          console.log('Attempting to use main query method');
+          const mainResults = await getOperatorQuoteRequests(operatorCode);
+
+          if (isMounted) {
+            console.log(`Got ${mainResults.length} results using main method`);
+            setRequests(mainResults);
+            setLoading(false);
+            setError(null); // Clear any errors since this worked
+            setIndexError(false);
+            setIndexUrl(null);
+            setUseFallback(false);
+          }
+        } catch (mainErr: any) {
+          // If the main method failed with an index error
+          if (
+            mainErr.isIndexError ||
+            mainErr.message?.includes('The query requires an index') ||
+            mainErr.toString().includes('FirebaseError: The query requires an index')
+          ) {
+            console.log('Index error detected when using main method');
+            if (isMounted) {
+              setIndexError(true);
+              setIndexUrl(mainErr.indexUrl || null);
+              setUseFallback(true);
+
+              // Only show the error if the fallback didn't work
+              if (rs.length === 0) {
+                setError('The system is being configured. Please try again in a few minutes.');
+                errorOccurred = true;
+              } else {
+                // We have fallback data, so don't show an error
+                setError(null);
+              }
+            }
+          } else {
+            // Some other error occurred with the main method
+            console.error('Main method failed with non-index error:', mainErr);
+            if (isMounted) {
+              // Only show this error if we don't have fallback data
+              if (rs.length === 0) {
+                setError('Failed to load incoming quote requests');
+                errorOccurred = true;
+              }
+            }
+          }
+        }
+
+        if (isMounted && !errorOccurred) {
+          setError(null);
+        }
+      } catch (err: any) {
+        console.error(`[useOperatorQuoteRequests] Unexpected error:`, err);
+        if (isMounted) {
+          setError('An unexpected error occurred. Please try again.');
+          setLoading(false);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    setLoading(true);
+    fetchRequests();
+
+    // Setup refresh interval (every 30 seconds)
+    // If there was an index error, try less frequently (every 2 minutes)
+    // After 3 retries with index errors, back off to 5 minutes
+    let intervalTime = 30000; // Default 30 seconds
+    if (indexError) {
+      intervalTime = retryCount > 3 ? 300000 : 120000; // 5 minutes or 2 minutes
+    }
+
+    const intervalId = setInterval(() => {
+      console.log(`[useOperatorQuoteRequests] Auto-refreshing quote requests for ${operatorCode}`);
+      fetchRequests();
+    }, intervalTime);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [operatorCode, lastRefresh, retryCount]);
+
+  return {
+    requests,
+    loading,
+    error,
+    refreshRequests,
+    indexError,
+    indexUrl,
+    retryCount,
+    useFallback,
+  };
 }
 
 /**
- * Hook to fetch a single flight request detail
+ * Hook to fetch a single quote request detail
  */
-export function useFlightRequestDetail(requestId?: string) {
-  const [request, setRequest] = useState<FlightRequest | null>(null);
+export function useQuoteRequestDetail(requestId?: string) {
+  const [request, setRequest] = useState<QuoteRequest | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -84,15 +209,15 @@ export function useFlightRequestDetail(requestId?: string) {
     (async () => {
       setLoading(true);
       try {
-        const r = await getFlightRequest(requestId);
+        const r = await getQuoteRequest(requestId);
         if (!r) {
-          setError('Flight request not found');
+          setError('Quote request not found');
         } else {
           setRequest(r);
         }
       } catch (err) {
         console.error(err);
-        setError('Failed to load flight request');
+        setError('Failed to load quote request');
       } finally {
         setLoading(false);
       }
@@ -103,7 +228,7 @@ export function useFlightRequestDetail(requestId?: string) {
 }
 
 /**
- * Hook to fetch quotes for a flight request
+ * Hook to fetch quotes for a quote request
  */
 export function useQuotes(requestId?: string) {
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -130,4 +255,39 @@ export function useQuotes(requestId?: string) {
   }, [requestId]);
 
   return { quotes, loading, error };
-} 
+}
+
+/**
+ * Hook to fetch submitted quotes for a specific operator.
+ */
+export const useOperatorSubmittedQuotes = (operatorId?: string) => {
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchQuotes = useCallback(async () => {
+    if (!operatorId) {
+      setQuotes([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const operatorQuotes = await getOperatorSubmittedQuotes(operatorId);
+      setQuotes(operatorQuotes);
+      setError(null);
+    } catch (err) {
+      console.error('Error in useOperatorSubmittedQuotes:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch submitted quotes');
+      setQuotes([]); // Clear quotes on error
+    } finally {
+      setLoading(false);
+    }
+  }, [operatorId]);
+
+  useEffect(() => {
+    fetchQuotes();
+  }, [fetchQuotes]);
+
+  return { quotes, loading, error, refreshSubmittedQuotes: fetchQuotes };
+};

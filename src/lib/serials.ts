@@ -37,15 +37,15 @@ export function generateFlightId(operatorCode: string): string {
 }
 
 /**
- * Generates a flight request code
- * @param operatorCode The operator's code
- * @returns Flight request code in format RQ-OPERATORCODE-YYYYMMDD-XXXX
+ * Generates a quote request code
+ * @param userCode The user's code
+ * @returns Quote request code in format RQ-USERCODE-YYYYMMDD-XXXX
  */
-export function generateFlightRequestCode(operatorCode: string): string {
+export function generateQuoteRequestCode(userCode: string): string {
   const date = new Date();
   const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
   const random = generateRandomString(4);
-  return `RQ-${operatorCode}-${dateStr}-${random}`;
+  return `RQ-${userCode}-${dateStr}-${random}`;
 }
 
 /**
@@ -127,4 +127,15 @@ export function generateBookingId(operatorCode: string): string {
   const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
   const random = generateRandomString(4);
   return `BK-${operatorCode}-${dateStr}-${random}`;
-} 
+}
+
+// For backward compatibility
+export const generateFlightRequestCode = generateQuoteRequestCode;
+
+// Add Payment ID generator
+export function generatePaymentId(): string {
+  const date = new Date();
+  const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
+  const random = generateRandomString(6);
+  return `PMT-${dateStr}-${random}`;
+}

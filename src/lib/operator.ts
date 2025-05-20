@@ -9,6 +9,10 @@ export const findAvailableOperators = async (
   passengerCount: number
 ): Promise<OperatorSearchResult[]> => {
   try {
+    console.log(
+      `Finding operators for route ${departureAirport} to ${arrivalAirport} with ${passengerCount} passengers`
+    );
+
     // Get airport details to determine regions
     const [depAirport, arrAirport] = await Promise.all([
       getAirportByICAO(departureAirport),
@@ -16,29 +20,32 @@ export const findAvailableOperators = async (
     ]);
 
     if (!depAirport || !arrAirport) {
+      console.error(`Invalid airports: ${departureAirport} or ${arrivalAirport} not found`);
       throw new Error('Invalid airports');
     }
+
+    console.log(
+      `Departure airport region: ${depAirport.country}, Arrival airport region: ${arrAirport.country}`
+    );
 
     // Query operators that:
     // 1. Are active
     // 2. Operate in the departure or arrival region
-    // 3. Have aircraft that can accommodate the passenger count
     const operatorsRef = collection(db, 'operators');
     const q = query(
       operatorsRef,
       where('status', '==', 'active'),
-      where('operatingRegions', 'array-contains-any', [
-        depAirport.country,
-        arrAirport.country,
-      ])
+      where('operatingRegions', 'array-contains-any', [depAirport.country, arrAirport.country])
     );
 
     const querySnapshot = await getDocs(q);
+    console.log(`Found ${querySnapshot.size} operators matching region criteria`);
+
     const operators: OperatorSearchResult[] = [];
 
     for (const doc of querySnapshot.docs) {
       const operator = doc.data() as Operator;
-      
+
       // Check if operator has suitable aircraft
       const aircraftRef = collection(db, 'aircraft');
       const aircraftQuery = query(
@@ -47,9 +54,9 @@ export const findAvailableOperators = async (
         where('maxPassengers', '>=', passengerCount),
         where('status', '==', 'active')
       );
-      
+
       const aircraftSnapshot = await getDocs(aircraftQuery);
-      
+
       if (!aircraftSnapshot.empty) {
         operators.push({
           id: doc.id,
@@ -59,6 +66,37 @@ export const findAvailableOperators = async (
           fleetSize: operator.fleetSize,
           status: operator.status,
         });
+        console.log(`Added operator: ${operator.companyName} (${operator.operatorCode})`);
+      }
+    }
+
+    // If no operators found, try a fallback approach - get any active operator
+    if (operators.length === 0) {
+      console.log('No matching operators found with suitable aircraft. Using fallback.');
+
+      const fallbackQuery = query(operatorsRef, where('status', '==', 'active'));
+
+      const fallbackSnapshot = await getDocs(fallbackQuery);
+
+      if (!fallbackSnapshot.empty) {
+        // Take the first active operator as fallback
+        const fallbackDoc = fallbackSnapshot.docs[0];
+        const fallbackOperator = fallbackDoc.data() as Operator;
+
+        operators.push({
+          id: fallbackDoc.id,
+          operatorCode: fallbackOperator.operatorCode,
+          companyName: fallbackOperator.companyName,
+          baseAirport: fallbackOperator.baseAirport,
+          fleetSize: fallbackOperator.fleetSize,
+          status: fallbackOperator.status,
+        });
+
+        console.log(
+          `Using fallback operator: ${fallbackOperator.companyName} (${fallbackOperator.operatorCode})`
+        );
+      } else {
+        console.error('No active operators found in the system at all');
       }
     }
 
@@ -73,7 +111,7 @@ export const getOperator = async (id: string): Promise<Operator | null> => {
   try {
     const operatorRef = doc(db, 'operators', id);
     const operatorDoc = await getDoc(operatorRef);
-    
+
     if (!operatorDoc.exists()) {
       return null;
     }
@@ -98,7 +136,7 @@ export const getOperatorsByRegion = async (region: string): Promise<OperatorSear
     );
 
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => {
+    return querySnapshot.docs.map((doc) => {
       const operator = doc.data() as Operator;
       return {
         id: doc.id,
@@ -113,4 +151,4 @@ export const getOperatorsByRegion = async (region: string): Promise<OperatorSear
     console.error('Error getting operators by region:', error);
     throw new Error('Failed to get operators by region');
   }
-}; 
+};

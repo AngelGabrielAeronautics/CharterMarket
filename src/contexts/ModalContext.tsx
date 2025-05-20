@@ -2,10 +2,12 @@ import { createContext, useContext, useState, ReactNode } from 'react';
 import RegisterModal from '@/components/RegisterModal';
 import LoginModal from '@/components/LoginModal';
 
+type UserType = 'passenger' | 'agent' | 'operator';
+
 interface ModalContextType {
   isRegisterModalOpen: boolean;
   isLoginModalOpen: boolean;
-  openRegisterModal: () => void;
+  openRegisterModal: (defaultUserType?: UserType) => void;
   closeRegisterModal: () => void;
   openLoginModal: () => void;
   closeLoginModal: () => void;
@@ -16,19 +18,24 @@ const ModalContext = createContext<ModalContextType | undefined>(undefined);
 export function ModalProvider({ children }: { children: ReactNode }) {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [defaultUserType, setDefaultUserType] = useState<UserType | undefined>(undefined);
 
-  const openRegisterModal = () => {
+  const openRegisterModal = (type?: UserType) => {
     setIsLoginModalOpen(false);
+    setDefaultUserType(type);
     setIsRegisterModalOpen(true);
   };
-  
-  const closeRegisterModal = () => setIsRegisterModalOpen(false);
-  
+
+  const closeRegisterModal = () => {
+    setIsRegisterModalOpen(false);
+    setDefaultUserType(undefined);
+  };
+
   const openLoginModal = () => {
     setIsRegisterModalOpen(false);
     setIsLoginModalOpen(true);
   };
-  
+
   const closeLoginModal = () => setIsLoginModalOpen(false);
 
   return (
@@ -44,7 +51,13 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     >
       {children}
       {/* Render modals here */}
-      {isRegisterModalOpen && <RegisterModal isOpen={true} onClose={closeRegisterModal} />}
+      {isRegisterModalOpen && (
+        <RegisterModal
+          isOpen={true}
+          onClose={closeRegisterModal}
+          defaultUserType={defaultUserType}
+        />
+      )}
       {isLoginModalOpen && <LoginModal isOpen={true} onClose={closeLoginModal} />}
     </ModalContext.Provider>
   );
@@ -56,4 +69,4 @@ export function useModal() {
     throw new Error('useModal must be used within a ModalProvider');
   }
   return context;
-} 
+}

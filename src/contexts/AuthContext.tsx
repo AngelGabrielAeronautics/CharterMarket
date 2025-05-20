@@ -38,14 +38,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          const q = query(
-            collection(db, 'users'),
-            where('email', '==', firebaseUser.email)
-          );
+          const q = query(collection(db, 'users'), where('email', '==', firebaseUser.email));
           const querySnapshot = await getDocs(q);
-          
+
           if (!querySnapshot.empty) {
             const userData = querySnapshot.docs[0].data();
+            console.log('AuthContext: Fetched userData from Firestore:', userData);
+            console.log('AuthContext: Attempting to set user.userCode to:', userData.userCode);
             // Set the complete user data including userCode
             setUser({
               ...firebaseUser,
@@ -65,9 +64,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               createdAt: (raw.createdAt as Timestamp).toDate(),
               updatedAt: (raw.updatedAt as Timestamp).toDate(),
               emailVerified: raw.emailVerified,
-              lastReminderSent: raw.lastReminderSent ? (raw.lastReminderSent as Timestamp).toDate() : null,
+              lastReminderSent: raw.lastReminderSent
+                ? (raw.lastReminderSent as Timestamp).toDate()
+                : null,
               reminderCount: raw.reminderCount,
-              profileIncompleteDate: raw.profileIncompleteDate ? (raw.profileIncompleteDate as Timestamp).toDate() : null,
+              profileIncompleteDate: raw.profileIncompleteDate
+                ? (raw.profileIncompleteDate as Timestamp).toDate()
+                : null,
               status: raw.status,
               isProfileComplete: raw.isProfileComplete,
               hasAircraft: raw.hasAircraft,
@@ -76,20 +79,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setProfile(profileData);
 
             // Log successful login
-            await logAuthEvent(
-              EventType.LOGIN,
-              {
-                severity: EventSeverity.INFO,
-                userId: firebaseUser.uid,
-                userCode: userData.userCode,
-                userRole: userData.role,
-                description: `User ${userData.userCode} logged in successfully`,
-                data: {
-                  email: firebaseUser.email,
-                  provider: firebaseUser.providerData[0]?.providerId || 'email',
-                },
-              }
-            );
+            await logAuthEvent(EventType.LOGIN, {
+              severity: EventSeverity.INFO,
+              userId: firebaseUser.uid,
+              userCode: userData.userCode,
+              userRole: userData.role,
+              description: `User ${userData.userCode} logged in successfully`,
+              data: {
+                email: firebaseUser.email,
+                provider: firebaseUser.providerData[0]?.providerId || 'email',
+              },
+            });
           } else {
             // No user data found in Firestore
             setUser(null);
@@ -122,19 +122,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const currentUser = user; // Store current user before logout
       if (currentUser) {
         // Log logout event before actually logging out
-        await logAuthEvent(
-          EventType.LOGOUT,
-          {
-            severity: EventSeverity.INFO,
-            userId: currentUser.uid,
-            userCode: currentUser.userCode,
-            userRole: currentUser.role,
-            description: `User ${currentUser.userCode} logged out`,
-            data: { email: currentUser.email },
-          }
-        );
+        await logAuthEvent(EventType.LOGOUT, {
+          severity: EventSeverity.INFO,
+          userId: currentUser.uid,
+          userCode: currentUser.userCode,
+          userRole: currentUser.role,
+          description: `User ${currentUser.userCode} logged out`,
+          data: { email: currentUser.email },
+        });
       }
-      
+
       await logoutUser();
       setUser(null);
       setUserRole(null);
@@ -152,4 +149,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export const useAuth = () => useContext(AuthContext); 
+export const useAuth = () => useContext(AuthContext);

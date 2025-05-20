@@ -13,10 +13,7 @@ export async function POST(request: Request) {
     const { email, firstName, role, reminderNumber, nextStep } = await request.json();
 
     if (!email || !firstName || !role || !reminderNumber || !nextStep) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     if (!process.env.SENDGRID_FROM_EMAIL) {
@@ -28,11 +25,11 @@ export async function POST(request: Request) {
     switch (reminderNumber) {
       case 1: // 24 hours
         subject = 'Complete Your Charter Registration';
-        urgencyMessage = 'We noticed you haven\'t completed your registration yet.';
+        urgencyMessage = "We noticed you haven't completed your registration yet.";
         break;
       case 2: // 3 days
-        subject = 'Don\'t Miss Out - Complete Your Charter Registration';
-        urgencyMessage = 'You\'re missing out on connecting with potential clients.';
+        subject = "Don't Miss Out - Complete Your Charter Registration";
+        urgencyMessage = "You're missing out on connecting with potential clients.";
         break;
       case 3: // 7 days
         subject = 'Final Reminder - Charter Registration';
@@ -43,9 +40,10 @@ export async function POST(request: Request) {
         urgencyMessage = 'Please complete your registration.';
     }
 
-    const roleSpecificMessage = role === 'operator' 
-      ? 'Start receiving flight requests and growing your business.'
-      : 'Start booking private flights with ease.';
+    const roleSpecificMessage =
+      role === 'operator'
+        ? 'Start receiving quote requests and growing your business.'
+        : 'Start booking private flights with ease.';
 
     const msg = {
       to: email,
@@ -75,11 +73,11 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('Error sending registration reminder:', error?.response?.body || error);
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to send registration reminder',
-        details: error?.response?.body?.errors || error.message
+        details: error?.response?.body?.errors || error.message,
       },
       { status: 500 }
     );
   }
-} 
+}

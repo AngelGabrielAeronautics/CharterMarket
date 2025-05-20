@@ -19,4 +19,7 @@ export interface Booking {
   status: BookingStatus;
   createdAt: Timestamp;
   updatedAt: Timestamp;
-} 
+  flightNumber?: string;
+  operatorName?: string;
+  isPaid?: boolean;
+}

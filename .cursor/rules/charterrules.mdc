@@ -69,3 +69,1175 @@ pages/**/*.{ts,tsx}
 npm run lint         # Enforce linting before commit
 npm run test         # Run unit and integration tests
 npm run build:tokens # Sync design tokens
+
+# Charter Aviation Platform - Project Rules and Guidelines
+
+## SEO Guidelines
+
+### Metadata and Documentation
+- All pages must include proper metadata using the centralized metadata configuration
+- Use dynamic metadata for page-specific content
+- Maintain up-to-date sitemap.xml and robots.txt
+- Document all SEO changes in commit messages
+
+### Content Structure
+1. **HTML Semantics**
+   - Use semantic HTML tags (`<header>`, `<main>`, `<nav>`, `<article>`, `<section>`, `<footer>`)
+   - Maintain proper heading hierarchy (h1 -> h6)
+   - Use descriptive alt text for images
+   - Implement ARIA labels where necessary
+
+2. **Meta Tags**
+   - Include title, description, and keywords
+   - Use OpenGraph and Twitter card meta tags
+   - Implement canonical URLs
+   - Set proper viewport meta tags
+
+3. **Structured Data**
+   - Use JSON-LD for structured data
+   - Implement appropriate schema.org types
+   - Include Organization and Service schemas
+   - Add BreadcrumbList where applicable
+
+### Performance
+1. **Image Optimization**
+   - Use next/image component
+   - Implement lazy loading for below-fold images
+   - Provide proper width and height attributes
+   - Use appropriate image formats (WebP with fallbacks)
+
+2. **Loading Performance**
+   - Implement proper code splitting
+   - Use dynamic imports where appropriate
+   - Minimize unused JavaScript
+   - Optimize third-party scripts
+
+### Technical SEO
+1. **URL Structure**
+   - Use clean, descriptive URLs
+   - Implement proper URL hierarchy
+   - Handle trailing slashes consistently
+   - Set up proper redirects
+
+2. **Security**
+   - Protect sensitive routes in robots.txt
+   - Implement proper CORS policies
+   - Secure API endpoints
+   - Use HTTPS throughout
+
+## Development Guidelines
+
+### Code Structure
+1. **File Organization**
+   ```
+   src/
+   ├── app/                 # Next.js app directory
+   ├── components/          # React components
+   ├── contexts/           # React contexts
+   ├── lib/                # Utility libraries
+   ├── styles/            # Global styles
+   └── utils/             # Helper functions
+   ```
+
+2. **Naming Conventions**
+   - Components: PascalCase
+   - Files: kebab-case
+   - Functions: camelCase
+   - Constants: UPPER_SNAKE_CASE
+
+### Component Guidelines
+1. **Structure**
+   - Use TypeScript for all components
+   - Implement proper prop typing
+   - Use functional components
+   - Follow single responsibility principle
+
+2. **State Management**
+   - Use React Context for global state
+   - Implement proper state initialization
+   - Handle loading and error states
+   - Use proper state update patterns
+
+### Styling Guidelines
+1. **CSS/Tailwind**
+   - Use Tailwind CSS classes
+   - Follow mobile-first approach
+   - Maintain dark mode support
+   - Use CSS variables for theming
+
+2. **Form Fields (Material Design)**
+   - All form inputs must follow these design principles:
+     ```css
+     /* Base Input Styling */
+     .form-field {
+       position: relative;
+       width: 100%;
+       border-radius: 0.5rem; /* 8px */
+       transition: all 200ms;
+     }
+
+     /* Input States */
+     .default {
+       border: 1px solid #E5E7EB; /* gray-300 */
+     }
+     .focused {
+       border-color: #3B82F6; /* primary-500 */
+     }
+     .error {
+       border-color: #EF4444; /* red-500 */
+     }
+     .disabled {
+       background: #F3F4F6; /* gray-100 */
+       opacity: 0.5;
+       cursor: not-allowed;
+     }
+
+     /* Dark Mode */
+     .dark .default {
+       border-color: #374151; /* dark-border */
+       background: #1F2937; /* dark-primary */
+     }
+     .dark .focused {
+       border-color: #60A5FA; /* primary-400 */
+     }
+     ```
+
+     - Floating Label Animation:
+       - Initial state: Inside input
+       - Focused/filled state: Animates to top, scales to 0.85
+       - Color changes based on input state
+       - Uses framer-motion for smooth transitions
+
+     - Error Messages:
+       - Positioned below input
+       - Animated entrance/exit
+       - Red color scheme (#EF4444)
+       - Small text size (14px)
+
+     - Helper Text:
+       - Shows as placeholder when input is empty
+       - Disappears when input is focused/filled
+
+     - Icons:
+       - Optional left-aligned icons
+       - Proper spacing (40px padding-left when icon present)
+       - Color matches input state
+       - Password fields must include visibility toggle:
+         - Use Material-UI's VisibilityIcon and VisibilityOffIcon
+         - Position in end adornment
+         - Toggle between text/password input type
+         - Proper ARIA labels for accessibility
+         - Prevent mouseDown default to avoid focus issues
+         - Match icon color to input state
+
+     - Required Fields:
+       - Red asterisk (*)
+       - Shows next to label
+       - Right-aligned when label is not floating
+
+     - Specific Components:
+       1. Text Input (`Input.tsx`)
+          - Standard text input with floating label
+          - Support for all HTML input types
+          - Icon support
+          - Full width by default
+          - Password fields example:
+            ```tsx
+            const [showPassword, setShowPassword] = useState(false);
+            
+            <TextField
+              type={showPassword ? 'text' : 'password'}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword(!showPassword)}
+                      onMouseDown={(e) => e.preventDefault()}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            ```
+
+       2. Phone Input (`PhoneInput.tsx`)
+          - Country code selector
+          - International format support
+          - Custom styling matching other inputs
+          - Flag icons
+
+       3. Select Input
+          - Custom dropdown styling
+          - Floating label support
+          - Option group support
+          - Search/filter capability
+
+       4. Date Input
+          - Calendar popup
+          - Date format validation
+          - Range selection support
+          - Locale support
+
+     - Accessibility Features:
+       - ARIA labels
+       - Focus indicators
+       - Error announcements
+       - Keyboard navigation
+       - Screen reader support
+
+     - Responsive Behavior:
+       - Full width on mobile
+       - Proper touch targets (min 44px)
+       - Keyboard handling
+       - Viewport adjustments
+
+     - Form Layout:
+       - Consistent spacing (16px between fields)
+       - Proper group alignment
+       - Responsive grid support
+       - Section organization
+
+     - Validation:
+       - Real-time validation
+       - Custom error messages
+       - Required field indicators
+       - Pattern matching
+
+3. **Responsive Design**
+   - Support all major breakpoints
+   - Test on multiple devices
+   - Ensure proper touch targets
+   - Maintain consistent spacing
+
+### Authentication and Authorization
+1. **User Management**
+   - Implement proper role-based access
+   - Handle session management
+   - Secure user data
+   - Follow OAuth best practices
+
+2. **Security**
+   - Implement proper input validation
+   - Handle errors gracefully
+   - Protect sensitive routes
+   - Follow security best practices
+
+## Testing Guidelines
+
+### Unit Testing
+- Write tests for all utility functions
+- Test component rendering
+- Implement proper mocking
+- Maintain good test coverage
+
+### Integration Testing
+- Test component interactions
+- Verify API integrations
+- Test user flows
+- Implement E2E testing
+
+## Deployment Guidelines
+
+### Build Process
+- Verify all tests pass
+- Check bundle size
+- Optimize assets
+- Update documentation
+
+### Monitoring
+- Implement error tracking
+- Monitor performance metrics
+- Track user analytics
+- Monitor SEO performance
+
+## Version Control
+
+### Git Workflow
+1. **Branch Naming**
+   - feature/feature-name
+   - bugfix/bug-description
+   - hotfix/issue-description
+   - release/version-number
+
+2. **Commit Messages**
+   - Use conventional commits
+   - Include ticket references
+   - Provide clear descriptions
+   - Document breaking changes
+
+### Code Review
+- Review all pull requests
+- Check for SEO impact
+- Verify accessibility
+- Test performance impact
+
+## Documentation
+
+### Required Documentation
+- README.md
+- API documentation
+- Component documentation
+- Setup instructions
+
+### Maintenance
+- Keep documentation up to date
+- Document all major changes
+- Include examples
+- Maintain changelog
+
+## Accessibility Guidelines
+
+### WCAG Compliance
+- Follow WCAG 2.1 guidelines
+- Implement proper ARIA labels
+- Ensure keyboard navigation
+- Maintain proper contrast
+
+### Testing
+- Test with screen readers
+- Verify keyboard navigation
+- Check color contrast
+- Test with assistive technologies
+
+## Naming Conventions
+
+### ID Formats
+All ID formats are defined and validated in `src/lib/serials.ts`. The following formats are used:
+- Quotes: `QT-OPERATORCODE-YYYYMMDD-XXXX`
+- Invoices: `INV-FLIGHTCODE-YYYYMMDD-XXXXXXXX`
+- Flights: `FLT-OPERATORCODE-YYYYMMDD-XXXX`
+- Aircraft: `AC-OPERATORCODE-XXXX`
+- Documents: `DOC-userCode-XXXX`
+- Passengers (by agent): `PAX-AGENTCODE-XXXX`
+- Passengers (by passenger): `PAX-userCode-XXXX`
+- Clients: `CL-AGENTCODE-XXXX`
+
+Note: All ID generation and validation should use the functions from `src/lib/serials.ts` to ensure consistency.
+
+### User Code Formats
+All user code formats are defined and validated in `src/lib/userCode.ts`. The following formats are used:
+
+- Passenger: `PA-LASTNAME-XXXX` (e.g., PA-SMIT-ABCD)
+- Operator: `OP-COMPANY-XXXX` (e.g., OP-JETS-ABCD)
+- Agent: `AG-COMPANY-XXXX` (e.g., AG-TRAV-ABCD)
+- Admin: `AD-LASTNAME-XXXX` (e.g., AD-JOHN-ABCD)
+
+Format Rules:
+- Prefix: Two uppercase letters (PA, OP, AG, AD)
+- Identifier: Four uppercase letters derived from lastName or company name
+- Suffix: Four uppercase alphanumeric characters generated using nanoid
+- All parts are separated by hyphens
+- Company/lastName are trimmed and cleaned of whitespace
+- If company/lastName is missing, fallback values are used (UNKNOWN for company roles)
+
+Note: All user code generation and validation should use the functions from `src/lib/userCode.ts` to ensure consistency:
+- `generateUserCode({ role, lastName, company })`: Generates a new user code
+- `validateUserCode(code)`: Validates the format of a user code
+- `UserRole` type: Defines valid user roles
+
+## User Roles & Permissions
+
+### Role Hierarchy
+The system implements a hierarchical role structure, with superAdmin at the top:
+
+1. `superAdmin`: System-wide administrator with complete access
+2. `admin`: Role-based administrator with delegated permissions
+3. `operator`: Aircraft operator with fleet management capabilities
+4. `agent`: Travel agent with booking and client management access
+5. `passenger`: End-user with basic booking capabilities
+
+### Role Definitions
+
+#### superAdmin
+The superAdmin role is the highest level of system access, designed for platform administrators. A superAdmin has unrestricted access to all system features and exclusive privileges:
+
+1. User Management
+   - Create and manage admin accounts
+   - Approve new admin registrations
+   - Set and modify admin permissions
+   - View and modify all user data
+   - Suspend or deactivate any user account
+   - Reset passwords for any user
+
+2. System Configuration
+   - Access and modify all system settings
+   - Configure system-wide parameters
+   - Manage API integrations
+   - Set up payment gateways
+   - Configure email templates
+   - Manage system notifications
+
+3. Security & Compliance
+   - Access audit logs and system metrics
+   - Monitor system activity
+   - View security reports
+   - Manage role permissions
+   - Override system restrictions
+   - Handle data privacy settings
+
+4. Content Management
+   - Manage all system content
+   - Create and edit announcements
+   - Modify terms and conditions
+   - Update privacy policies
+   - Control feature flags
+
+5. Financial Management
+   - Access all financial reports
+   - Configure pricing rules
+   - Manage payment settings
+   - Override financial restrictions
+   - View system-wide transactions
+
+6. Technical Administration
+   - Access development tools
+   - Manage API keys
+   - Configure third-party integrations
+   - Handle system maintenance
+   - Manage backup and recovery
+
+7. Analytics & Reporting
+   - Access all system analytics
+   - Generate custom reports
+   - Export system data
+   - Monitor performance metrics
+   - Track user engagement
+
+#### Restrictions & Security
+- Only one superAdmin account can exist in the system at a time
+- superAdmin actions are logged and cannot be deleted
+- Two-factor authentication is mandatory for superAdmin accounts
+- Session timeout is enforced after 30 minutes of inactivity
+- IP restriction can be enabled for additional security
+
+#### Creation & Management
+1. Initial Setup
+   - superAdmin account is created during system initialization
+   - Requires secure email and strong password
+   - Must complete 2FA setup before accessing features
+
+2. Account Recovery
+   - Requires multiple factor verification
+   - Time-limited recovery tokens
+   - Notification to backup email addresses
+
+3. Permission Updates
+   - Cannot be modified by other roles
+   - Changes require 2FA confirmation
+   - All permission changes are logged
+
+## Data Structure
+
+### User Document
+The user data is created using the prepareUserData function in `src/app/register/page.tsx` 
+```typescript
+{
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'passenger' | 'operator' | 'agent' | 'admin';
+  userCode: string;
+  company: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  emailVerified: boolean;
+  lastReminderSent: Date | null;
+  reminderCount: number;
+  profileIncompleteDate: Date | null;
+}
+```
+
+### Protected Routes
+- `/dashboard`: Authenticated users
+- `/profile`: Authenticated users
+- `/admin/*`: Admin only
+- `/operator/*`: Operator only
+- `/passenger/*`: Passenger only
+- `/agent/*`: Agent only
+
+## Key Dependencies
+- Next.js 15.3.0
+- Firebase 10.14.1 (Auth, Firestore, Storage)
+- Material-UI 5.15.10
+- TailwindCSS 3.4.1
+
+## Core Files
+- `src/contexts/AuthContext.tsx`: Authentication state management
+- `src/lib/firebase.ts`: Firebase configuration
+- `src/lib/serials.ts`: ID generation utilities
+- `src/types/user.ts`: Core type definitions
+
+## Database Structure
+User documents in Firestore:
+- Collection: 'users'
+- Document ID: userCode (e.g., 'AG-ANGE-UFSV')
+- Fields:
+  ```typescript
+  {
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: UserRole;
+    userCode: string;
+    company: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    emailVerified: boolean;
+    lastReminderSent: Date | null;
+    reminderCount: number;
+    profileIncompleteDate: Date | null;
+    firebaseAuthId: string;     // Firebase Authentication ID (not used in application code)
+  }
+  ```
+
+Notification documents in Firestore:
+- Root Collection: 'notifications'
+- Document ID: userCode (e.g., 'PA-COPP-LECE')
+- Subcollection: 'emails'
+- Email Document ID: Auto-generated (e.g., 'BejkIy2geAz576P2Uw3N')
+- Fields:
+  ```typescript
+  {
+    emailType: 'VERIFICATION_EMAIL' | 'WELCOME_EMAIL' | 'RESET_PASSWORD_EMAIL' | 'REMINDER_EMAIL';
+    error?: string;              // Error message if sending failed
+    sentAt: Date;               // Timestamp when the email was sent
+    sentTo: string;             // Recipient email address
+    status: 'sent' | 'failed';
+    type: 'verification' | 'welcome' | 'password_reset' | 'quote_request' | 'booking_confirmation';
+    userId: string;             // Reference to Firebase Auth ID for cross-referencing
+    userCode: string;           // User's unique code (e.g., 'PA-COPP-LECE')
+  }
+  ```
+
+Note: Notifications are stored in a dedicated 'notifications' collection, with each user's notifications grouped under their userCode and stored in an 'emails' subcollection. This structure provides:
+- Efficient querying of a user's notification history using their userCode
+- Natural organization of notifications by user
+- Maintained reference to Firebase Auth ID for system integrity
+- Better scalability for per-user notification queries
+- Path structure: /notifications/{userCode}/emails/{notificationId}
+
+## Styling Guidelines
+- Use Material-UI components as primary UI library
+- TailwindCSS for custom styling
+- Follow theme configuration in `src/theme/theme.ts`
+- Maintain consistent spacing and typography
+
+## Authentication Flow
+1. User signs in/up
+2. Custom claims set via cloud functions
+3. User profile created/fetched
+4. Role-based routing handled by RouteGuard
+
+## Error Handling
+- Always use try-catch blocks for async operations
+- Display user-friendly error messages
+- Log errors to console in development
+- Handle loading states appropriately
+
+## Form Validation
+- Required fields must be marked
+- Email validation for all email fields
+- Phone number formatting and validation
+- Date validation for bookings
+
+## API Integration Rules
+- Use environment variables for API keys
+- Implement rate limiting where necessary
+- Handle API errors gracefully
+- Cache responses where appropriate
+
+## Environment Variables
+Sensitive information and configuration should be stored in environment variables:
+
+Required Environment Variables:
+- `NEXT_PUBLIC_FIREBASE_API_KEY`
+- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+- `NEXT_PUBLIC_FIREBASE_APP_ID`
+- `NEXT_PUBLIC_APP_URL`
+- `NEXT_PUBLIC_ADMIN_EMAIL`
+- `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`
+- `SENDGRID_API_KEY`
+- `SENDGRID_WELCOME_TEMPLATE_ID`
+- `SENDGRID_VERIFICATION_TEMPLATE_ID`
+- `SENDGRID_RESET_PASSWORD_TEMPLATE_ID`
+- `SENDGRID_QUOTE_REQUEST_TEMPLATE_ID`
+- `SENDGRID_BOOKING_CONFIRMATION_TEMPLATE_ID`
+
+Note: Never commit `.env` files to version control. Use `.env.example` as a template.
+
+## Security Rules
+- Validate user permissions server-side
+- No sensitive data in client-side code
+- Implement request validation
+- Use secure session management
+- Store API keys and secrets in environment variables
+- Never expose sensitive information in documentation or version control
+
+## Testing Requirements
+- Unit tests for utility functions
+- Integration tests for API endpoints
+- Component testing for UI elements
+- End-to-end testing for critical flows
+
+## Performance Guidelines
+- Implement lazy loading for routes
+- Optimize image loading
+- Use proper indexing for Firestore queries
+- Minimize bundle size
+
+## Deployment Checklist
+- Environment variables configured
+- Firebase security rules updated
+- Database indexes created
+- Performance monitoring enabled
+
+## Maintenance
+- Regular dependency updates
+- Security patch implementation
+- Database backup procedures
+- Monitoring and alerting setup
+
+## Authentication & Service Accounts
+
+### Firebase
+- Project ID: charter-ef2c2
+- Authentication Methods:
+  - Email/Password
+  - Google OAuth
+- Security Rules:
+  - Firestore: Defined in `firestore.rules`
+  - Storage: Defined in `storage.rules`
+- Custom Claims:
+  - `userCode`: Unique identifier for the user
+  - `role`: User role (passenger/operator/agent/admin)
+
+### SendGrid
+- Email Templates:
+  - Welcome: `SENDGRID_WELCOME_TEMPLATE_ID`
+  - Verification: `SENDGRID_VERIFICATION_TEMPLATE_ID`
+  - Reset Password: `SENDGRID_RESET_PASSWORD_TEMPLATE_ID`
+  - Quote Request: `SENDGRID_QUOTE_REQUEST_TEMPLATE_ID`
+  - Booking Confirmation: `SENDGRID_BOOKING_CONFIRMATION_TEMPLATE_ID`
+- Email Types:
+  - Transactional emails for user actions
+  - Marketing emails for promotions
+  - System notifications for important updates
+
+### ReCAPTCHA
+- Site Key: `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`
+- Used for:
+  - Registration
+  - Password reset
+  - Contact forms
+- Security Level: High 
+
+## Visual Design Guidelines
+
+### Image-First Approach
+1. **Hero Sections**
+   - Full-width, high-resolution aircraft imagery
+   - Dynamic image sliders for featured destinations
+   - Parallax scrolling effects for immersive experience
+   - Overlay text with elegant typography
+   - Minimum image dimensions: 1920x1080px
+
+2. **Image Quality Standards**
+   - Aircraft images: Professional, high-resolution photos
+   - Destination images: Aerial and landmark shots
+   - Interior cabin shots: HDR photography
+   - Format: WebP with JPEG fallback
+   - Lazy loading for performance
+   - Responsive sizing with next/image
+
+3. **Color Palette**
+   - Primary: Deep navy (#1A2B3C)
+   - Secondary: Gold accent (#C4A962)
+   - Background: Pure white (#FFFFFF)
+   - Text: Rich black (#0A0A0A)
+   - Accent: Sky blue (#7CB9E8)
+   - Gradients: Subtle blue overlays for images
+
+4. **Typography**
+   - Follow typography guidelines defined in `src/styles/typography.md`
+   - Headings: Playfair Display (elegant, luxury feel)
+   - Body: Inter (modern, clean, readable)
+   - Navigation: Montserrat (clear, professional)
+   - Font sizes:
+     ```css
+     h1: 3.5rem (56px)
+     h2: 2.5rem (40px)
+     h3: 2rem (32px)
+     body: 1rem (16px)
+     small: 0.875rem (14px)
+     ```
+
+### Layout Components
+1. **Homepage**
+   - Full-screen hero with video/image background
+   - Prominent search/booking interface
+   - Featured destinations grid
+   - Aircraft showcase carousel
+   - Latest empty leg flights
+   - Testimonials with client photos
+   - News and updates section
+
+2. **Search Interface**
+   - Large, clear input fields
+   - Interactive map integration
+   - Real-time availability
+   - Price estimates
+   - Recently viewed flights
+   - Popular routes showcase
+
+3. **Aircraft Showcase**
+   - Grid layout with large images
+   - Quick view modals
+   - Detailed specifications
+   - Interior/exterior galleries
+   - 360° virtual tours where available
+   - Cabin configuration diagrams
+
+4. **Responsive Design**
+   - Mobile-first approach
+   - Breakpoints:
+     ```css
+     sm: 640px   // Mobile landscape
+     md: 768px   // Tablets
+     lg: 1024px  // Small laptops
+     xl: 1280px  // Desktops
+     2xl: 1536px // Large screens
+     ```
+
+### Interactive Elements
+1. **Animations**
+   - Subtle fade-ins on scroll
+   - Smooth transitions between states
+   - Loading states with branded animations
+   - Hover effects on cards and buttons
+
+2. **Buttons & CTAs**
+   - Primary: Solid with gold accent
+   - Secondary: Outlined with hover effect
+   - Tertiary: Text-only with underline
+   - All button text MUST be in UPPERCASE
+   - Size variations:
+     ```css
+     sm: px-4 py-2
+     md: px-6 py-3
+     lg: px-8 py-4
+     ```
+
+3. **Forms & Inputs**
+   - Floating labels
+   - Clear validation states
+   - Autocomplete suggestions
+   - Date/time pickers with range selection
+   - Progress indicators for multi-step forms
+
+### Content Presentation
+1. **Cards & Containers**
+   - Subtle shadows
+   - Rounded corners (12px)
+   - White backgrounds
+   - Hover states with scale transform
+   - Content hierarchy with clear spacing
+
+2. **Grid Systems**
+   - Featured: 3-column grid
+   - Gallery: 4-column masonry
+   - News: 2-column with featured article
+   - Testimonials: Carousel slider
+
+3. **Loading States**
+   - Branded skeleton screens
+   - Smooth transitions
+   - Progress indicators
+   - Placeholder content
+
+### Performance Considerations
+1. **Image Optimization**
+   - Automatic WebP conversion
+   - Responsive sizes
+   - Quality optimization
+   - Lazy loading
+   - Blur-up placeholder effect
+
+2. **Animation Performance**
+   - Use CSS transforms
+   - Optimize for 60fps
+   - Reduce layout shifts
+   - Respect reduced-motion preferences
+
+Note: All visual elements should maintain consistency with brand guidelines while ensuring optimal performance and accessibility standards.
+
+## Mobile Responsiveness Guidelines
+
+### Mobile-First Development
+1. **Breakpoint Strategy**
+   ```css
+   xs: 320px   // Small phones
+   sm: 640px   // Mobile landscape
+   md: 768px   // Tablets
+   lg: 1024px  // Small laptops
+   xl: 1280px  // Desktops
+   2xl: 1536px // Large screens
+   ```
+   - Always start with mobile layout first
+   - Use min-width media queries
+   - Test at each breakpoint during development
+   - Implement fluid typography scaling
+
+2. **Touch Targets**
+   - Minimum touch target size: 44x44px
+   - Adequate spacing between interactive elements (minimum 8px)
+   - Clear visual feedback on touch interactions
+   - Avoid double-tap zoom issues with proper viewport meta tags
+   - Implement touch-friendly hover states
+
+3. **Performance Requirements**
+   - Maximum initial load time on 3G: 3 seconds
+   - Core Web Vitals targets:
+     - LCP (Largest Contentful Paint): < 2.5s
+     - FID (First Input Delay): < 100ms
+     - CLS (Cumulative Layout Shift): < 0.1
+   - Implement lazy loading for below-fold images
+   - Use responsive image srcsets
+   - Minimize main thread blocking
+
+4. **Layout Rules**
+   - No horizontal scrolling on mobile devices
+   - Maintain minimum 16px font size for body text
+   - Use relative units (rem, em, vh, vw) instead of fixed pixels
+   - Implement proper safe area insets for notched devices
+   - Stack columns on mobile instead of horizontal layouts
+   - Hide non-essential content on smaller screens
+
+5. **Navigation Patterns**
+   - Implement hamburger menu for mobile navigation
+   - Bottom navigation for frequently used actions
+   - Sticky headers should not exceed 56px height on mobile
+   - Ensure swipe gestures don't conflict with native browser gestures
+   - Provide clear back navigation
+
+6. **Form Optimization**
+   - Use appropriate input types (tel, email, number)
+   - Implement autocomplete where appropriate
+   - Show/hide virtual keyboard appropriately
+   - Ensure form elements are not obscured by virtual keyboard
+   - Maintain proper form validation feedback
+   - Use full-width form controls on mobile
+
+7. **Content Adaptation**
+   - Truncate long text appropriately
+   - Scale images and media content responsively
+   - Adjust typography hierarchy for smaller screens
+   - Implement responsive data tables
+   - Use appropriate content padding (16px minimum)
+
+8. **Testing Requirements**
+   - Test on actual devices, not just emulators
+   - Required test devices:
+     - iOS (latest iPhone and iPad)
+     - Android (small and large screen devices)
+     - Tablet devices (portrait and landscape)
+   - Test in both portrait and landscape orientations
+   - Verify functionality with different input methods
+   - Test with varying network conditions
+
+9. **Accessibility for Mobile**
+   - Maintain color contrast ratios (4.5:1 minimum)
+   - Ensure touch targets are accessible
+   - Test with screen readers (VoiceOver, TalkBack)
+   - Implement proper ARIA labels
+   - Support landscape and portrait orientations
+   - Account for text resizing up to 200%
+
+10. **Mobile-Specific Features**
+    - Implement app install banners appropriately
+    - Handle offline functionality gracefully
+    - Support native sharing features
+    - Optimize for mobile search
+    - Handle device orientation changes smoothly
+    - Support pull-to-refresh where appropriate
+
+11. **Development Workflow**
+    - Use mobile-first CSS organization
+    - Implement CSS containment for performance
+    - Regular testing on mobile devices during development
+    - Performance monitoring for mobile metrics
+    - Regular lighthouse mobile audits
+
+12. **Quality Assurance**
+    - Automated testing for responsive breakpoints
+    - Visual regression testing across devices
+    - Performance benchmarking on mobile
+    - Regular UX testing on mobile devices
+    - Cross-browser mobile testing 
+
+## Mobile App Development Guidelines
+
+### Build Process Requirements
+
+1. **Progressive Web App (PWA)**
+   - Implement service workers for offline functionality
+   - Configure web app manifest
+   - Support push notifications
+   - Maintain proper icon sizes
+   - Enable app installation
+
+2. **Performance Targets**
+   - First Contentful Paint (FCP): < 1.8s
+   - Time to Interactive (TTI): < 3.8s
+   - First Input Delay (FID): < 100ms
+   - Cumulative Layout Shift (CLS): < 0.1
+   - Lighthouse Performance Score: > 90
+
+3. **Mobile-First Development**
+   ```css
+   /* Breakpoint Strategy */
+   xs: 320px   // Small phones
+   sm: 640px   // Mobile landscape
+   md: 768px   // Tablets
+   lg: 1024px  // Small laptops
+   xl: 1280px  // Desktops
+   2xl: 1536px // Large screens
+   ```
+
+4. **Touch Interactions**
+   - Minimum touch target size: 44x44px
+   - Proper spacing between interactive elements (16px)
+   - Clear visual feedback on interactions
+   - Support for gesture navigation
+   - Handle keyboard interactions properly
+
+5. **Platform Requirements**
+   - iOS: Support iOS 14.0+
+   - Android: Support API Level 24+ (Android 7.0+)
+   - PWA: Support latest 2 versions of major browsers
+
+6. **Security Requirements**
+   - Implement SSL/TLS
+   - Enable app transport security
+   - Secure local storage
+   - Handle deep linking securely
+   - Implement certificate pinning
+
+7. **Testing Requirements**
+   - Device testing matrix
+   - Platform-specific testing
+   - Offline capabilities
+   - Performance benchmarks
+   - Security compliance
+
+8. **Asset Requirements**
+   - High-resolution images (2x, 3x)
+   - Optimized for mobile devices
+   - Support dark mode
+   - Proper image formats (WebP with fallbacks)
+   - Lazy loading implementation
+
+9. **Accessibility Requirements**
+   - WCAG 2.1 Level AA compliance
+   - Support screen readers
+   - Proper color contrast
+   - Keyboard navigation
+   - Touch target accessibility
+
+10. **Code Organization**
+    ```typescript
+    src/
+    ├── components/
+    │   ├── mobile/       // Mobile-specific components
+    │   └── shared/       // Shared components
+    ├── hooks/
+    │   ├── mobile/       // Mobile-specific hooks
+    │   └── shared/       // Shared hooks
+    ├── styles/
+    │   ├── mobile/       // Mobile-specific styles
+    │   └── shared/       // Shared styles
+    └── utils/
+        ├── mobile/       // Mobile-specific utilities
+        └── shared/       // Shared utilities
+    ```
+
+11. **Mobile Features Integration**
+    ```typescript
+    interface MobileFeatures {
+      pushNotifications: boolean;
+      offlineMode: boolean;
+      locationServices: boolean;
+      biometricAuth: boolean;
+      deepLinking: boolean;
+      fileSharing: boolean;
+      cameraAccess: boolean;
+    }
+    ```
+
+12. **Build Process Integration**
+    ```yaml
+    mobile_build:
+      stages:
+        - lint
+        - test
+        - build_ios
+        - build_android
+        - deploy_testflight
+        - deploy_play_store
+    ```
+
+13. **Environment Configuration**
+    ```env
+    # iOS
+    APPLE_ID=
+    TEAM_ID=
+    BUNDLE_ID=co.za.charter
+    PROVISIONING_PROFILE=
+
+    # Android
+    KEYSTORE_PATH=
+    KEYSTORE_PASSWORD=
+    KEY_ALIAS=
+    KEY_PASSWORD=
+
+    # Shared
+    FIREBASE_CONFIG=
+    SENTRY_DSN=
+    API_URL=
+    ```
+
+14. **Quality Assurance**
+    - Automated testing for responsive breakpoints
+    - Visual regression testing across devices
+    - Performance benchmarking on mobile
+    - Regular UX testing on mobile devices
+    - Cross-browser mobile testing
+
+15. **Documentation Requirements**
+    - Mobile-specific component documentation
+    - Platform-specific implementation details
+    - Testing procedures for mobile features
+    - Deployment guides for iOS and Android
+    - Troubleshooting guides 
+
+    The platform we are building together is a private jet charter marketplace called Charter. Think of it like Airbnb for private jet flights.
+
+Platform overview.
+
+Charter acts as the intermediary that connects clients to aircraft operators and aircraft operators to clients. A client is a passenger, agent or broker. An operator is an air operator certificate holder. For the operator, Charter effectively acts as an aviation broker. For the passenger, agent/broker Charter effectively acts as a marketplace that makes it easy and convenient for them to find and manage private flights for themselves or their clients. 
+
+The core benefit for the operator is to access a large client base at effectively no cost to them and without needing to do any marketing.
+
+The core benefit for the purchaser is that they access a wide selection of operators and receive multiple quotes with just one request.
+
+Charter takes a small commission 3% added to the operators quote for this service.
+
+
+Here is the basic flow of operations for the average flight booking:
+
+(1a) An operator signs up to charter (1b) and offers up their available fleet of aircraft through their Charter backend.
+
+(2a) A passenger, Agent / Broker, will use Charter to request the specific flight that they are looking for. Routing, date, number of pax, one way or return. (2b) The buyer signs up to action their request.
+
+(3a) The operator receives the flight request via the Charter platform (3b) and submits a price / quote. (3c) The Charter commission of 3% is added to the quote. (3d) The quote is issued to the client via the charter platform.
+
+(4a) The client receives the operator's quote via the platform. (4b)The client accepts the quote. (4c) The system alerts the operator that a quote has been accepted. (4d) The client is required to upload all passenger information. (4e)The client records all passenger information in the Charter backend. 
+
+(5a) The operator receives the accepted quote via the platform (5b) and acknowledges the client's acceptance. (5c) At this point, the flight is created in the system but is provisional pending payment.
+
+(6a) The Charter platform creates a proforma invoice on behalf of the operator and issues it to Charter. (6b) The Charter platform issues an invoice to the client via the platform.
+
+(7a) The client makes a manual transfer payment. (7b) Charter admin manually checks for the payment in the bank account (7c) and admin manually marks the flight as paid. (7d) The flight is now active in the system. (7e) E-tickets are issued to the client, one for each passenger on the flight.
+
+(8a) Charter admin makes a manual bank payment to the operator. (8b) Admin, mark the invoice as paid. (8c) The operator is notified of the payment.
+
+(9a) After the flight date, the flight is marked as complete on the platform. (9b) The client is asked to rate the service of the operator. (9c) The ratings are recorded in the platform.
+
+This concludes a flight in its most basic form.
+
+## Notification Standards
+
+### Notification Types
+
+1. **Toast Notifications** (`react-hot-toast`)
+   - For temporary, non-critical notifications
+   - Auto-dismiss after duration
+   - Used for action feedback (success, error, etc.)
+   - Positioned in top-right corner
+   - Stack vertically with spacing
+   - Maximum of 3 visible at once
+
+2. **Banner Notifications** (`@/components/ui/Banner`)
+   - For persistent, important messages
+   - Require user action to dismiss
+   - Support action buttons
+   - Used for:
+     - Email verification
+     - System announcements
+     - Important warnings
+     - Required actions
+
+   **Variants**
+   ```typescript
+   type BannerVariant = 'info' | 'success' | 'warning' | 'error';
+   ```
+
+   **Styling**
+   ```css
+   /* Info Banner */
+   background: #EFF6FF
+   border-color: #60A5FA
+   color: #1D4ED8
+
+   /* Success Banner */
+   background: #F0FDF4
+   border-color: #34D399
+   color: #047857
+
+   /* Warning Banner */
+   background: #FFFBEB
+   border-color: #FBBF24
+   color: #B45309
+
+   /* Error Banner */
+   background: #FEF2F2
+   border-color: #F87171
+   color: #B91C1C
+   ```
+
+   **Usage Example**
+   ```tsx
+   <Banner
+     variant="info"
+     action={{
+       label: "TAKE ACTION",
+       onClick: handleAction,
+       loading: isLoading
+     }}
+     onDismiss={handleDismiss}
+   >
+     Important message for the user
+   </Banner>
+   ```
+
+   **Implementation Requirements**
+   - Must be responsive
+   - Support dark mode
+   - Include proper ARIA labels
+   - Support action buttons
+   - Support dismiss functionality
+   - Handle loading states
+
+3. **Usage Guidelines**
+   - Use toasts for transient feedback
+   - Use banners for persistent messages
+   - Never stack more than 2 banners
+   - Order banners by priority (error > warning > info)
+   - Ensure all notifications are dismissible
+   - Include clear action items when needed

@@ -7,11 +7,13 @@ import { auth, db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import EmailVerificationBanner from '@/components/EmailVerificationBanner';
 import OperatorOnboardingBanner from '@/components/OperatorOnboardingBanner';
+import AppDownloadBanner from '@/components/ui/AppDownloadBanner';
 import SideNav from '@/components/SideNav';
 import { UserRole } from '@/lib/userCode';
 import { UserStatus } from '@/types/user';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { Box, Container } from '@mui/material';
+import { Box, Container, IconButton, Tooltip } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 import tokens from '@/styles/tokens';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
 
@@ -27,11 +29,7 @@ interface UserData {
   hasAircraft: boolean;
 }
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const muiTheme = useMuiTheme();
@@ -40,10 +38,10 @@ export default function DashboardLayout({
   const [isSideNavMini, setIsSideNavMini] = useState(false);
   // Width of the sidebar drawer (to offset content when open on mobile)
   const expandedSideNavWidth = muiTheme.spacing(32); // 256px
-  const collapsedSideNavWidth = muiTheme.spacing(9); // 72px
+  const collapsedSideNavWidth = muiTheme.spacing(6); // 48px - ultra compact
 
-  const toggleSideNavMini = () => setIsSideNavMini(prev => !prev);
-  const toggleMobileMenu = () => setIsMobileMenuOpen(prev => !prev);
+  const toggleSideNavMini = () => setIsSideNavMini((prev) => !prev);
+  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -87,70 +85,114 @@ export default function DashboardLayout({
   }
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
-      bgcolor: 'background.default'
-    }}>
-      {/* Dashboard header removed; SideNav will handle navigation */}
+    <Box
+      sx={{
+        minHeight: '100vh',
+        bgcolor: 'background.default',
+      }}
+    >
+      {/* Mobile Menu Button - only visible on small screens */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: muiTheme.spacing(2),
+          left: muiTheme.spacing(2),
+          zIndex: 25,
+          display: { xs: 'block', lg: 'none' },
+        }}
+      >
+        <Tooltip title="Menu" placement="right">
+          <IconButton
+            aria-label="Open menu"
+            onClick={toggleMobileMenu}
+            sx={{
+              bgcolor: 'background.paper',
+              boxShadow: muiTheme.shadows[3],
+              color: 'primary.main',
+              borderRadius: '50%',
+              width: 40,
+              height: 40,
+              '&:hover': {
+                bgcolor: 'action.hover',
+              },
+            }}
+            size="medium"
+          >
+            <MenuIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Box>
+
       {/* Side nav layout without TopNav */}
-      <Box sx={{ 
-        pt: 0, 
-        display: 'flex', 
-        minHeight: '100vh', 
-        position: 'relative'
-      }}>
+      <Box
+        sx={{
+          pt: 0,
+          display: 'flex',
+          minHeight: '100vh',
+          position: 'relative',
+        }}
+      >
         {/* Mobile menu backdrop */}
         {isMobileMenuOpen && (
-          <Box 
+          <Box
             sx={{
               position: 'fixed',
               inset: 0,
               bgcolor: 'rgba(0, 0, 0, 0.5)',
               transition: 'opacity 300ms',
               display: { xs: 'block', lg: 'none' },
-              zIndex: 20
+              zIndex: 20,
             }}
             onClick={() => setIsMobileMenuOpen(false)}
           />
         )}
 
-        {/* SideNav container: hidden on mobile, flows on desktop */}
-        <Box sx={{
-          display: { xs: 'none', lg: 'flex' },
-          flexDirection: 'column',
-          flexShrink: 0,
-          position: { xs: 'fixed', lg: 'static' },
-          inset: { xs: '0 auto 0 0', lg: 'auto' },
-          transform: { 
-            xs: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)', 
-            lg: 'none' 
-          },
-          transition: 'transform 300ms ease-in-out',
-          zIndex: { xs: 30, lg: 'auto' },
-          height: '100%'
-        }}>
-          {userData && 
-            <SideNav 
-              userRole={userData.role} 
-              isMobile={isMobileMenuOpen} 
-              onCloseMobile={() => setIsMobileMenuOpen(false)} 
-              mini={isSideNavMini} 
-              onToggleMini={toggleSideNavMini} 
-            />}
+        {/* SideNav container: hidden on mobile unless opened, visible on desktop */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            flexShrink: 0,
+            position: { xs: 'fixed', lg: 'static' },
+            inset: { xs: '0 auto 0 0', lg: 'auto' },
+            transform: {
+              xs: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)',
+              lg: 'none',
+            },
+            transition: 'transform 300ms ease-in-out',
+            zIndex: { xs: 30, lg: 'auto' },
+            height: '100%',
+          }}
+        >
+          {userData && (
+            <SideNav
+              userRole={userData.role}
+              isMobile={isMobileMenuOpen}
+              onCloseMobile={() => setIsMobileMenuOpen(false)}
+              mini={isSideNavMini}
+              onToggleMini={toggleSideNavMini}
+            />
+          )}
         </Box>
 
         {/* Main content */}
-        <Box sx={{ 
-          flexGrow: 1, 
-          position: 'relative',
-          overflow: 'auto',
-          // Using flex layout: no ml needed since nav now flows in layout
-          pt: { xs: muiTheme.spacing(8), lg: muiTheme.spacing(4) } // Adjusted lg padding top
-        }}>
-          <Container maxWidth={false} disableGutters sx={{ 
-            py: 3,
-            px: muiTheme.spacing(4),
-          }}>
+        <Box
+          sx={{
+            flexGrow: 1,
+            position: 'relative',
+            overflow: 'auto',
+            width: '100%',
+            pt: { xs: muiTheme.spacing(8), lg: muiTheme.spacing(4) }, // Adjusted lg padding top
+          }}
+        >
+          <Container
+            maxWidth={false}
+            disableGutters
+            sx={{
+              py: 3,
+              px: muiTheme.spacing(4),
+            }}
+          >
             {userData && !userData.emailVerified && (
               <EmailVerificationBanner
                 email={userData.email}
@@ -175,10 +217,30 @@ export default function DashboardLayout({
                 isEmailVerified={userData.emailVerified}
               />
             )}
+
+            {/* App Download Banner - Shown only on mobile devices */}
+            <Box sx={{ mb: 2 }}>
+              <AppDownloadBanner variant="compact" persistentId="dashboard-app-download" />
+            </Box>
+
             {children}
           </Container>
         </Box>
       </Box>
+
+      {/* Fixed app download banner for desktop */}
+      <Box
+        sx={{
+          position: 'fixed',
+          bottom: 0,
+          right: 0,
+          zIndex: 1200,
+          width: { xs: '100%', sm: '300px' },
+          display: { xs: 'none', md: 'block' },
+        }}
+      >
+        <AppDownloadBanner variant="full" persistentId="dashboard-app-download-fixed" />
+      </Box>
     </Box>
   );
-} 
+}

@@ -10,21 +10,13 @@ import DarkModeToggle from '@/components/DarkModeToggle';
 import Input from '@/components/ui/Input';
 import PhoneInput from '@/components/ui/PhoneInput';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import {
-  Box,
-  Typography,
-  Button,
-  Grid,
-  Paper,
-  Alert,
-  Chip,
-  Stack,
-  Container
-} from '@mui/material';
+import Link from 'next/link';
+import { Box, Typography, Button, Grid, Paper, Alert, Chip, Stack, Container } from '@mui/material';
 import { UserRole } from '@/lib/userCode';
+import { Business as BusinessIcon } from '@mui/icons-material';
 
 interface UserProfile {
-  uid: string;        // Firebase Authentication UID
+  uid: string; // Firebase Authentication UID
   email: string;
   firstName: string;
   lastName: string;
@@ -100,7 +92,7 @@ export default function ProfilePage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -108,7 +100,7 @@ export default function ProfilePage() {
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setPasswordData(prev => ({
+    setPasswordData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -128,19 +120,28 @@ export default function ProfilePage() {
         firstName: formData.firstName,
         lastName: formData.lastName,
         company: profile.role === 'operator' || profile.role === 'agent' ? formData.company : null,
-        phoneNumber: profile.role === 'operator' || profile.role === 'agent' ? formData.phoneNumber : null,
+        phoneNumber:
+          profile.role === 'operator' || profile.role === 'agent' ? formData.phoneNumber : null,
         updatedAt: new Date(),
       });
 
-      setProfile(prev => prev ? {
-        ...prev,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        company: profile.role === 'operator' || profile.role === 'agent' ? formData.company : null,
-        phoneNumber: profile.role === 'operator' || profile.role === 'agent' ? formData.phoneNumber : null,
-        updatedAt: new Date(),
-      } : null);
-      
+      setProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              company:
+                profile.role === 'operator' || profile.role === 'agent' ? formData.company : null,
+              phoneNumber:
+                profile.role === 'operator' || profile.role === 'agent'
+                  ? formData.phoneNumber
+                  : null,
+              updatedAt: new Date(),
+            }
+          : null
+      );
+
       setIsEditing(false);
       setSuccess('Profile updated successfully');
     } catch (error) {
@@ -172,7 +173,7 @@ export default function ProfilePage() {
       }
 
       await changePassword(passwordData.currentPassword, passwordData.newPassword);
-      
+
       setPasswordData({
         currentPassword: '',
         newPassword: '',
@@ -188,19 +189,12 @@ export default function ProfilePage() {
   };
 
   if (loading) {
-    return (
-      <LoadingSpinner fullscreen />
-    );
+    return <LoadingSpinner fullscreen />;
   }
 
   if (!profile) {
     return (
-      <Typography 
-        color="error" 
-        variant="h6" 
-        align="center" 
-        sx={{ mt: 4 }}
-      >
+      <Typography color="error" variant="h6" align="center" sx={{ mt: 4 }}>
         Profile not found
       </Typography>
     );
@@ -214,40 +208,60 @@ export default function ProfilePage() {
         </Typography>
         <Stack spacing={1}>
           <Typography variant="body2" color="text.secondary">
-            <Box component="span" fontWeight="medium">User Code:</Box> {profile.userCode}
+            <Box component="span" fontWeight="medium">
+              User Code:
+            </Box>{' '}
+            {profile.userCode}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            <Box component="span" fontWeight="medium">Account Type:</Box> {' '}
-            <Box component="span" sx={{ textTransform: 'capitalize' }}>{profile.role}</Box>
+            <Box component="span" fontWeight="medium">
+              Account Type:
+            </Box>{' '}
+            <Box component="span" sx={{ textTransform: 'capitalize' }}>
+              {profile.role}
+            </Box>
           </Typography>
         </Stack>
       </Box>
 
       <Stack spacing={3}>
         {(error || success) && (
-          <Alert 
-            severity={error ? "error" : "success"}
-            sx={{ mb: 2 }}
-          >
+          <Alert severity={error ? 'error' : 'success'} sx={{ mb: 2 }}>
             {error || success}
           </Alert>
         )}
 
         {/* User Profile Information Section */}
         <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
+          >
             <Typography variant="h6" fontWeight="medium" color="text.primary">
               User Profile Information
             </Typography>
-            <Button
-              onClick={() => setIsEditing(true)}
-              variant="outlined"
-              color="primary"
-              size="medium"
-              disabled={isEditing}
-            >
-              Edit Profile
-            </Button>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              {(profile.role === 'operator' || profile.role === 'agent') && (
+                <Button
+                  component={Link}
+                  href="/dashboard/company-profile"
+                  variant="outlined"
+                  color="secondary"
+                  size="medium"
+                  startIcon={<BusinessIcon />}
+                >
+                  Company Profile
+                </Button>
+              )}
+              <Button
+                onClick={() => setIsEditing(true)}
+                variant="outlined"
+                color="primary"
+                size="medium"
+                disabled={isEditing}
+              >
+                Edit Profile
+              </Button>
+            </Box>
           </Box>
 
           {isEditing ? (
@@ -276,7 +290,9 @@ export default function ProfilePage() {
                 <Grid item xs={12} component="div">
                   <PhoneInput
                     value={formData.phoneNumber}
-                    onChange={(value) => handleChange({ target: { name: 'phoneNumber', value } } as any)}
+                    onChange={(value) =>
+                      handleChange({ target: { name: 'phoneNumber', value } } as any)
+                    }
                     required={profile.role === 'operator' || profile.role === 'agent'}
                     helperText="Your contact phone number"
                   />
@@ -294,7 +310,7 @@ export default function ProfilePage() {
                   </Grid>
                 )}
               </Grid>
-              
+
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
                 <Button
                   type="button"
@@ -304,12 +320,7 @@ export default function ProfilePage() {
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  disabled={loading}
-                >
+                <Button type="submit" variant="contained" color="primary" disabled={loading}>
                   {loading ? 'Updating...' : 'Update Profile'}
                 </Button>
               </Box>
@@ -329,9 +340,7 @@ export default function ProfilePage() {
                   <Typography variant="subtitle2" color="text.secondary">
                     Phone Number
                   </Typography>
-                  <Typography variant="body1">
-                    {profile.phoneNumber || 'Not provided'}
-                  </Typography>
+                  <Typography variant="body1">{profile.phoneNumber || 'Not provided'}</Typography>
                 </Stack>
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -368,7 +377,7 @@ export default function ProfilePage() {
                   <Typography variant="body1">{profile.userCode}</Typography>
                 </Stack>
               </Grid>
-              
+
               {(profile.role === 'operator' || profile.role === 'agent') && (
                 <Grid item xs={12} sm={6}>
                   <Stack spacing={1}>
@@ -379,38 +388,40 @@ export default function ProfilePage() {
                   </Stack>
                 </Grid>
               )}
-              
+
               <Grid item xs={12} sm={6}>
                 <Stack spacing={1}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Email Verification
                   </Typography>
-                  <Chip 
-                    label={profile.emailVerified ? 'Verified' : 'Not Verified'} 
+                  <Chip
+                    label={profile.emailVerified ? 'Verified' : 'Not Verified'}
                     color={profile.emailVerified ? 'success' : 'warning'}
                     size="small"
                   />
                 </Stack>
               </Grid>
-              
+
               <Grid item xs={12} sm={6}>
                 <Stack spacing={1}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Account Created
                   </Typography>
-                  <Typography variant="body1">
-                    {profile.createdAt.toLocaleDateString()}
-                  </Typography>
+                  <Typography variant="body1">{profile.createdAt.toLocaleDateString()}</Typography>
                 </Stack>
               </Grid>
-              
+
               <Grid item xs={12} sm={6}>
                 <Stack spacing={1}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Last Updated
                   </Typography>
                   <Typography variant="body1">
-                    {profile.updatedAt.toLocaleDateString()} at {profile.updatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {profile.updatedAt.toLocaleDateString()} at{' '}
+                    {profile.updatedAt.toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
                   </Typography>
                 </Stack>
               </Grid>
@@ -420,7 +431,9 @@ export default function ProfilePage() {
 
         {/* Password Maintenance Section */}
         <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
+          >
             <Typography variant="h6" fontWeight="medium" color="text.primary">
               Password Maintenance
             </Typography>
@@ -466,7 +479,7 @@ export default function ProfilePage() {
                   />
                 </Grid>
                 <Grid item xs={12}>
-                  <PasswordStrengthChecker 
+                  <PasswordStrengthChecker
                     password={passwordData.newPassword}
                     isVisible={isPasswordFocused || passwordData.newPassword.length > 0}
                   />
@@ -481,13 +494,16 @@ export default function ProfilePage() {
                     required
                     helperText="Re-enter your new password"
                     autoComplete="new-password"
-                    error={passwordData.confirmNewPassword !== '' && 
-                           passwordData.newPassword !== passwordData.confirmNewPassword 
-                           ? "Passwords don't match" : ""}
+                    error={
+                      passwordData.confirmNewPassword !== '' &&
+                      passwordData.newPassword !== passwordData.confirmNewPassword
+                        ? "Passwords don't match"
+                        : ''
+                    }
                   />
                 </Grid>
               </Grid>
-              
+
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
                 <Button
                   type="button"
@@ -497,12 +513,7 @@ export default function ProfilePage() {
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  disabled={loading}
-                >
+                <Button type="submit" variant="contained" color="primary" disabled={loading}>
                   {loading ? 'Updating...' : 'Update Password'}
                 </Button>
               </Box>
@@ -522,4 +533,4 @@ export default function ProfilePage() {
       </Stack>
     </Box>
   );
-} 
+}

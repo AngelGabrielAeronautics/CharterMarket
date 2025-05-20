@@ -1,26 +1,33 @@
 import { db } from '@/lib/firebase';
-import { collection, addDoc, Timestamp, query, where, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
+import {
+  collection,
+  addDoc,
+  Timestamp,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  doc,
+  getDoc,
+  updateDoc,
+} from 'firebase/firestore';
 import { generateBookingId } from '@/lib/serials';
 import { Booking } from '@/types/booking';
-import { FlightRequest } from '@/types/flight';
-import { Quote } from '@/types/quote';
+import { QuoteRequest, Offer as Quote } from '@/types/flight';
 
 /**
- * Create a new booking based on a flight request and quote
+ * Create a new booking based on a quote request and quote
  */
-export const createBooking = async (
-  request: FlightRequest,
-  quote: Quote
-): Promise<string> => {
+export const createBooking = async (request: QuoteRequest, quote: Quote): Promise<string> => {
   try {
-    const bookingCode = generateBookingId(request.operatorId);
+    const bookingCode = generateBookingId(quote.operatorId);
     const bookingData: Omit<Booking, 'id'> = {
       bookingId: bookingCode,
       requestId: request.id,
       requestCode: request.requestCode,
-      quoteId: quote.id,
-      operatorId: request.operatorId,
-      clientId: request.clientId,
+      quoteId: quote.offerId,
+      operatorId: quote.operatorId,
+      clientId: request.clientUserCode,
       routing: request.routing,
       passengerCount: request.passengerCount,
       cabinClass: request.cabinClass,
@@ -41,9 +48,7 @@ export const createBooking = async (
 /**
  * Fetch all bookings for a given client
  */
-export const getClientBookings = async (
-  clientId: string
-): Promise<Booking[]> => {
+export const getClientBookings = async (clientId: string): Promise<Booking[]> => {
   try {
     const bookingsQuery = query(
       collection(db, 'bookings'),
@@ -51,7 +56,7 @@ export const getClientBookings = async (
       orderBy('createdAt', 'desc')
     );
     const snapshot = await getDocs(bookingsQuery);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Booking);
   } catch (error) {
     console.error('Error fetching client bookings:', error);
     throw new Error('Failed to fetch client bookings');
@@ -61,9 +66,7 @@ export const getClientBookings = async (
 /**
  * Fetch all bookings for a given operator
  */
-export const getOperatorBookings = async (
-  operatorId: string
-): Promise<Booking[]> => {
+export const getOperatorBookings = async (operatorId: string): Promise<Booking[]> => {
   try {
     const bookingsQuery = query(
       collection(db, 'bookings'),
@@ -71,17 +74,15 @@ export const getOperatorBookings = async (
       orderBy('createdAt', 'desc')
     );
     const snapshot = await getDocs(bookingsQuery);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-  } catch (error) {
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Booking);
+  } catch (error: any) {
     console.error('Error fetching operator bookings:', error);
-    throw new Error('Failed to fetch operator bookings');
+    throw new Error(error.message || 'Failed to fetch operator bookings');
   }
 };
 
 // Add helper to fetch a single booking by document ID
-export const getBookingById = async (
-  bookingDocId: string
-): Promise<Booking | null> => {
+export const getBookingById = async (bookingDocId: string): Promise<Booking | null> => {
   try {
     const bookingRef = doc(db, 'bookings', bookingDocId);
     const bookingSnap = await getDoc(bookingRef);
@@ -93,4 +94,29 @@ export const getBookingById = async (
     console.error('Error fetching booking:', error);
     throw new Error('Failed to fetch booking');
   }
-}; 
+};
+
+/**
+ * Update the status of a booking
+ */
+export const updateBookingStatus = async (
+  bookingId: string,
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
+): Promise<void> => {
+  try {
+    const bookingRef = doc(db, 'bookings', bookingId);
+    const bookingSnap = await getDoc(bookingRef);
+
+    if (!bookingSnap.exists()) {
+      throw new Error('Booking not found');
+    }
+
+    await updateDoc(bookingRef, {
+      status,
+      updatedAt: Timestamp.now(),
+    });
+  } catch (error) {
+    console.error('Error updating booking status:', error);
+    throw new Error('Failed to update booking status');
+  }
+};
