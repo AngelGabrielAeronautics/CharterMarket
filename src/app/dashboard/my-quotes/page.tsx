@@ -25,7 +25,7 @@ import {
 } from '@mui/material';
 import { EyeIcon } from 'lucide-react'; // Or a suitable MUI icon
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '@/firebase/firebaseConfig';
+import { db } from '@/lib/firebase';
 
 export default function MySubmittedOffersPage() {
   const { user } = useAuth();
