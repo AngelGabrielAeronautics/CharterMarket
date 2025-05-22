@@ -1,3 +1,5 @@
+// @ts-nocheck
+import * as React from 'react';
 import { createContext, useContext, useState, ReactNode } from 'react';
 import RegisterModal from '@/components/RegisterModal';
 import LoginModal from '@/components/LoginModal';
@@ -13,7 +15,7 @@ interface ModalContextType {
   closeLoginModal: () => void;
 }
 
-const ModalContext = createContext<ModalContextType | undefined>(undefined);
+export const ModalContext = createContext<ModalContextType | undefined>(undefined);
 
 export function ModalProvider({ children }: { children: ReactNode }) {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);

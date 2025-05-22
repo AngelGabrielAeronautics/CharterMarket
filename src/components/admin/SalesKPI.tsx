@@ -147,11 +147,14 @@ export default function SalesKPI() {
           </Tooltip>
         </Box>
       </Box>
-
       {/* Main KPI Cards */}
       <Grid container spacing={3}>
         {/* Revenue Summary */}
-        <Grid item xs={12} md={8}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 8
+          }}>
           <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
             <Box
               sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
@@ -167,7 +170,11 @@ export default function SalesKPI() {
             </Box>
 
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     Total Revenue (Year to Date)
@@ -217,7 +224,11 @@ export default function SalesKPI() {
                 </Box>
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Monthly Revenue Trend
@@ -248,7 +259,11 @@ export default function SalesKPI() {
         </Grid>
 
         {/* Key Metrics */}
-        <Grid item xs={12} md={4}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 4
+          }}>
           <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
             <Typography variant="h6" fontWeight="medium" gutterBottom>
               Key Metrics
@@ -256,7 +271,7 @@ export default function SalesKPI() {
 
             <Box sx={{ mt: 2 }}>
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid size={6}>
                   <Box>
                     <Typography variant="body2" color="text.secondary">
                       Bookings
@@ -275,7 +290,7 @@ export default function SalesKPI() {
                   </Box>
                 </Grid>
 
-                <Grid item xs={6}>
+                <Grid size={6}>
                   <Box>
                     <Typography variant="body2" color="text.secondary">
                       New Customers
@@ -294,7 +309,7 @@ export default function SalesKPI() {
                   </Box>
                 </Grid>
 
-                <Grid item xs={6}>
+                <Grid size={6}>
                   <Box>
                     <Typography variant="body2" color="text.secondary">
                       Avg. Booking Value
@@ -305,7 +320,7 @@ export default function SalesKPI() {
                   </Box>
                 </Grid>
 
-                <Grid item xs={6}>
+                <Grid size={6}>
                   <Box>
                     <Typography variant="body2" color="text.secondary">
                       Conversion Rate

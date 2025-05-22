@@ -105,6 +105,16 @@ export default function Header() {
 
           {!loading && profile ? (
             <>
+              {/* Direct link to the user's dashboard */}
+              <Button
+                component={Link}
+                href="/dashboard"
+                color="inherit"
+                startIcon={<DashboardIcon />}
+                sx={{ textTransform: 'none' }}
+              >
+                Dashboard
+              </Button>
               <Button
                 ref={anchorRef}
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}

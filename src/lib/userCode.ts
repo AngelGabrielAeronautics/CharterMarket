@@ -1,4 +1,4 @@
-import { nanoid } from 'nanoid';
+import { nanoid, customAlphabet } from 'nanoid';
 
 /**
  * Valid user roles in the system
@@ -29,7 +29,10 @@ export function generateUserCode({ role, lastName, company }: GenerateUserCodePa
   const identifier = role === 'operator' || role === 'agent' 
     ? (company || 'UNKNOWN').toUpperCase().replace(/\s+/g, '').slice(0, 4)
     : lastName.toUpperCase().replace(/\s+/g, '').slice(0, 4);
-  const randomSuffix = nanoid(4).toUpperCase();
+  // Define an alphanumeric alphabet for nanoid
+  const alphanumeric = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const customNanoid = customAlphabet(alphanumeric, 4);
+  const randomSuffix = customNanoid().toUpperCase(); // Ensure uppercase, though alphabet is already uppercase
   
   return `${prefix}-${identifier}-${randomSuffix}`;
 }
@@ -71,8 +74,8 @@ export function validateUserCode(code: string): boolean {
   // Validate identifier (4 characters)
   if (identifier.length !== 4) return false;
   
-  // Validate suffix (4 characters)
-  if (suffix.length !== 4) return false;
+  // Validate suffix (4 uppercase alphanumeric characters)
+  if (suffix.length !== 4 || !/^[A-Z0-9]{4}$/.test(suffix)) return false;
   
   return true;
 }

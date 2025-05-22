@@ -46,7 +46,7 @@ export default function AircraftDetails({ aircraft }: AircraftDetailsProps) {
                 </Grid>
                 <Grid size={6}>
                   <Typography variant="caption" color="text.secondary">Manufacturer</Typography>
-                  <Typography variant="body2">{aircraft.manufacturer}</Typography>
+                  <Typography variant="body2">{aircraft.make}</Typography>
                 </Grid>
                 <Grid size={6}>
                   <Typography variant="caption" color="text.secondary">Model</Typography>
@@ -63,12 +63,12 @@ export default function AircraftDetails({ aircraft }: AircraftDetailsProps) {
                     size="small"
                     sx={{
                       bgcolor:
-                        aircraft.status === 'active' ? 'success.lighter' :
-                        aircraft.status === 'maintenance' ? 'warning.lighter' :
+                        aircraft.status === 'ACTIVE' ? 'success.lighter' :
+                        aircraft.status === 'MAINTENANCE' ? 'warning.lighter' :
                         'error.lighter',
                       color:
-                        aircraft.status === 'active' ? 'success.dark' :
-                        aircraft.status === 'maintenance' ? 'warning.dark' :
+                        aircraft.status === 'ACTIVE' ? 'success.dark' :
+                        aircraft.status === 'MAINTENANCE' ? 'warning.dark' :
                         'error.dark',
                       fontWeight: 500
                     }}
@@ -82,15 +82,15 @@ export default function AircraftDetails({ aircraft }: AircraftDetailsProps) {
               <Grid container spacing={2}>
                 <Grid size={6}>
                   <Typography variant="caption" color="text.secondary">Maximum Passengers</Typography>
-                  <Typography variant="body2">{aircraft.maxPassengers}</Typography>
+                  <Typography variant="body2">{aircraft.specifications.maxPassengers}</Typography>
                 </Grid>
                 <Grid size={6}>
                   <Typography variant="caption" color="text.secondary">Range</Typography>
-                  <Typography variant="body2">{aircraft.maxRange} nm</Typography>
+                  <Typography variant="body2">{aircraft.specifications.maxRange} nm</Typography>
                 </Grid>
                 <Grid size={6}>
                   <Typography variant="caption" color="text.secondary">Maximum Speed</Typography>
-                  <Typography variant="body2">{aircraft.maxSpeed} kts</Typography>
+                  <Typography variant="body2">{aircraft.specifications.maxSpeed} kts</Typography>
                 </Grid>
               </Grid>
             </Box>
@@ -108,28 +108,28 @@ export default function AircraftDetails({ aircraft }: AircraftDetailsProps) {
               <Grid container spacing={2}>
                 <Grid size={6}>
                   <Typography variant="caption" color="text.secondary">Height</Typography>
-                  <Typography variant="body2">{aircraft.cabinHeight} ft</Typography>
+                  <Typography variant="body2">{aircraft.specifications.cabinHeight} ft</Typography>
                 </Grid>
                 <Grid size={6}>
                   <Typography variant="caption" color="text.secondary">Width</Typography>
-                  <Typography variant="body2">{aircraft.cabinWidth} ft</Typography>
+                  <Typography variant="body2">{aircraft.specifications.cabinWidth} ft</Typography>
                 </Grid>
                 <Grid size={6}>
                   <Typography variant="caption" color="text.secondary">Length</Typography>
-                  <Typography variant="body2">{aircraft.cabinLength} ft</Typography>
+                  <Typography variant="body2">{aircraft.specifications.cabinLength} ft</Typography>
                 </Grid>
                 <Grid size={6}>
                   <Typography variant="caption" color="text.secondary">Baggage Capacity</Typography>
-                  <Typography variant="body2">{aircraft.baggageCapacity} cu ft</Typography>
+                  <Typography variant="body2">{aircraft.specifications.baggageCapacity} cu ft</Typography>
                 </Grid>
               </Grid>
             </Box>
 
-          {aircraft.features && aircraft.features.length > 0 && (
+          {aircraft.specifications.features && aircraft.specifications.features.length > 0 && (
               <Box>
                 <Typography variant="h6" fontWeight="medium" mb={2}>Features & Amenities</Typography>
                 <Grid container spacing={1}>
-                {aircraft.features.map((feature, index) => (
+                {aircraft.specifications.features.map((feature, index) => (
                     <Grid
                       key={index}
                       size={{
@@ -156,11 +156,11 @@ export default function AircraftDetails({ aircraft }: AircraftDetailsProps) {
             id: `${index}`,
             url,
             type: index === 0 ? 'exterior' : 'interior',
+            fileName: url.split('/').pop() || '',
             isPrimary: index === 0,
-            aircraftId: aircraft.id,
-            createdAt: aircraft.createdAt,
-            updatedAt: aircraft.updatedAt,
+            uploadedAt: aircraft.updatedAt.toDate().toISOString(),
           }))}
+          type="exterior"
           onImagesUpdate={() => {}}
         />
       </Box>

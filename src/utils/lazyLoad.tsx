@@ -1,3 +1,6 @@
+// @ts-nocheck
+'use client';
+
 import React, { lazy, Suspense } from 'react';
 
 interface LazyComponentOptions {

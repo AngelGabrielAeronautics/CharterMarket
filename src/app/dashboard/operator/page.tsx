@@ -54,6 +54,7 @@ import { formatDistanceToNow } from 'date-fns';
 import DashboardCalendar from '@/components/calendar/DashboardCalendar';
 import { generateMockFlights } from '@/lib/mockFlightData';
 import { CalendarFlight } from '@/components/calendar/FlightCalendar';
+import { UserStatus } from '@/types/user';
 
 // Mock data - would be replaced with real data from API
 const mockQuoteRequests = [
@@ -180,7 +181,7 @@ export default function OperatorDashboardPage() {
 
   // Mock data for operator profile - would come from database
   const operatorProfile = {
-    status: user.emailVerified ? 'active' : 'pending',
+    status: (user.emailVerified ? 'active' : 'pending') as UserStatus,
     isProfileComplete: true,
     hasAircraft: mockAircraft.length > 0,
   };
@@ -199,7 +200,7 @@ export default function OperatorDashboardPage() {
       </Box>
 
       <Grid container spacing={3}>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Paper sx={{ mb: 3, borderRadius: 2, overflow: 'hidden' }}>
             <Tabs
               value={activeTab}
@@ -240,12 +241,12 @@ export default function OperatorDashboardPage() {
         </Grid>
 
         {/* Tab Content */}
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Box role="tabpanel" hidden={activeTab !== 0}>
             {activeTab === 0 && (
               <Grid container spacing={3}>
                 {/* Add calendar component */}
-                <Grid item xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                   {calendarLoading ? (
                     <Paper
                       sx={{
@@ -269,7 +270,7 @@ export default function OperatorDashboardPage() {
                 </Grid>
 
                 {/* Move flight metrics next to calendar */}
-                <Grid item xs={12} md={8}>
+                <Grid size={{ xs: 12, md: 8 }}>
                   <Paper sx={{ p: 3, borderRadius: 2 }}>
                     <Box
                       sx={{
@@ -298,7 +299,7 @@ export default function OperatorDashboardPage() {
                     </Box>
 
                     <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6} md={3}>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Card
                           sx={{
                             height: '100%',
@@ -317,7 +318,7 @@ export default function OperatorDashboardPage() {
                         </Card>
                       </Grid>
 
-                      <Grid item xs={12} sm={6} md={3}>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Card
                           sx={{
                             height: '100%',
@@ -336,7 +337,7 @@ export default function OperatorDashboardPage() {
                         </Card>
                       </Grid>
 
-                      <Grid item xs={12} sm={6} md={3}>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Card
                           sx={{
                             height: '100%',
@@ -355,7 +356,7 @@ export default function OperatorDashboardPage() {
                         </Card>
                       </Grid>
 
-                      <Grid item xs={12} sm={6} md={3}>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <Card
                           sx={{
                             height: '100%',
@@ -378,7 +379,7 @@ export default function OperatorDashboardPage() {
                 </Grid>
 
                 {/* Rest of the flight management tab */}
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
                     <Typography variant="h6" fontWeight="medium" gutterBottom>
                       Quote Requests
@@ -440,7 +441,7 @@ export default function OperatorDashboardPage() {
                   </Paper>
                 </Grid>
 
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
                     <Typography variant="h6" fontWeight="medium" gutterBottom>
                       Upcoming Flights
@@ -514,9 +515,80 @@ export default function OperatorDashboardPage() {
             )}
           </Box>
 
-          {/* ... existing fleet & equipment tab ... */}
+          <Box role="tabpanel" hidden={activeTab !== 1}>
+            {activeTab === 1 && (
+              <Grid container spacing={3}>
+                <Grid size={12}>
+                  <Paper sx={{ p: 3, borderRadius: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mb: 3,
+                      }}
+                    >
+                      <Typography variant="h6" fontWeight="medium">
+                        Fleet & Equipment
+                      </Typography>
+                    </Box>
 
-          {/* ... existing financial tab ... */}
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Paper sx={{ p: 3, borderRadius: 2 }}>
+                          <Typography variant="h6" fontWeight="medium" gutterBottom>
+                            Aircraft
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {mockAircraft.length} aircraft
+                          </Typography>
+                        </Paper>
+                      </Grid>
+
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Paper sx={{ p: 3, borderRadius: 2 }}>
+                          <Typography variant="h6" fontWeight="medium" gutterBottom>
+                            Aircraft Types
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {Array.from(new Set(mockAircraft.map((a) => a.type))).join(', ')}
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                    </Grid>
+                  </Paper>
+                </Grid>
+              </Grid>
+            )}
+          </Box>
+
+          <Box role="tabpanel" hidden={activeTab !== 2}>
+            {activeTab === 2 && (
+              <Grid container spacing={3}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Paper sx={{ p: 3, borderRadius: 2 }}>
+                    <Typography variant="h6" fontWeight="medium" gutterBottom>
+                      Financial
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Total revenue: $100,000
+                    </Typography>
+                  </Paper>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Paper sx={{ p: 3, borderRadius: 2 }}>
+                    <Typography variant="h6" fontWeight="medium" gutterBottom>
+                      Expenses
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Total expenses: $50,000
+                    </Typography>
+                  </Paper>
+                </Grid>
+              </Grid>
+            )}
+          </Box>
         </Grid>
       </Grid>
     </>

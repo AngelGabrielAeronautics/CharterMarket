@@ -18,7 +18,7 @@ interface AuthContextType {
   profile: UserProfile | undefined;
 }
 
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   error: null,

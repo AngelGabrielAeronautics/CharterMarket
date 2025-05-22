@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus, Wrench, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/Calendar';
+import { DateRange } from 'react-day-picker';
 
 interface MaintenanceScheduleProps {
   aircraftId: string;
@@ -17,7 +18,7 @@ export default function MaintenanceScheduleComponent({ aircraftId }: Maintenance
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddingMaintenance, setIsAddingMaintenance] = useState(false);
-  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [selectedDates, setSelectedDates] = useState<DateRange | undefined>(undefined);
   const [maintenanceType, setMaintenanceType] = useState<'scheduled' | 'unscheduled' | 'inspection'>('scheduled');
   const [description, setDescription] = useState('');
   const [technician, setTechnician] = useState('');
@@ -42,7 +43,7 @@ export default function MaintenanceScheduleComponent({ aircraftId }: Maintenance
   };
 
   const handleAddMaintenance = async () => {
-    if (selectedDates.length !== 2) {
+    if (!selectedDates?.from || !selectedDates?.to) {
       setError('Please select both start and end dates');
       return;
     }
@@ -54,14 +55,14 @@ export default function MaintenanceScheduleComponent({ aircraftId }: Maintenance
       //   aircraftId,
       //   type: maintenanceType,
       //   description,
-      //   startDate: selectedDates[0],
-      //   endDate: selectedDates[1],
+      //   startDate: selectedDates.from,
+      //   endDate: selectedDates.to,
       //   technician,
       //   notes,
       //   status: 'scheduled'
       // });
       await loadMaintenanceSchedule();
-      setSelectedDates([]);
+      setSelectedDates(undefined);
       setDescription('');
       setTechnician('');
       setNotes('');
@@ -170,14 +171,14 @@ export default function MaintenanceScheduleComponent({ aircraftId }: Maintenance
                 <Calendar
                   mode="range"
                   selected={selectedDates}
-                  onSelect={dates => setSelectedDates(dates || [])}
-                  numberOfMonths={2}
+                  onSelect={setSelectedDates}
+                  numberOfMonths={1}
                   disabled={{ before: new Date() }}
                 />
               </div>
               <Button
                 onClick={handleAddMaintenance}
-                disabled={isAddingMaintenance || selectedDates.length !== 2}
+                disabled={isAddingMaintenance || !selectedDates?.from || !selectedDates?.to}
                 className="w-full"
               >
                 {isAddingMaintenance ? 'Scheduling...' : 'Schedule Maintenance'}
@@ -219,18 +220,18 @@ export default function MaintenanceScheduleComponent({ aircraftId }: Maintenance
               <div className="flex items-center space-x-2">
                 {maintenance.status === 'scheduled' && (
                   <>
-                    <Button size="sm" variant="outline" className="text-green-600">
+                    <Button size="small" variant="outlined" className="text-green-600">
                       <Check className="h-4 w-4 mr-1" />
                       Start
                     </Button>
-                    <Button size="sm" variant="outline" className="text-red-600">
+                    <Button size="small" variant="outlined" className="text-red-600">
                       <X className="h-4 w-4 mr-1" />
                       Cancel
                     </Button>
                   </>
                 )}
                 {maintenance.status === 'in-progress' && (
-                  <Button size="sm" variant="outline" className="text-green-600">
+                  <Button size="small" variant="outlined" className="text-green-600">
                     <Check className="h-4 w-4 mr-1" />
                     Complete
                   </Button>

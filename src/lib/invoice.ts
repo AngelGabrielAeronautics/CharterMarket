@@ -58,7 +58,10 @@ export const getInvoicesForBooking = async (bookingId: string): Promise<Invoice[
     const snapshot = await getDocs(invoicesQuery);
     console.log(`Query returned ${snapshot.docs.length} invoice documents`);
 
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Invoice);
+    return snapshot.docs.map((doc) => (({
+      id: doc.id,
+      ...doc.data()
+    }) as Invoice));
   } catch (error) {
     console.error('Error fetching invoices:', error);
     // Add more details to the error
@@ -96,7 +99,10 @@ export const getInvoicesByClientId = async (clientId: string): Promise<Invoice[]
       orderBy('createdAt', 'desc')
     );
     const snapshot = await getDocs(invoicesQuery);
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Invoice);
+    return snapshot.docs.map((doc) => (({
+      id: doc.id,
+      ...doc.data()
+    }) as Invoice));
   } catch (error) {
     console.error('Error fetching invoices by client ID:', error);
     // Preserve the original Firestore error message for debugging

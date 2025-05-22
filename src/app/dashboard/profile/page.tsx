@@ -266,50 +266,58 @@ export default function ProfilePage() {
 
           {isEditing ? (
             <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+              <div className="flex flex-wrap -mx-2">
+                <div className="w-full sm:w-1/2 px-2 mb-4">
                   <Input
                     label="First Name"
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleChange}
+                    fullWidth
                     required
-                    helperText="Your legal first name"
                   />
-                </Grid>
-                <Grid item xs={12} sm={6} component="div">
+                </div>
+                <div className="w-full sm:w-1/2 px-2 mb-4">
                   <Input
-                    label="Last Name"
+                    label="Last Name" 
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
+                    fullWidth
                     required
-                    helperText="Your legal last name"
                   />
-                </Grid>
-                <Grid item xs={12} component="div">
-                  <PhoneInput
+                </div>
+                <div className="w-full px-2 mb-4">
+                  <Input
+                    label="Email"
+                    name="email"
+                    type="email"
+                    value={profile.email}
+                    onChange={handleChange}
+                    fullWidth
+                    required
+                    disabled
+                  />
+                </div>
+                <div className="w-full sm:w-1/2 px-2 mb-4">
+                  <Input
+                    label="Phone Number"
+                    name="phoneNumber"
                     value={formData.phoneNumber}
-                    onChange={(value) =>
-                      handleChange({ target: { name: 'phoneNumber', value } } as any)
-                    }
-                    required={profile.role === 'operator' || profile.role === 'agent'}
-                    helperText="Your contact phone number"
+                    onChange={handleChange}
+                    fullWidth
                   />
-                </Grid>
-                {(profile.role === 'operator' || profile.role === 'agent') && (
-                  <Grid item xs={12}>
-                    <Input
-                      label="Company"
-                      name="company"
-                      value={formData.company}
-                      onChange={handleChange}
-                      required={profile.role === 'agent' || profile.role === 'operator'}
-                      helperText="Your company or organization name"
-                    />
-                  </Grid>
-                )}
-              </Grid>
+                </div>
+                <div className="w-full sm:w-1/2 px-2 mb-4">
+                  <Input
+                    label="Company"
+                    name="company"
+                    value={formData.company}
+                    onChange={handleChange}
+                    fullWidth
+                  />
+                </div>
+              </div>
 
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
                 <Button
@@ -326,40 +334,40 @@ export default function ProfilePage() {
               </Box>
             </Box>
           ) : (
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+            <div className="flex flex-wrap -mx-2">
+              <div className="w-full sm:w-1/2 px-2 mb-4">
                 <Stack spacing={1}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Email
                   </Typography>
                   <Typography variant="body1">{profile.email}</Typography>
                 </Stack>
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </div>
+              <div className="w-full sm:w-1/2 px-2 mb-4">
                 <Stack spacing={1}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Phone Number
                   </Typography>
                   <Typography variant="body1">{profile.phoneNumber || 'Not provided'}</Typography>
                 </Stack>
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </div>
+              <div className="w-full sm:w-1/2 px-2 mb-4">
                 <Stack spacing={1}>
                   <Typography variant="subtitle2" color="text.secondary">
                     First Name
                   </Typography>
                   <Typography variant="body1">{profile.firstName}</Typography>
                 </Stack>
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </div>
+              <div className="w-full sm:w-1/2 px-2 mb-4">
                 <Stack spacing={1}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Last Name
                   </Typography>
                   <Typography variant="body1">{profile.lastName}</Typography>
                 </Stack>
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </div>
+              <div className="w-full sm:w-1/2 px-2 mb-4">
                 <Stack spacing={1}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Role
@@ -368,28 +376,28 @@ export default function ProfilePage() {
                     {profile.role}
                   </Typography>
                 </Stack>
-              </Grid>
-              <Grid item xs={12} sm={6} component="div">
+              </div>
+              <div className="w-full sm:w-1/2 px-2 mb-4">
                 <Stack spacing={1}>
                   <Typography variant="subtitle2" color="text.secondary">
                     User Code
                   </Typography>
                   <Typography variant="body1">{profile.userCode}</Typography>
                 </Stack>
-              </Grid>
+              </div>
 
               {(profile.role === 'operator' || profile.role === 'agent') && (
-                <Grid item xs={12} sm={6}>
+                <div className="w-full sm:w-1/2 px-2 mb-4">
                   <Stack spacing={1}>
                     <Typography variant="subtitle2" color="text.secondary">
                       Company
                     </Typography>
                     <Typography variant="body1">{profile.company}</Typography>
                   </Stack>
-                </Grid>
+                </div>
               )}
 
-              <Grid item xs={12} sm={6}>
+              <div className="w-full sm:w-1/2 px-2 mb-4">
                 <Stack spacing={1}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Email Verification
@@ -400,18 +408,18 @@ export default function ProfilePage() {
                     size="small"
                   />
                 </Stack>
-              </Grid>
+              </div>
 
-              <Grid item xs={12} sm={6}>
+              <div className="w-full sm:w-1/2 px-2 mb-4">
                 <Stack spacing={1}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Account Created
                   </Typography>
                   <Typography variant="body1">{profile.createdAt.toLocaleDateString()}</Typography>
                 </Stack>
-              </Grid>
+              </div>
 
-              <Grid item xs={12} sm={6}>
+              <div className="w-full sm:w-1/2 px-2 mb-4">
                 <Stack spacing={1}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Last Updated
@@ -424,8 +432,8 @@ export default function ProfilePage() {
                     })}
                   </Typography>
                 </Stack>
-              </Grid>
-            </Grid>
+              </div>
+            </div>
           )}
         </Paper>
 
@@ -451,8 +459,8 @@ export default function ProfilePage() {
 
           {isChangingPassword && (
             <Box component="form" onSubmit={handlePasswordSubmit} sx={{ mt: 2 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
+              <div className="flex flex-wrap -mx-2">
+                <div className="w-full px-2 mb-4">
                   <Input
                     label="Current Password"
                     type="password"
@@ -463,8 +471,8 @@ export default function ProfilePage() {
                     helperText="Enter your current password"
                     autoComplete="current-password"
                   />
-                </Grid>
-                <Grid item xs={12}>
+                </div>
+                <div className="w-full px-2 mb-4">
                   <Input
                     label="New Password"
                     type="password"
@@ -477,14 +485,14 @@ export default function ProfilePage() {
                     helperText="Create a new strong password"
                     autoComplete="new-password"
                   />
-                </Grid>
-                <Grid item xs={12}>
+                </div>
+                <div className="w-full px-2 mb-4">
                   <PasswordStrengthChecker
                     password={passwordData.newPassword}
                     isVisible={isPasswordFocused || passwordData.newPassword.length > 0}
                   />
-                </Grid>
-                <Grid item xs={12}>
+                </div>
+                <div className="w-full px-2 mb-4">
                   <Input
                     label="Confirm New Password"
                     type="password"
@@ -501,8 +509,8 @@ export default function ProfilePage() {
                         : ''
                     }
                   />
-                </Grid>
-              </Grid>
+                </div>
+              </div>
 
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
                 <Button

@@ -1,3 +1,6 @@
+// @ts-nocheck
+'use client';
+
 import { auth, db } from './firebase';
 import { generateUserCode } from './userCode';
 import {

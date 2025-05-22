@@ -131,7 +131,10 @@ export const getPassengersForBooking = async (bookingId: string): Promise<Passen
     );
 
     const snapshot = await getDocs(passengersQuery);
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Passenger);
+    return snapshot.docs.map((doc) => (({
+      id: doc.id,
+      ...doc.data()
+    }) as Passenger));
   } catch (error) {
     console.error('Error fetching passengers for booking:', error);
     throw new Error('Failed to fetch passengers');

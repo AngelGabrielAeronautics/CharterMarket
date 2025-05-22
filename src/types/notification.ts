@@ -10,6 +10,7 @@ export type NotificationType =
   | 'PAYMENT_CONFIRMED' // For client notifications about confirmed payments
   | 'FLIGHT_CONFIRMED'
   | 'FLIGHT_CANCELLED'
+  | 'REQUEST_DECLINED' // Added for when an operator declines a quote request
   | 'DOCUMENTS_REQUIRED'
   | 'DOCUMENTS_APPROVED'
   | 'PASSENGER_ADDED' // For notifications about passenger manifest updates

@@ -59,10 +59,10 @@ export const getAgentClients = async (agentUserCode: string): Promise<Client[]> 
 
     return querySnapshot.docs.map(
       (doc) =>
-        ({
+        (({
           id: doc.id,
-          ...doc.data(),
-        }) as Client
+          ...doc.data()
+        }) as Client)
     );
   } catch (error) {
     console.error('Error fetching clients:', error);
@@ -81,10 +81,10 @@ export const getAllClients = async (): Promise<Client[]> => {
 
     return querySnapshot.docs.map(
       (doc) =>
-        ({
+        (({
           id: doc.id,
-          ...doc.data(),
-        }) as Client
+          ...doc.data()
+        }) as Client)
     );
   } catch (error) {
     console.error('Error fetching all clients:', error);

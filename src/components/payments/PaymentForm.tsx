@@ -180,24 +180,20 @@ export default function PaymentForm({
           {error}
         </Alert>
       )}
-
       {success && (
         <Alert severity="success" sx={{ mb: 2 }}>
           Payment information submitted successfully! Our team will verify your payment.
         </Alert>
       )}
-
       <Typography variant="h6" gutterBottom>
         Payment Information
       </Typography>
-
       <Typography variant="body2" color="text.secondary" paragraph>
         Please provide details about your payment. Our team will verify the payment and update your
         booking status.
       </Typography>
-
       <Grid container spacing={2}>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <TextField
             required
             fullWidth
@@ -213,7 +209,7 @@ export default function PaymentForm({
           />
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={12}>
           <FormControl fullWidth required error={!!errors.paymentMethod} disabled={loading}>
             <InputLabel id="payment-method-label">Payment Method</InputLabel>
             <Select
@@ -235,7 +231,11 @@ export default function PaymentForm({
 
         {renderPaymentInstructions()}
 
-        <Grid item xs={12} md={formData.paymentMethod ? 6 : 12}>
+        <Grid
+          size={{
+            xs: 12,
+            md: formData.paymentMethod ? 6 : 12
+          }}>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DatePicker
               label="Payment Date"
@@ -255,7 +255,11 @@ export default function PaymentForm({
         </Grid>
 
         {formData.paymentMethod && (
-          <Grid item xs={12} md={6}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6
+            }}>
             <TextField
               fullWidth
               id="paymentReference"
@@ -279,7 +283,7 @@ export default function PaymentForm({
           </Grid>
         )}
 
-        <Grid item xs={12}>
+        <Grid size={12}>
           <TextField
             fullWidth
             id="notes"
@@ -294,11 +298,13 @@ export default function PaymentForm({
           />
         </Grid>
 
-        <Grid item xs={12} sx={{ mt: 2 }}>
+        <Grid sx={{ mt: 2 }} size={12}>
           <Divider />
         </Grid>
 
-        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+        <Grid
+          sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}
+          size={12}>
           {onCancel && (
             <Button variant="outlined" onClick={onCancel} disabled={loading}>
               Cancel

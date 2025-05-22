@@ -12,6 +12,8 @@ export interface InputProps extends Omit<TextFieldProps, 'error'> {
   error?: string;
   helperText?: string;
   endAdornment?: React.ReactNode;
+  min?: number | string;
+  max?: number | string;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -21,6 +23,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     helperText, 
     endAdornment,
     InputProps,
+    min,
+    max,
     ...props 
   }, ref) => {
     return (
@@ -29,10 +33,14 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           label={label}
           error={!!error}
           helperText={error || helperText}
+          inputRef={ref}
           InputProps={{
             ...InputProps,
             endAdornment: endAdornment,
-            ref: ref
+          }}
+          inputProps={{
+            min,
+            max,
           }}
           fullWidth
           margin="dense"

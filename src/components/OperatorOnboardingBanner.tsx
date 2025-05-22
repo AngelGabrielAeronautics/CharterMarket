@@ -4,10 +4,16 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Banner from '@/components/ui/Banner';
 import { Box, Stepper, Step, StepLabel, Button, Typography } from '@mui/material';
-import { UserProfile } from '@/types/user';
+import { UserStatus } from '@/types/user';
+
+interface OperatorProfile {
+  status: UserStatus;
+  isProfileComplete: boolean;
+  hasAircraft: boolean;
+}
 
 interface OperatorOnboardingBannerProps {
-  profile: UserProfile;
+  profile: OperatorProfile;
   isEmailVerified: boolean;
 }
 

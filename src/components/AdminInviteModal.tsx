@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { generateUserInviteCode } from '@/lib/userCode';
-import { sendAdminInvite } from '@/lib/admin';
+import { useAuth } from '@/contexts/AuthContext';
+import { sendAdminInvitation, type AdminPermissions } from '@/lib/admin';
 import {
   Dialog,
   DialogTitle,
@@ -55,6 +55,7 @@ export default function AdminInviteModal({ isOpen, onClose }: AdminInviteModalPr
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const { user } = useAuth();
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -75,14 +76,22 @@ export default function AdminInviteModal({ isOpen, onClose }: AdminInviteModalPr
     setSuccess(false);
 
     try {
-      const inviteCode = await generateUserInviteCode('admin');
-      await sendAdminInvite({
+      if (!user) throw new Error('Not authenticated');
+      // Convert selected permission IDs to AdminPermissions object
+      const permissionsObj: AdminPermissions = {
+        userManagement: selectedPermissions.includes('users'),
+        bookingManagement: selectedPermissions.includes('bookings'),
+        financialAccess: selectedPermissions.includes('reports'),
+        systemConfig: selectedPermissions.includes('operators'),
+        contentManagement: selectedPermissions.includes('notifications'),
+      };
+      await sendAdminInvitation(
         email,
         firstName,
         lastName,
-        inviteCode,
-        permissions: selectedPermissions,
-      });
+        permissionsObj,
+        { uid: user.uid, email: user.email || '', userCode: user.userCode || '' }
+      );
       setSuccess(true);
       // Reset form
       setEmail('');

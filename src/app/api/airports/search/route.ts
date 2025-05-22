@@ -112,6 +112,26 @@ export async function GET(request: Request) {
       longitude: -118.4085,
       timezone: 'America/Los_Angeles',
     },
+    {
+      iata: 'JER',
+      icao: 'EGJJ',
+      name: 'Jersey Airport',
+      city: 'Saint Peter',
+      country: 'Jersey',
+      latitude: 49.2077,
+      longitude: -2.1955,
+      timezone: 'Europe/London',
+    },
+    {
+      iata: 'GCI',
+      icao: 'EGJB',
+      name: 'Guernsey Airport',
+      city: 'Saint Peter Port',
+      country: 'Guernsey',
+      latitude: 49.4275,
+      longitude: -2.6044,
+      timezone: 'Europe/London',
+    },
   ];
 
   // Filter airports based on query

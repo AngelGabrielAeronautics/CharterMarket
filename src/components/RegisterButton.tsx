@@ -12,7 +12,7 @@ export default function RegisterButton({ children, ...props }: RegisterButtonPro
     <Button
       variant="contained"
       color="primary"
-      onClick={openRegisterModal}
+      onClick={() => openRegisterModal()}
       {...props}
     >
       {children || 'REGISTER'}

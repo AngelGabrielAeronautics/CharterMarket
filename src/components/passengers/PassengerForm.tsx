@@ -148,26 +148,27 @@ export default function PassengerForm({
           {error}
         </Alert>
       )}
-
       {success && (
         <Alert severity="success" sx={{ mb: 2 }}>
           Passenger information {passengerId ? 'updated' : 'added'} successfully!
         </Alert>
       )}
-
       <Typography variant="h6" gutterBottom>
         {passengerId ? 'Edit Passenger Details' : 'Add New Passenger'}
       </Typography>
-
       <Grid container spacing={2}>
         {/* Personal Information */}
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Typography variant="subtitle1" fontWeight="medium">
             Personal Information
           </Typography>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <TextField
             required
             fullWidth
@@ -182,7 +183,11 @@ export default function PassengerForm({
           />
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <TextField
             required
             fullWidth
@@ -197,7 +202,11 @@ export default function PassengerForm({
           />
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DatePicker
               label="Date of Birth"
@@ -217,7 +226,11 @@ export default function PassengerForm({
           </LocalizationProvider>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <FormControl fullWidth required error={!!errors.nationality} disabled={loading}>
             <InputLabel id="nationality-label">Nationality</InputLabel>
             <Select
@@ -238,13 +251,17 @@ export default function PassengerForm({
         </Grid>
 
         {/* Travel Document Information */}
-        <Grid item xs={12} sx={{ mt: 2 }}>
+        <Grid sx={{ mt: 2 }} size={12}>
           <Typography variant="subtitle1" fontWeight="medium">
             Travel Document Information
           </Typography>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <TextField
             required
             fullWidth
@@ -259,7 +276,11 @@ export default function PassengerForm({
           />
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DatePicker
               label="Passport Expiry Date"
@@ -280,13 +301,17 @@ export default function PassengerForm({
         </Grid>
 
         {/* Contact Information */}
-        <Grid item xs={12} sx={{ mt: 2 }}>
+        <Grid sx={{ mt: 2 }} size={12}>
           <Typography variant="subtitle1" fontWeight="medium">
             Contact Information
           </Typography>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <TextField
             required
             fullWidth
@@ -302,7 +327,11 @@ export default function PassengerForm({
           />
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <TextField
             required
             fullWidth
@@ -318,13 +347,17 @@ export default function PassengerForm({
         </Grid>
 
         {/* Emergency Contact */}
-        <Grid item xs={12} sx={{ mt: 2 }}>
+        <Grid sx={{ mt: 2 }} size={12}>
           <Typography variant="subtitle1" fontWeight="medium">
             Emergency Contact (Optional)
           </Typography>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <TextField
             fullWidth
             id="emergencyContactName"
@@ -336,7 +369,11 @@ export default function PassengerForm({
           />
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <TextField
             fullWidth
             id="emergencyContactPhone"
@@ -349,13 +386,13 @@ export default function PassengerForm({
         </Grid>
 
         {/* Special Requirements */}
-        <Grid item xs={12} sx={{ mt: 2 }}>
+        <Grid sx={{ mt: 2 }} size={12}>
           <Typography variant="subtitle1" fontWeight="medium">
             Additional Information
           </Typography>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={12}>
           <TextField
             fullWidth
             id="specialRequirements"
@@ -370,7 +407,9 @@ export default function PassengerForm({
         </Grid>
 
         {/* Form Actions */}
-        <Grid item xs={12} sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+        <Grid
+          sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}
+          size={12}>
           {onCancel && (
             <Button variant="outlined" onClick={onCancel} disabled={loading}>
               Cancel

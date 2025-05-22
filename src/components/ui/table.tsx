@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef } from 'react';
-import { Box, Table as MuiTable, TableBody as MuiTableBody, TableCell as MuiTableCell, TableContainer, TableHead as MuiTableHead, TableRow as MuiTableRow, useTheme } from '@mui/material';
+import { Box, Table as MuiTable, TableBody as MuiTableBody, TableCell as MuiTableCell, TableContainer, TableHead as MuiTableHead, TableRow as MuiTableRow, useTheme, type TableCellProps as MuiTableCellProps } from '@mui/material';
 
 const Table = forwardRef<
   HTMLTableElement,
@@ -95,7 +95,7 @@ TableRow.displayName = 'TableRow';
 
 const TableHead = forwardRef<
   HTMLTableCellElement,
-  React.ThHTMLAttributes<HTMLTableCellElement>
+  MuiTableCellProps
 >(({ className, ...props }, ref) => {
   const theme = useTheme();
   return (
@@ -111,7 +111,6 @@ const TableHead = forwardRef<
         '&[role="checkbox"]': {
           pr: 0,
         },
-        ...(className && { className })
       }}
       {...props}
     />
@@ -121,7 +120,7 @@ TableHead.displayName = 'TableHead';
 
 const TableCell = forwardRef<
   HTMLTableCellElement,
-  React.TdHTMLAttributes<HTMLTableCellElement>
+  MuiTableCellProps
 >(({ className, ...props }, ref) => {
   const theme = useTheme();
   return (
@@ -134,7 +133,6 @@ const TableCell = forwardRef<
         '&[role="checkbox"]': {
           pr: 0,
         },
-        ...(className && { className })
       }}
       {...props}
     />

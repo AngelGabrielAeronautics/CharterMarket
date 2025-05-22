@@ -1,0 +1,160 @@
+---
+description: "Unified development rules for the Charter Aviation platform, used by AI assistants and developers in Cursor."
+globs: 
+alwaysApply: true
+---
+
+# CharterBible: Unified Development Rules for Charter Aviation Platform
+
+## ✨ Purpose
+A single, authoritative set of rules combining the best of our Cursor standards, platform-specific conventions, and third-party guidance for maintaining high-quality, performant, secure, and accessible code across the Charter platform.
+
+---
+
+## 🔧 General Conventions
+- **Framework**: Next.js App Router (TypeScript mandatory)
+- **Architecture**: Functional React components + Hooks only
+- **Styling**: TailwindCSS + Material UI + Design Tokens
+- **Testing**: Jest + React Testing Library (≥80% coverage)
+- **Commit Messages**: [Conventional Commits](mdc:https:/www.conventionalcommits.org)
+
+---
+
+## 🛠️ Technical Stack
+- **Front-End**: Next.js (App Router), React, TypeScript
+- **Database**: Firebase Firestore
+  - Separate projects/instances for dev, test, prod
+  - Local emulator for development
+  - Security rules in `firestore.rules`
+- **Back-End**: Python (Cloud Functions or serverless APIs)
+- **Search**: Elasticsearch (dev & prod indexes on Elastic.co)
+- **CI/CD & Hosting**: GitHub Actions → Vercel
+
+---
+
+## 🚀 Performance & SEO
+1. **Images**: Always use `next/image` with explicit `width`/`height` and lazy loading
+2. **Code Splitting**: Dynamic imports (`next/dynamic`) for large modules
+3. **Metadata**:
+   - Dynamic `<Head>` tags: `title`, `description`, `og:*`, `twitter:card`, `canonical`
+   - Maintain `robots.txt`, `sitemap.xml`
+4. **Structured Data**: JSON‑LD (schema.org types: Organization, Service, BreadcrumbList)
+5. **URL Structure**: Clean, descriptive paths; consistent trailing slash; redirects
+6. **Web Vitals**: Aim for LCP<2.5s, FID<100ms, CLS<0.1
+
+---
+
+## 📦 Development Guidelines
+
+### File & Project Structure
+```txt
+src/
+├── app/                   # Next.js routes + layouts
+├── components/            # Reusable UI components
+├── contexts/              # React Context providers
+├── lib/                   # Core utilities & API wrappers
+├── hooks/                 # Custom React Hooks
+├── styles/                # Global CSS & design tokens
+└── utils/                 # CLI scripts & helpers
+```
+
+### 🏷️ Naming Conventions
+- **Components**: PascalCase (`UserCard.tsx`)
+- **Files**: kebab-case (`user-card.tsx`)
+- **Functions**: camelCase (`fetchUser()`)
+- **Constants**: UPPER_SNAKE_CASE (`MAX_SEATS`)
+- **Directories**: grouped by feature/domain (`auth/`, `booking/`, `dashboard/`)
+
+### Component Structure
+- Always TypeScript (.tsx)
+- Explicit prop and return types
+- Single responsibility per component
+- Dark mode support via `useTheme` or Tailwind `dark:` prefix
+- Default loading/error states
+- ARIA labels for accessibility
+
+### Routing & API
+- **Pages**: `app/` folder with `layout.tsx`, `page.tsx`, `[id]/page.tsx`
+- **API**: `src/app/api/<route>/route.ts`
+- Protect routes via `AuthContext` guards
+- Use `next/link` and `next/navigation` hooks
+
+---
+
+## 🎨 Styling & Design Tokens
+- Mobile‑first with Tailwind responsive variants (`sm:`, `md:`, `lg:`)
+- Design tokens defined in `style-dictionary/tokens/global.json`
+- Generate CSS & JS tokens: `npm run build:tokens`
+- Import `tokens.css` in `globals.css`, extend Tailwind in `tailwind.config.js`
+
+### Typography
+```css
+h1 { font-size: 3.5rem; }
+h2 { font-size: 2.5rem; }
+h3 { font-size: 2rem; }
+body { font-size: 1rem; }
+```
+- Fonts: Playfair Display (Headings), Inter (Body), Montserrat (Nav)
+
+### Colors
+- Primary: `#1A2B3C`; Secondary: `#C4A962`; Accent: `#7CB9E8`
+- Background: `#FFFFFF`; Text: `#0A0A0A`
+
+---
+
+## 🧪 Testing
+- **Unit**: All utilities in `lib/`, `utils/` with Jest
+- **Component**: React Testing Library + snapshots
+- **Integration/E2E**: Critical user flows (login, booking) via Playwright or Cypress
+- CI fails on lint/type/test errors
+
+---
+
+## 🔐 Security & Environment
+- Never commit `.env` or secret files; use `.env.example`
+- Sanitize inputs client/server-side
+- Role‑based auth: Firebase custom claims
+- Secure cookies: `httpOnly`, `secure`, `SameSite=Strict`
+
+---
+
+## 🔁 Git & CI/CD
+- **Branching**: `feature/*`, `bugfix/*`, `release/*`, `hotfix/*`
+- **PRs**: Conventional commits, description, screenshot/tests
+- **CI Pipeline**:
+  1. `npm run lint`
+  2. `npm run type-check`
+  3. `npm run test`
+  4. `npm run build`
+  5. Deploy to Vercel
+
+---
+
+## 🧑‍🦯 Accessibility
+- Semantic HTML tags (`<header>`, `<main>`, `<nav>`, `<footer>`)
+- Keyboard navigation & focus styles
+- ARIA roles/labels on interactive elements
+- Color contrast ≥ 4.5:1
+
+---
+
+## 📝 Other Guidance
+- **Coding Patterns**: Prefer simple solutions; avoid duplication; adhere to existing patterns; limit file size to 200–300 lines
+- **Workflow**: Tackle only relevant code; write tests before refactoring; assess cross‑impact of changes
+
+---
+
+Replace any types
+The sizes: 'any' usage should be typed explicitly (e.g., sizes: string[] or a more specific union type) to benefit from TypeScript’s safety.
+
+Review logic conditions
+Ensure comparisons like val === true are necessary; if val is boolean, you can simplify to if (val).
+
+
+## 📚 Resources
+- [React Component Standards](mdc:https:/raw.githubusercontent.com/zuchka/cursor-setup-react-nextjs-tailwind/refs/heads/main/ReactComponentStandards.md)
+- [Next App Router Patterns](mdc:https:/raw.githubusercontent.com/zuchka/cursor-setup-react-nextjs-tailwind/refs/heads/main/NextAppRouterPatterns.md)
+- [Tailwind CSS Guidelines](mdc:https:/raw.githubusercontent.com/zuchka/cursor-setup-react-nextjs-tailwind/refs/heads/main/TailwindCSSGuidelines.md)
+- @https://mui.com/material-ui/migration/upgrade-to-v7/ 
+- @https://mui.com/material-ui/migration/upgrade-to-grid-v2/ 
+- @https://mui.com/material-ui/migration/pickers-migration/ 

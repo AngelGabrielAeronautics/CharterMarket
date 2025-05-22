@@ -24,19 +24,18 @@ export function useClientBookings(clientId?: string) {
       setLoading(false);
       return;
     }
+    console.log(`[useClientBookings] Fetching bookings for clientId: ${clientId}`);
     (async () => {
       setLoading(true);
       try {
-        // Use mock API in development
-        if (isDev) {
-          const data = await mockGetClientBookings(clientId);
-          setBookings(data);
-        } else {
-          const res = await fetch(`/api/bookings?clientId=${clientId}`);
-          if (!res.ok) throw new Error(await res.text());
-          const data: Booking[] = await res.json();
-          setBookings(data);
+        // Always fetch real API for client bookings
+        const res = await fetch(`/api/bookings?clientId=${clientId}`);
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(errorText || `API error ${res.status}`);
         }
+        const data: Booking[] = await res.json();
+        setBookings(data);
       } catch (err) {
         console.error(err);
         setError('Failed to load bookings');
@@ -108,56 +107,35 @@ export function useBookingDetail(bookingId?: string, userCode?: string, userRole
   useEffect(() => {
     if (!bookingId || !userCode || !userRole) {
       setLoading(false);
-      // setError('Missing bookingId, userCode, or userRole'); // Optional: More specific error
       return;
     }
     (async () => {
       setLoading(true);
-      setError(null); // Clear previous errors
+      setError(null);
       try {
-        // Use mock API in development
-        if (isDev) {
-          const b = await mockGetBookingById(bookingId);
-
-          if (!b) {
-            throw new Error('Booking not found');
+        // Fetch booking detail from API
+        const res = await fetch(`/api/bookings?bookingId=${bookingId}`);
+        if (!res.ok) {
+          let errorMsg = 'Failed to load booking';
+          try {
+            const errRes = await res.json();
+            errorMsg = errRes.error || errorMsg;
+          } catch {
+            errorMsg = (await res.text()) || errorMsg;
           }
+          throw new Error(errorMsg);
+        }
+        const b: Booking = await res.json();
 
-          if (
-            userRole === 'admin' ||
-            userRole === 'superAdmin' ||
-            b.clientId === userCode ||
-            b.operatorId === userCode
-          ) {
-            setBooking(b);
-          } else {
-            setError('Not authorized to view this booking');
-          }
+        if (
+          userRole === 'admin' ||
+          userRole === 'superAdmin' ||
+          b.clientId === userCode ||
+          b.operatorId === userCode
+        ) {
+          setBooking(b);
         } else {
-          const res = await fetch(`/api/bookings?bookingId=${bookingId}`);
-          if (!res.ok) {
-            let errorMsg = 'Failed to load booking';
-            try {
-              const errRes = await res.json();
-              errorMsg = errRes.error || errorMsg;
-            } catch (e) {
-              // If response is not JSON, use text
-              errorMsg = (await res.text()) || errorMsg;
-            }
-            throw new Error(errorMsg);
-          }
-          const b: Booking = await res.json();
-
-          if (
-            userRole === 'admin' ||
-            userRole === 'superAdmin' ||
-            b.clientId === userCode ||
-            b.operatorId === userCode
-          ) {
-            setBooking(b);
-          } else {
-            setError('Not authorized to view this booking');
-          }
+          setError('Not authorized to view this booking');
         }
       } catch (err: any) {
         console.error('Error in useBookingDetail:', err);

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Box, Grid, Typography, Paper } from '@mui/material';
+import { Box, Grid, Typography, Paper, Button } from '@mui/material';
 import AirportSelect from '@/components/ui/AirportSelect';
 import { Airport } from '@/types/airport';
 
@@ -13,6 +13,7 @@ const QuoteRequestForm = () => {
   const {
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<QuoteRequestFormData>({
     defaultValues: {
@@ -36,9 +37,12 @@ const QuoteRequestForm = () => {
       <Typography variant="h5" component="h2" gutterBottom>
         Request a Quote
       </Typography>
-
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <Box sx={{ mb: 3 }}>
             <AirportSelect
               label="Departure Airport"
@@ -52,7 +56,11 @@ const QuoteRequestForm = () => {
           </Box>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <Box sx={{ mb: 3 }}>
             <AirportSelect
               label="Arrival Airport"
@@ -66,6 +74,11 @@ const QuoteRequestForm = () => {
           </Box>
         </Grid>
       </Grid>
+      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+        <Button variant="outlined" onClick={() => reset()}>
+          Reset
+        </Button>
+      </Box>
     </Paper>
   );
 };

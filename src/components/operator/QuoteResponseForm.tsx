@@ -42,6 +42,8 @@ import { useForm, Controller } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
+import { Timestamp } from 'firebase/firestore';
+import { addDays } from 'date-fns';
 
 // Define the schema for form validation
 const quoteResponseSchema = z.object({
@@ -64,7 +66,7 @@ type QuoteResponseForm = z.infer<typeof quoteResponseSchema>;
 // Mock data for a quote request
 const mockQuoteRequest = {
   id: 'req1',
-  requestCode: 'RQ-PA-SMIT-20230601-1234',
+  requestCode: 'QR-PA-SMIT-20230601-1234',
   clientName: 'John Smith',
   clientType: 'passenger',
   departureAirport: 'FAJS',
@@ -194,7 +196,7 @@ export default function QuoteResponseForm({
           {/* Quote request details */}
           <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
             <Grid container spacing={2}>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <Box
                   sx={{
                     display: 'flex',
@@ -211,7 +213,11 @@ export default function QuoteResponseForm({
                 <Divider sx={{ mb: 3 }} />
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  md: 6
+                }}>
                 <Stack spacing={3}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
                     <FlightTakeoff color="primary" sx={{ mr: 1, mt: 0.5 }} />
@@ -264,7 +270,11 @@ export default function QuoteResponseForm({
                 </Stack>
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  md: 6
+                }}>
                 <Card variant="outlined" sx={{ height: '100%', bgcolor: 'background.paper' }}>
                   <CardContent>
                     <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
@@ -306,7 +316,11 @@ export default function QuoteResponseForm({
 
             <form onSubmit={handleSubmit(onSubmit)}>
               <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
                   <FormControl fullWidth error={!!errors.aircraft}>
                     <InputLabel id="aircraft-label">Select Aircraft</InputLabel>
                     <Controller
@@ -342,7 +356,11 @@ export default function QuoteResponseForm({
                   </FormControl>
                 </Grid>
 
-                <Grid item xs={12} md={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 6
+                  }}>
                   <Controller
                     name="operatorQuoteNumber"
                     control={control}
@@ -365,7 +383,11 @@ export default function QuoteResponseForm({
                   />
                 </Grid>
 
-                <Grid item xs={12} md={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 4
+                  }}>
                   <Controller
                     name="basePrice"
                     control={control}
@@ -410,7 +432,11 @@ export default function QuoteResponseForm({
                   />
                 </Grid>
 
-                <Grid item xs={12} md={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 4
+                  }}>
                   <Controller
                     name="charterFee"
                     control={control}
@@ -435,7 +461,11 @@ export default function QuoteResponseForm({
                   />
                 </Grid>
 
-                <Grid item xs={12} md={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 4
+                  }}>
                   <Controller
                     name="totalPrice"
                     control={control}
@@ -462,7 +492,11 @@ export default function QuoteResponseForm({
                   />
                 </Grid>
 
-                <Grid item xs={12} md={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 4
+                  }}>
                   <Controller
                     name="availabilityStart"
                     control={control}
@@ -483,7 +517,11 @@ export default function QuoteResponseForm({
                   />
                 </Grid>
 
-                <Grid item xs={12} md={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 4
+                  }}>
                   <Controller
                     name="availabilityEnd"
                     control={control}
@@ -504,7 +542,11 @@ export default function QuoteResponseForm({
                   />
                 </Grid>
 
-                <Grid item xs={12} md={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 4
+                  }}>
                   <Controller
                     name="validUntil"
                     control={control}
@@ -525,7 +567,7 @@ export default function QuoteResponseForm({
                   />
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <Controller
                     name="notes"
                     control={control}
@@ -549,7 +591,7 @@ export default function QuoteResponseForm({
                   />
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <Controller
                     name="termsAccepted"
                     control={control}
@@ -571,7 +613,7 @@ export default function QuoteResponseForm({
                   )}
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <Divider sx={{ my: 2 }} />
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Button variant="outlined" color="inherit">

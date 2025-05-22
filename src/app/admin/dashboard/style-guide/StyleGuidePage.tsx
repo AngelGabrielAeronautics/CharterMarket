@@ -79,11 +79,11 @@ interface GridItemProps extends GridProps {
 
 // Create a custom GridItem component to work with Material UI v7
 const GridItem: React.FC<GridItemProps> = ({ children, ...props }) => (
-  <Grid component="div" item {...props}>{children}</Grid>
+  <Grid component="div">{children}</Grid>
 );
 
-// Color palette rendering
-const renderColorPalette = () => {
+// Color palette component
+const ColorPalette: React.FC = () => {
   const theme = useTheme();
   const paletteTokens = tokens.color;
   const swatchSize = theme.spacing(6);
@@ -93,22 +93,22 @@ const renderColorPalette = () => {
         <GridItem xs={12} md={6} key={tokenName}>
           <Paper sx={{ p: 4, height: '100%' }}>
             <Typography variant="h6" gutterBottom>{tokenName}</Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Box
-                      sx={{
-                        width: swatchSize,
-                        height: swatchSize,
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <Box
+                sx={{
+                  width: swatchSize,
+                  height: swatchSize,
                   bgcolor: token.value,
-                        borderRadius: '50%',
-                        mr: theme.spacing(2),
-                        border: `1px solid ${theme.palette.divider}`
-                      }}
-                    />
-                    <Box>
+                  borderRadius: '50%',
+                  mr: theme.spacing(2),
+                  border: `1px solid ${theme.palette.divider}`
+                }}
+              />
+              <Box>
                 <Typography variant="subtitle2" sx={{ color: theme.palette.text.primary }}>{tokenName}</Typography>
                 <Typography variant="body2" color="text.secondary">{token.value}</Typography>
-                    </Box>
-                  </Box>
+              </Box>
+            </Box>
           </Paper>
         </GridItem>
       ))}
@@ -116,10 +116,9 @@ const renderColorPalette = () => {
   );
 };
 
-// Typography rendering
-const renderTypography = () => {
+// Typography demo component
+const TypographyDemo: React.FC = () => {
   const theme = useTheme();
-  
   return (
     <StyledGrid container spacing={3}>
       <GridItem xs={12}>
@@ -142,7 +141,6 @@ const renderTypography = () => {
           <Typography variant="h6" gutterBottom>Font Properties</Typography>
           <Grid container spacing={2}>
             {Object.entries(theme.typography).map(([name, value]) => {
-              // Only show simple properties, not objects or functions
               if (typeof value === 'string' || typeof value === 'number') {
                 return (
                   <GridItem xs={6} md={4} key={name}>
@@ -409,8 +407,8 @@ const renderStyleGuide = (value: number, onChange: (event: React.SyntheticEvent,
         <Tab label="Banners" />
       </Tabs>
     </Box>
-    <TabPanel value={value} index={0}>{renderColorPalette()}</TabPanel>
-    <TabPanel value={value} index={1}>{renderTypography()}</TabPanel>
+    <TabPanel value={value} index={0}><ColorPalette /></TabPanel>
+    <TabPanel value={value} index={1}><TypographyDemo /></TabPanel>
     <TabPanel value={value} index={2}>{renderButtons()}</TabPanel>
     <TabPanel value={value} index={3}>{renderShadows()}</TabPanel>
     <TabPanel value={value} index={4}>

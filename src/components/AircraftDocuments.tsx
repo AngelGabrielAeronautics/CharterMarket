@@ -47,27 +47,27 @@ export default function AircraftDocuments({ aircraftId }: AircraftDocumentsProps
     }
   };
 
-  const handleDownload = async (document: AircraftDocument) => {
+  const handleDownload = async (doc: AircraftDocument) => {
     try {
-      const response = await fetch(document.url);
+      const response = await fetch(doc.url);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = window.document.createElement('a');
       link.href = url;
-      link.download = document.name;
-      document.body.appendChild(link);
+      link.download = doc.name;
+      window.document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      window.document.body.removeChild(link);
     } catch (err) {
       console.error('Error downloading document:', err);
       setError(err instanceof Error ? err.message : 'Failed to download document');
     }
   };
 
-  const handleDelete = async (document: AircraftDocument) => {
+  const handleDelete = async (doc: AircraftDocument) => {
     try {
       // TODO: Implement document deletion functionality
-      // await deleteAircraftDocument(aircraftId, document.id);
+      // await deleteAircraftDocument(aircraftId, doc.id);
       // await loadDocuments();
     } catch (err) {
       console.error('Error deleting document:', err);
@@ -136,16 +136,16 @@ export default function AircraftDocuments({ aircraftId }: AircraftDocumentsProps
             </div>
             <div className="flex items-center space-x-2">
               <Button
-                variant="outline"
-                size="sm"
+                variant="outlined"
+                size="small"
                 onClick={() => handleDownload(document)}
               >
                 <Download className="h-4 w-4 mr-1" />
                 Download
               </Button>
               <Button
-                variant="outline"
-                size="sm"
+                variant="outlined"
+                size="small"
                 onClick={() => handleDelete(document)}
                 className="text-red-600"
               >

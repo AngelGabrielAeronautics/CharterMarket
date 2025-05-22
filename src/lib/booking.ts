@@ -56,7 +56,10 @@ export const getClientBookings = async (clientId: string): Promise<Booking[]> =>
       orderBy('createdAt', 'desc')
     );
     const snapshot = await getDocs(bookingsQuery);
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Booking);
+    return snapshot.docs.map((doc) => (({
+      id: doc.id,
+      ...doc.data()
+    }) as Booking));
   } catch (error) {
     console.error('Error fetching client bookings:', error);
     throw new Error('Failed to fetch client bookings');
@@ -74,7 +77,10 @@ export const getOperatorBookings = async (operatorId: string): Promise<Booking[]
       orderBy('createdAt', 'desc')
     );
     const snapshot = await getDocs(bookingsQuery);
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Booking);
+    return snapshot.docs.map((doc) => (({
+      id: doc.id,
+      ...doc.data()
+    }) as Booking));
   } catch (error: any) {
     console.error('Error fetching operator bookings:', error);
     throw new Error(error.message || 'Failed to fetch operator bookings');

@@ -252,7 +252,6 @@ export default function AdminCalendarPage() {
           </Tooltip>
         </Box>
       </Box>
-
       {filtersOpen && (
         <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
           <Box
@@ -271,7 +270,13 @@ export default function AdminCalendarPage() {
           </Box>
 
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
+            {/* @ts-ignore - MUI Grid type inference issue */}
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6,
+                md: 3
+              }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Status</InputLabel>
                 <Select
@@ -287,7 +292,13 @@ export default function AdminCalendarPage() {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            {/* @ts-ignore - MUI Grid type inference issue */}
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6,
+                md: 3
+              }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Operator</InputLabel>
                 <Select
@@ -305,7 +316,13 @@ export default function AdminCalendarPage() {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            {/* @ts-ignore - MUI Grid type inference issue */}
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6,
+                md: 3
+              }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Date Range</InputLabel>
                 <Select
@@ -321,7 +338,13 @@ export default function AdminCalendarPage() {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            {/* @ts-ignore - MUI Grid type inference issue */}
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6,
+                md: 3
+              }}>
               <TextField
                 fullWidth
                 size="small"
@@ -404,7 +427,6 @@ export default function AdminCalendarPage() {
           )}
         </Paper>
       )}
-
       {isLoading ? (
         <Box sx={{ mb: 4 }}>
           <Skeleton variant="rectangular" height={500} animation="wave" sx={{ borderRadius: 2 }} />

@@ -10,12 +10,15 @@ import {
   useTheme,
   Avatar,
   Grid,
+  InputAdornment,
 } from '@mui/material';
 import { Airport } from '@/types/airport';
 import { getCityImageUrlWithFallback } from '@/lib/cityImages';
 import Image from 'next/image';
 import debounce from 'lodash/debounce';
 import { ChevronDown } from 'lucide-react';
+import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
+import FlightLandIcon from '@mui/icons-material/FlightLand';
 
 interface AirportSelectProps {
   label: string;
@@ -27,6 +30,7 @@ interface AirportSelectProps {
   className?: string;
   showCityImages?: boolean;
   onAirportSelected?: (airport: Airport | null) => void;
+  disabled?: boolean;
 }
 
 export default function AirportSelect({
@@ -39,20 +43,40 @@ export default function AirportSelect({
   className,
   showCityImages = false,
   onAirportSelected,
+  disabled = false,
 }: AirportSelectProps) {
   const theme = useTheme();
   const [inputValue, setInputValue] = useState('');
-  const [options, setOptions] = useState<Airport[]>([]);
+  const manualEntryOption: Airport = {
+    icao: 'MANUAL',
+    name: 'Manually add unlisted airfields',
+    city: '',
+    country: '',
+    iata: '',
+    timezone: '',
+    latitude: 0,
+    longitude: 0
+  };
+  
+  const [options, setOptions] = useState<Airport[]>([manualEntryOption]);
   const [loading, setLoading] = useState(false);
-  const [selectedAirport, setSelectedAirport] = useState<Airport | null>(null);
+  const [selectedValue, setSelectedValue] = useState<Airport | string | null>(null);
   const [cityImageUrl, setCityImageUrl] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState<boolean>(false);
+  const [showUndocumented, setShowUndocumented] = useState(false);
+
+  const getOptionLabelString = (option: Airport | string): string => {
+    if (typeof option === 'string') return option;
+    if (option.icao === 'MANUAL') return ''; // Manual entry shouldn't show in input
+    return `${option.name} (${option.icao}) - ${option.city}, ${option.country}`;
+  };
 
   // Debounced fetch function
   const fetchAirports = useCallback(
     debounce(async (searchTerm: string) => {
       if (searchTerm.length < 2) {
         setOptions([]);
+        setOptions([manualEntryOption]);
         setLoading(false);
         return;
       }
@@ -60,10 +84,13 @@ export default function AirportSelect({
       try {
         const response = await fetch(`/api/airports/search?q=${searchTerm}`);
         const data: Airport[] = await response.json();
-        setOptions(data);
+        // Always include the manual entry option at the beginning
+        setOptions([manualEntryOption, ...data]);
+        setShowUndocumented(data.length === 0);
       } catch (error) {
         console.error('Failed to fetch airports:', error);
-        setOptions([]);
+        setOptions([manualEntryOption]);
+        setShowUndocumented(true);
       } finally {
         setLoading(false);
       }
@@ -75,65 +102,125 @@ export default function AirportSelect({
     if (inputValue) {
       fetchAirports(inputValue);
     } else {
-      setOptions([]);
+      setOptions([manualEntryOption]);
+      setShowUndocumented(false);
     }
   }, [inputValue, fetchAirports]);
 
-  // Effect to fetch details and image for the initially selected airport (based on ICAO value)
+  // Effect to fetch details and image for the initially selected airport (based on ICAO value prop)
   useEffect(() => {
-    const loadInitialAirport = async () => {
-      if (value && options.length === 0) {
-        // Only if value is present and options haven't been fetched for it
-        setLoading(true); // Indicate loading for initial fetch
+    const loadAirportFromValueProp = async () => {
+      if (!value) {
+        setSelectedValue(null);
+        setInputValue('');
+        if (cityImageUrl) setCityImageUrl(null);
+        if (onAirportSelected) onAirportSelected(null);
+        return;
+      }
+
+      if (value === 'MANUAL') {
+        setSelectedValue(manualEntryOption);
+        setInputValue(getOptionLabelString(manualEntryOption)); // Though it's empty
+        return;
+      }
+
+      let currentICAO = '';
+      if (selectedValue && typeof selectedValue !== 'string') currentICAO = selectedValue.icao;
+      else if (typeof selectedValue === 'string') currentICAO = selectedValue;
+
+      if (value !== currentICAO) { // Only process if the prop value is actually different
+        setLoading(true);
         try {
-          // Attempt to find in current options, or fetch if not found (e.g., on initial load)
-          let airport = options.find((opt) => opt.icao === value);
+          let airport = options.find(opt => typeof opt !== 'string' && opt.icao === value);
           if (!airport) {
-            const response = await fetch(`/api/airports/search?q=${value}`); // Assuming API can find by ICAO
+            const response = await fetch(`/api/airports/search?q=${value}`);
             const data: Airport[] = await response.json();
             airport = data.find((d) => d.icao === value);
           }
 
           if (airport) {
-            setSelectedAirport(airport);
-            if (onAirportSelected) {
-              onAirportSelected(airport);
-            }
+            setSelectedValue(airport);
+            setInputValue(getOptionLabelString(airport));
+            if (onAirportSelected) onAirportSelected(airport);
             if (showCityImages && airport.city && airport.country) {
               setImageLoading(true);
               const imageUrl = await getCityImageUrlWithFallback(airport);
               setCityImageUrl(imageUrl);
               setImageLoading(false);
             }
+          } else {
+            // If value is an ICAO but not found, clear out to avoid stale display
+            setSelectedValue(null);
+            setInputValue(''); 
+            if (onAirportSelected) onAirportSelected(null);
           }
-        } catch (error) {
-          console.error('Failed to fetch initial airport details:', error);
+        } catch (err) {
+          console.error('Failed to fetch airport for value prop:', err);
+          setSelectedValue(null);
+          setInputValue('');
         } finally {
           setLoading(false);
         }
-      } else if (!value) {
-        setSelectedAirport(null);
-        setCityImageUrl(null);
-        if (onAirportSelected) {
-          onAirportSelected(null);
-        }
       }
     };
-    loadInitialAirport();
-  }, [value, showCityImages, onAirportSelected]); // options removed to avoid re-triggering if options change due to typing
+    loadAirportFromValueProp();
+  }, [value, onAirportSelected, showCityImages]); // Removed options and selectedValue from deps
 
-  const handleSelectionChange = async (event: any, newValue: Airport | null) => {
-    setSelectedAirport(newValue);
-    onChange(newValue ? newValue.icao : ''); // Pass ICAO code up
-    if (onAirportSelected) {
-      onAirportSelected(newValue);
+  // Show helper message below the input whenever the user has typed at least 2 characters,
+  // the component is not loading, and no airport suggestions are available.
+  useEffect(() => {
+    if (!loading && inputValue.trim().length >= 2 && options.length === 0) {
+      setShowUndocumented(true);
+    } else {
+      setShowUndocumented(false);
+    }
+  }, [loading, inputValue, options]);
+
+  const handleSelectionChange = async (
+    event: unknown,
+    newValue: Airport | string | null
+  ) => {
+    if (disabled) return;
+
+    // If the value is an Airport object, keep it; otherwise store the free-text string.
+    // Prevent selecting the manual message option
+    if (newValue && typeof newValue !== 'string' && newValue.icao === 'MANUAL') {
+      return; // Do nothing when manual message is clicked
     }
 
-    if (showCityImages && newValue && newValue.city && newValue.country) {
+    setSelectedValue(newValue);
+
+    if (typeof newValue === 'string') {
+      // Free-text entry – pass the raw string up and notify that no documented airport was selected.
+      onChange(newValue.trim());
+      if (onAirportSelected) {
+        onAirportSelected(null);
+      }
+    } else if (newValue) {
+      // Airport object selected from the list
+      onChange(newValue.icao);
+      if (onAirportSelected) {
+        onAirportSelected(newValue);
+      }
+    } else {
+      // Selection cleared
+      onChange('');
+      if (onAirportSelected) {
+        onAirportSelected(null);
+      }
+    }
+
+    if (
+      showCityImages &&
+      newValue &&
+      typeof newValue !== 'string' &&
+      newValue.city &&
+      newValue.country
+    ) {
       setImageLoading(true);
       setCityImageUrl(null); // Clear previous image
       try {
-        const imageUrl = await getCityImageUrlWithFallback(newValue);
+        const imageUrl = await getCityImageUrlWithFallback(newValue as Airport);
         setCityImageUrl(imageUrl);
       } catch (error) {
         console.error('Failed to load city image for selected airport', error);
@@ -146,19 +233,42 @@ export default function AirportSelect({
     }
   };
 
+  // Helper to determine if we need to commit free text
+  function freeSoloCommitNeeded() {
+    // No airport object selected and user has typed something.
+    return (
+      (selectedValue === null || selectedValue === '') && inputValue.trim().length > 0
+    );
+  }
+
   return (
     <Box className={className}>
       <Autocomplete
+        freeSolo
         options={options}
-        getOptionLabel={(option) =>
-          `${option.name} (${option.icao}) - ${option.city}, ${option.country}`
-        }
-        value={selectedAirport}
-        onInputChange={(event, newInputValue) => {
+        getOptionLabel={getOptionLabelString}
+        value={selectedValue ?? null}
+        inputValue={inputValue}
+        onInputChange={(event, newInputValue, reason) => {
+          if (disabled && reason !== 'reset') return;
           setInputValue(newInputValue);
         }}
         onChange={handleSelectionChange}
+        onBlur={() => {
+          if (disabled) return;
+          // Commit the current input as a free-text value when the field loses focus and nothing is selected yet.
+          if (freeSoloCommitNeeded()) {
+            const trimmed = inputValue.trim();
+            if (trimmed) {
+              handleSelectionChange(null, trimmed);
+            }
+          }
+        }}
         loading={loading}
+        disabled={disabled}
+        readOnly={disabled}
+        disableClearable={disabled}
+        noOptionsText="Undocumented airfields can be added manually"
         renderInput={(params) => (
           <TextField
             {...params}
@@ -167,9 +277,26 @@ export default function AirportSelect({
             required={required}
             placeholder={placeholder}
             error={!!error}
-            helperText={error}
+            disabled={disabled}
+            helperText={
+              error
+                ? `${error}${showUndocumented ? ' — Undocumented airfields can be added manually' : ''}`
+                : showUndocumented
+                ? 'Undocumented airfields can be added manually'
+                : ' '
+            }
+            InputLabelProps={{
+              shrink: true,
+            }}
             InputProps={{
               ...params.InputProps,
+              startAdornment: (
+                <>
+                  {label === 'From' && <InputAdornment position="start"><FlightTakeoffIcon /></InputAdornment>}
+                  {label === 'To' && <InputAdornment position="start"><FlightLandIcon /></InputAdornment>}
+                  {params.InputProps.startAdornment}
+                </>
+              ),
               endAdornment: (
                 <>
                   {loading ? <CircularProgress color="inherit" size={20} /> : null}
@@ -180,42 +307,71 @@ export default function AirportSelect({
           />
         )}
         renderOption={(props, option) => (
-          <Box component="li" {...props} key={option.icao}>
-            <Grid container alignItems="center" spacing={2}>
-              {showCityImages && (
-                <Grid item>
-                  {/* Placeholder for potential small thumbnail in dropdown, not implemented here */}
-                  {/* For now, using Avatar as a placeholder if you want an icon */}
-                  <Avatar
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      fontSize: '0.8rem',
-                      bgcolor: theme.palette.primary.light,
-                    }}
-                  >
-                    {option.city.substring(0, 1)}
-                  </Avatar>
+          typeof option === 'string' ? (
+            <Box component="li" {...props} key={option}>
+              {option}
+            </Box>
+          ) : option.icao === 'MANUAL' ? (
+            <Box 
+              component="li"
+              {...props}
+              onClick={(e) => e.stopPropagation()} // Prevent selection
+              key={option.icao}
+              sx={{ 
+                fontStyle: 'italic',
+                color: theme.palette.primary.main,
+                fontWeight: 'bold',
+                borderTop: '1px solid',
+                borderColor: theme.palette.divider,
+                py: 1.5,
+                pointerEvents: 'none'  // Make non-clickable
+              }}
+            >
+              {option.name}
+            </Box>
+          ) : (
+            <Box component="li" {...props} key={option.icao}>
+              <Grid container alignItems="center" spacing={2}>
+                {showCityImages && (
+                  <Grid>
+                    {/* Placeholder for potential small thumbnail in dropdown, not implemented here */}
+                    {/* For now, using Avatar as a placeholder if you want an icon */}
+                    <Avatar
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        fontSize: '0.8rem',
+                        bgcolor: theme.palette.primary.light,
+                      }}
+                    >
+                      {option.city.substring(0, 1)}
+                    </Avatar>
+                  </Grid>
+                )}
+                <Grid size="grow">
+                  <Typography variant="body2" component="div">
+                    {option.name} ({option.icao})
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    {option.city}, {option.country}
+                  </Typography>
                 </Grid>
-              )}
-              <Grid item xs>
-                <Typography variant="body2" component="div">
-                  {option.name} ({option.icao})
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  {option.city}, {option.country}
-                </Typography>
               </Grid>
-            </Grid>
-          </Box>
+            </Box>
+          )
         )}
-        isOptionEqualToValue={(option, val) => option.icao === val.icao}
+        isOptionEqualToValue={(option, val) => {
+          if (typeof option === 'string' || typeof val === 'string') {
+            return option === val;
+          }
+          return option.icao === val.icao;
+        }}
         filterOptions={(x) => x} // Disable frontend filtering, rely on API
         autoComplete
         includeInputInList
         filterSelectedOptions
       />
-      {showCityImages && selectedAirport && (
+      {showCityImages && selectedValue && typeof selectedValue !== 'string' && (
         <Box
           sx={{
             mt: 2,
@@ -242,7 +398,7 @@ export default function AirportSelect({
           {!imageLoading && cityImageUrl && (
             <Image
               src={cityImageUrl}
-              alt={`${selectedAirport.city}, ${selectedAirport.country}`}
+              alt={`${selectedValue.city}, ${selectedValue.country}`}
               layout="fill" // Use fill for responsive behavior within the Box
               objectFit="cover"
               loading="lazy"

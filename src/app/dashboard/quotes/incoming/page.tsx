@@ -40,6 +40,8 @@ import {
   Error as ErrorIcon,
   OpenInNew as OpenInNewIcon,
   Info as InfoIcon,
+  TimerOff as TimerOffIcon,
+  TaskAlt as TaskAltIcon,
 } from '@mui/icons-material';
 
 export default function IncomingRequestsPage() {
@@ -126,26 +128,6 @@ export default function IncomingRequestsPage() {
             icon={<LocalOfferIcon style={{ fontSize: 16 }} />}
           />
         );
-      case 'accepted':
-        return (
-          <Chip
-            label="Accepted"
-            color="success"
-            size="small"
-            icon={<CheckCircleIcon style={{ fontSize: 16 }} />}
-          />
-        );
-      case 'confirmed':
-        return (
-          <Chip
-            label="Confirmed"
-            color="success"
-            size="small"
-            icon={<CheckCircleIcon style={{ fontSize: 16 }} />}
-          />
-        );
-      case 'completed':
-        return <Chip label="Completed" color="default" size="small" />;
       case 'cancelled':
         return (
           <Chip
@@ -334,25 +316,6 @@ export default function IncomingRequestsPage() {
               variant={statusFilter === 'quoted' ? 'filled' : 'outlined'}
               icon={<LocalOfferIcon />}
             />
-            <Chip
-              label={`Completed (${completedCount})`}
-              color={
-                statusFilter === 'accepted' ||
-                statusFilter === 'confirmed' ||
-                statusFilter === 'completed'
-                  ? 'success'
-                  : 'default'
-              }
-              onClick={() => setStatusFilter('accepted')}
-              variant={
-                statusFilter === 'accepted' ||
-                statusFilter === 'confirmed' ||
-                statusFilter === 'completed'
-                  ? 'filled'
-                  : 'outlined'
-              }
-              icon={<CheckCircleIcon />}
-            />
           </Box>
 
           <Paper elevation={2} sx={{ overflow: 'hidden', borderRadius: 2 }}>
@@ -371,7 +334,7 @@ export default function IncomingRequestsPage() {
                 {filteredRequests.map((req) => (
                   <TableRow
                     key={req.id}
-                    sx={
+                    style={
                       req.status === 'pending'
                         ? {
                             backgroundColor: 'rgba(255, 152, 0, 0.08)', // Light warning color for pending requests
@@ -423,7 +386,7 @@ export default function IncomingRequestsPage() {
                 ))}
                 {filteredRequests.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} sx={{ textAlign: 'center', py: 4 }}>
+                    <TableCell colSpan={6} style={{ textAlign: 'center', paddingTop: '32px', paddingBottom: '32px' }}>
                       {searchTerm || statusFilter !== 'all' ? (
                         <Typography variant="body1">
                           No matching requests found. Try adjusting your filters.

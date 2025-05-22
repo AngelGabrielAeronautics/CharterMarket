@@ -89,7 +89,11 @@ export default function DownloadPage() {
 
         <Grid container spacing={4}>
           {/* App Screenshots */}
-          <Grid item xs={12} md={6}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6
+            }}>
             <Box
               sx={{
                 position: 'relative',
@@ -198,7 +202,11 @@ export default function DownloadPage() {
           </Grid>
 
           {/* Download Links */}
-          <Grid item xs={12} md={6}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6
+            }}>
             <Box
               sx={{
                 height: '100%',

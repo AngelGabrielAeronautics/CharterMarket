@@ -47,7 +47,7 @@ export default function Logo({ href, height = 40, sx = {}, srcOverride }: LogoPr
 
   if (href) {
     return (
-      <Link href={href} style={{ textDecoration: 'none', '&:hover': { opacity: 0.8 }, transition: 'opacity 200ms' }}>
+      <Link href={href} style={{ textDecoration: 'none', transition: 'opacity 200ms' }}>
         {logoComponent}
       </Link>
     );

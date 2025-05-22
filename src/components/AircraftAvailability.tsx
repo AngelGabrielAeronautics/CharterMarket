@@ -7,6 +7,7 @@ import AddIcon from '@mui/icons-material/Add';
 import { AircraftAvailability } from '@/types/aircraft';
 import { getAircraftAvailability, createAvailabilityBlock } from '@/lib/aircraft';
 import { addDays, format } from 'date-fns';
+import { DateRange } from 'react-day-picker';
 
 interface AircraftAvailabilityProps {
   aircraftId: string;
@@ -16,7 +17,7 @@ export default function AircraftAvailabilityCalendar({ aircraftId }: AircraftAva
   const [availability, setAvailability] = useState<AircraftAvailability[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [selectedDates, setSelectedDates] = useState<DateRange | undefined>(undefined);
   const [isAddingBlock, setIsAddingBlock] = useState(false);
   const [blockType, setBlockType] = useState<'blocked' | 'maintenance' | 'charter'>('blocked');
   const [notes, setNotes] = useState('');
@@ -38,22 +39,21 @@ export default function AircraftAvailabilityCalendar({ aircraftId }: AircraftAva
   };
 
   const handleAddBlock = async () => {
-    if (selectedDates.length !== 2) {
+    if (!selectedDates?.from || !selectedDates?.to) {
       setError('Please select both start and end dates');
       return;
     }
 
     setIsAddingBlock(true);
     try {
-      await createAvailabilityBlock({
-        aircraftId,
-        startDate: selectedDates[0],
-        endDate: selectedDates[1],
+      await createAvailabilityBlock(aircraftId, {
+        startDate: selectedDates.from,
+        endDate: selectedDates.to,
         type: blockType,
         notes,
       });
       await loadAvailability();
-      setSelectedDates([]);
+      setSelectedDates(undefined);
       setNotes('');
       setBlockType('blocked');
     } catch (err) {
@@ -86,7 +86,8 @@ export default function AircraftAvailabilityCalendar({ aircraftId }: AircraftAva
       }
     });
 
-    if (selectedDates.some(d => d.toDateString() === date.toDateString())) {
+    if (selectedDates && selectedDates.from && selectedDates.to &&
+        date >= selectedDates.from && date <= selectedDates.to) {
       classes.push('bg-blue-500 text-white hover:bg-blue-600');
     }
 
@@ -140,7 +141,7 @@ export default function AircraftAvailabilityCalendar({ aircraftId }: AircraftAva
             <Button onClick={() => setIsAddingBlock(false)} color="inherit">Cancel</Button>
             <Button
               onClick={handleAddBlock}
-              disabled={isAddingBlock || selectedDates.length !== 2}
+              disabled={isAddingBlock || !selectedDates || !selectedDates.from || !selectedDates.to}
               variant="contained"
               color="primary"
             >
@@ -163,12 +164,9 @@ export default function AircraftAvailabilityCalendar({ aircraftId }: AircraftAva
         <Calendar
           mode="range"
           selected={selectedDates}
-          onSelect={dates => setSelectedDates(dates || [])}
+          onSelect={setSelectedDates}
           numberOfMonths={2}
           disabled={{ before: new Date() }}
-          classNames={{
-            day: date => getDateClass(date),
-          }}
         />
       </Paper>
       <Grid container spacing={3}>

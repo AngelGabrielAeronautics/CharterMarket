@@ -121,11 +121,24 @@ export const createAvailabilityBlock = async (aircraftId: string, data: {
   }
 };
 
-export const getAircraftAvailability = async (aircraftId: string): Promise<AircraftAvailability[]> => {
+export const addAircraftAvailability = createAvailabilityBlock;
+
+export const getAircraftAvailability = async (
+  aircraftId: string,
+  startDate?: Date,
+  endDate?: Date
+): Promise<AircraftAvailability[]> => {
   try {
     const availabilityRef = collection(db, 'aircraft', aircraftId, 'availability');
-    const querySnapshot = await getDocs(availabilityRef);
-    
+    let q = query(availabilityRef);
+    if (startDate) {
+      q = query(q, where('startDate', '>=', Timestamp.fromDate(startDate)));
+    }
+    if (endDate) {
+      q = query(q, where('endDate', '<=', Timestamp.fromDate(endDate)));
+    }
+    const querySnapshot = await getDocs(q);
+
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),

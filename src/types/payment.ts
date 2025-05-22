@@ -1,6 +1,6 @@
 import { Timestamp } from 'firebase/firestore';
 
-export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
+export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded' | 'paid' | 'overdue';
 
 export interface Payment {
   id: string;
@@ -13,8 +13,10 @@ export interface Payment {
   paymentReference?: string; // Reference number for the payment
   notes?: string; // Admin notes about payment
   paymentDate?: Timestamp; // When payment was made
+  dueDate?: Timestamp; // Due date for pending/overdue payments
   processedDate?: Timestamp; // When payment was processed/verified by admin
   processedBy?: string; // Admin userCode who processed the payment
+  operatorPaid?: boolean; // Flag indicating if operator has been paid
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

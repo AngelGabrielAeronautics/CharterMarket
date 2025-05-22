@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
   Grid,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
   TableRow,
   Chip,
   Button,
@@ -46,556 +46,550 @@ import {
   Refresh as RefreshIcon,
   ReceiptLong as InvoiceIcon,
   Warning as WarningIcon,
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
-import { format, addDays, subDays } from 'date-fns';
+import { format, parseISO } from 'date-fns';
+import { usePayments } from '@/hooks/usePayments'; // Import the hook
+import { Payment, PaymentStatus } from '@/types/payment'; // Import Payment type
+import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
+import toast from 'react-hot-toast';
 
-// Mock data for pending payments
-const mockPendingPayments = [
-  {
-    id: 'payment1',
-    flightCode: 'FLT-OP-JETS-20230601-1234',
-    invoiceNumber: 'INV-FLT-OP-JETS-20230601-12345678',
-    client: 'John Smith',
-    operator: 'Luxury Jets',
-    amount: 75000,
-    dueDate: addDays(new Date(), 3),
-    status: 'pending',
-    paymentMethod: 'bank_transfer',
-    notes: 'Client has confirmed payment will be made by Friday',
-  },
-  {
-    id: 'payment2',
-    flightCode: 'FLT-OP-AIRS-20230603-5678',
-    invoiceNumber: 'INV-FLT-OP-AIRS-20230603-87654321',
-    client: 'ABC Travel Agency',
-    operator: 'AirStar Executive',
-    amount: 125000,
-    dueDate: addDays(new Date(), 1),
-    status: 'pending',
-    paymentMethod: 'credit_card',
-    notes: null,
-  },
-  {
-    id: 'payment3',
-    flightCode: 'FLT-OP-ELIT-20230605-9012',
-    invoiceNumber: 'INV-FLT-OP-ELIT-20230605-56781234',
-    client: 'Luxury Travels',
-    operator: 'Elite Air',
-    amount: 95000,
-    dueDate: subDays(new Date(), 1),
-    status: 'overdue',
-    paymentMethod: 'bank_transfer',
-    notes: 'Payment follow-up email sent',
-  },
-];
-
-// Mock data for recent payments
-const mockCompletedPayments = [
-  {
-    id: 'payment4',
-    flightCode: 'FLT-OP-JETS-20230530-3456',
-    invoiceNumber: 'INV-FLT-OP-JETS-20230530-98765432',
-    client: 'Michael Brown',
-    operator: 'Luxury Jets',
-    amount: 56000,
-    paidDate: subDays(new Date(), 2),
-    status: 'paid',
-    paymentMethod: 'bank_transfer',
-    verifiedBy: 'Admin User',
-    operatorPaid: true,
-    operatorPaymentDate: subDays(new Date(), 1),
-  },
-  {
-    id: 'payment5',
-    flightCode: 'FLT-OP-AIRS-20230525-7890',
-    invoiceNumber: 'INV-FLT-OP-AIRS-20230525-43218765',
-    client: 'Sarah Johnson',
-    operator: 'AirStar Executive',
-    amount: 110000,
-    paidDate: subDays(new Date(), 4),
-    status: 'paid',
-    paymentMethod: 'credit_card',
-    verifiedBy: 'Admin User',
-    operatorPaid: false,
-    operatorPaymentDate: null,
-  },
-];
+// Helper to convert Firestore Timestamp to Date if necessary
+const toJsDate = (timestamp: any): Date | null => {
+  if (!timestamp) return null;
+  if (timestamp instanceof Date) return timestamp;
+  if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+    return timestamp.toDate();
+  }
+  // Attempt to parse if it's a string
+  if (typeof timestamp === 'string') {
+    const parsed = parseISO(timestamp);
+    if (!isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+  console.warn('Invalid date/timestamp:', timestamp);
+  return null;
+};
 
 export default function PaymentVerification() {
+  const { user } = useAuth();
+  const {
+    payments: allPayments,
+    loading: paymentsLoading,
+    error: paymentsError,
+    refetchPayments,
+  } = usePayments(true); // Use the hook
+
   const [searchQuery, setSearchQuery] = useState('');
   const [tabValue, setTabValue] = useState(0);
-  const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
   const [isVerifyDialogOpen, setIsVerifyDialogOpen] = useState(false);
   const [isOperatorPayDialogOpen, setIsOperatorPayDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false); // For individual actions
+  const [verificationStatus, setVerificationStatus] = useState<PaymentStatus>('completed');
   const [verificationNotes, setVerificationNotes] = useState('');
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
-  // Filter payments based on search query and active tab
-  const filteredPendingPayments = mockPendingPayments.filter(
-    (payment) =>
-      payment.flightCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      payment.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      payment.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      payment.operator.toLowerCase().includes(searchQuery.toLowerCase())
+  const pendingPayments = useMemo(
+    () => allPayments.filter((p) => p.status === 'pending' || p.status === 'processing'),
+    [allPayments]
   );
 
-  const filteredCompletedPayments = mockCompletedPayments.filter(
-    (payment) =>
-      payment.flightCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      payment.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      payment.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      payment.operator.toLowerCase().includes(searchQuery.toLowerCase())
+  const completedPayments = useMemo(
+    () =>
+      allPayments.filter(
+        (p) => p.status === 'completed' || p.status === 'failed' || p.status === 'refunded'
+      ),
+    [allPayments]
   );
 
-  const handleVerifyPayment = (paymentId: string) => {
-    setSelectedPayment(paymentId);
-    setIsVerifyDialogOpen(true);
-  };
+  // Operator Payouts Tab - for now, these are payments that are 'completed'/'paid' but not yet marked as 'operatorPaid'
+  // This logic will need refinement based on how `operatorPaid` is structured and updated.
+  const operatorPayouts = useMemo(
+    () =>
+      allPayments.filter((p) => p.status === 'completed' && !p.operatorPaid),
+    [allPayments]
+  );
 
-  const handleMarkOperatorPaid = (paymentId: string) => {
-    setSelectedPayment(paymentId);
-    setIsOperatorPayDialogOpen(true);
-  };
-
-  const handleConfirmVerification = () => {
-    setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsVerifyDialogOpen(false);
-      setSelectedPayment(null);
-      setVerificationNotes('');
-      // In a real app, we would update the payment status
-    }, 1500);
-  };
-
-  const handleConfirmOperatorPayment = () => {
-    setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsOperatorPayDialogOpen(false);
-      setSelectedPayment(null);
-      // In a real app, we would update the operator payment status
-    }, 1500);
-  };
-
-  const getPaymentDetails = (paymentId: string | null) => {
-    if (!paymentId) return null;
-
-    return [...mockPendingPayments, ...mockCompletedPayments].find(
-      (payment) => payment.id === paymentId
+  const filterPayments = (paymentsToFilter: Payment[]) => {
+    if (!searchQuery) return paymentsToFilter;
+    return paymentsToFilter.filter(
+      (payment) =>
+        payment.invoiceId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        payment.bookingId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (payment.paymentId &&
+          payment.paymentId.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (payment.paymentReference &&
+          payment.paymentReference.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   };
 
-  const getStatusColor = (status: string) => {
+  const filteredPendingPayments = useMemo(
+    () => filterPayments(pendingPayments),
+    [pendingPayments, searchQuery]
+  );
+  const filteredCompletedPayments = useMemo(
+    () => filterPayments(completedPayments),
+    [completedPayments, searchQuery]
+  );
+  const filteredOperatorPayouts = useMemo(
+    () => filterPayments(operatorPayouts),
+    [operatorPayouts, searchQuery]
+  );
+
+  const handleOpenVerifyDialog = (paymentId: string) => {
+    setSelectedPaymentId(paymentId);
+    setVerificationStatus('completed'); // Default to completed
+    setVerificationNotes(allPayments.find((p) => p.id === paymentId)?.notes || '');
+    setIsVerifyDialogOpen(true);
+  };
+
+  const handleOpenOperatorPayDialog = (paymentId: string) => {
+    setSelectedPaymentId(paymentId);
+    // Potentially pre-fill notes or other details for operator payment
+    setIsOperatorPayDialogOpen(true);
+  };
+
+  const handleConfirmVerification = async () => {
+    if (!selectedPaymentId || !user?.userCode) {
+      toast.error('User or payment details missing.');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      // API call to verify payment
+      // This will be: POST /api/admin/payments/[paymentId]/verify
+      // Body: { adminUserCode: user.userCode, status: verificationStatus, notes: verificationNotes }
+      const response = await fetch(`/api/admin/payments/${selectedPaymentId}/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminUserCode: user.userCode,
+          status: verificationStatus,
+          notes: verificationNotes,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to verify payment.');
+      }
+
+      toast.success('Payment status updated!');
+      refetchPayments(); // Refresh the list
+    } catch (error: any) {
+      console.error('Error verifying payment:', error);
+      toast.error(error.message || 'Could not update payment status.');
+    } finally {
+      setActionLoading(false);
+      setIsVerifyDialogOpen(false);
+      setSelectedPaymentId(null);
+      setVerificationNotes('');
+    }
+  };
+
+  const handleConfirmOperatorPayment = async () => {
+    if (!selectedPaymentId || !user?.userCode) {
+      toast.error('User or payment details missing.');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      // API call to mark operator paid
+      // This will be: POST /api/admin/payments/[paymentId]/mark-operator-paid
+      // Body: { adminUserCode: user.userCode, notes: "Operator paid" } (or similar)
+      const response = await fetch(`/api/admin/payments/${selectedPaymentId}/mark-operator-paid`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminUserCode: user.userCode,
+          // Potentially add other fields like payout date, reference, etc.
+          notes: `Operator paid by ${user.userCode}`,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to mark operator as paid.');
+      }
+      toast.success('Operator marked as paid!');
+      refetchPayments(); // Refresh the list
+    } catch (error: any) {
+      console.error('Error marking operator paid:', error);
+      toast.error(error.message || 'Could not mark operator as paid.');
+    } finally {
+      setActionLoading(false);
+      setIsOperatorPayDialogOpen(false);
+      setSelectedPaymentId(null);
+    }
+  };
+
+  const currentPaymentDetails = useMemo(
+    () => allPayments.find((payment) => payment.id === selectedPaymentId),
+    [allPayments, selectedPaymentId]
+  );
+
+  const getStatusChipColor = (
+    status?: PaymentStatus
+  ): 'success' | 'warning' | 'error' | 'default' | 'info' => {
     switch (status) {
+      case 'completed':
       case 'paid':
         return 'success';
       case 'pending':
         return 'warning';
       case 'overdue':
         return 'error';
+      case 'failed':
+        return 'error';
       default:
         return 'default';
     }
   };
 
-  const paymentDetails = getPaymentDetails(selectedPayment);
+  const renderPaymentTable = (
+    payments: Payment[],
+    type: 'pending' | 'completed' | 'operatorPayout'
+  ) => {
+    if (paymentsLoading) {
+  return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+    if (paymentsError) {
+      return (
+        <Alert severity="error" sx={{ m: 2 }}>
+          Failed to load payments: {paymentsError}
+        </Alert>
+      );
+    }
+    if (payments.length === 0) {
+      return (
+        <Typography sx={{ p: 3, textAlign: 'center' }}>No payments in this category.</Typography>
+      );
+    }
+
+    return (
+      <TableContainer>
+        <Table stickyHeader>
+            <TableHead>
+              <TableRow>
+              <TableCell sx={{ fontWeight: 'bold' }}>Invoice ID</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Booking ID</TableCell>
+              {/* Add Client / Operator name columns later if data is available */}
+              <TableCell sx={{ fontWeight: 'bold' }} align="right">
+                Amount
+              </TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Date Created</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Due Date / Paid Date</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }} align="center">
+                Actions
+              </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+            {payments.map((payment) => {
+              const createdAtDate = toJsDate(payment.createdAt);
+              const paymentDateOrDueDate =
+                payment.status === 'completed' || payment.status === 'paid'
+                  ? toJsDate(payment.paymentDate || payment.processedDate) // Use paymentDate or processedDate for paid
+                  : toJsDate(payment.dueDate); // Use dueDate for pending/overdue
+              return (
+                <TableRow hover key={payment.id}>
+                  <TableCell>
+                    <Link href={`/admin/invoices/${payment.invoiceId}`} passHref>
+                      <Typography
+                        variant="body2"
+                        color="primary"
+                        sx={{ textDecoration: 'underline' }}
+                      >
+                        {payment.invoiceId}
+                      </Typography>
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Link href={`/dashboard/bookings/${payment.bookingId}`} passHref>
+                      <Typography
+                        variant="body2"
+                        color="primary"
+                        sx={{ textDecoration: 'underline' }}
+                      >
+                        {payment.bookingId}
+                      </Typography>
+                    </Link>
+                    <br />
+                    <Typography variant="caption" color="textSecondary">
+                      {payment.paymentId}
+                    </Typography>
+                  </TableCell>
+                  {/* Client / Operator Cells - Placeholder for now */}
+                  <TableCell align="right">
+                    R
+                    {payment.amount.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </TableCell>
+                  <TableCell>
+                    {createdAtDate ? format(createdAtDate, 'dd MMM yyyy, HH:mm') : 'N/A'}
+                  </TableCell>
+                  <TableCell>
+                    {paymentDateOrDueDate ? format(paymentDateOrDueDate, 'dd MMM yyyy') : 'N/A'}
+                    {payment.status === 'overdue' && (
+                      <Chip label="Overdue" color="error" size="small" sx={{ ml: 1 }} />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={payment.status}
+                      color={getStatusChipColor(payment.status)}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                      <Tooltip title="View Details">
+                        <IconButton 
+                          size="small" 
+                        component={Link}
+                        href={`/admin/payments/${payment.id}`}
+                        >
+                        {' '}
+                        {/* Assuming a detail page might exist */}
+                        <VisibilityIcon />
+                        </IconButton>
+                      </Tooltip>
+                    {(type === 'pending' || type === 'operatorPayout') && (
+                      <Tooltip
+                        title={type === 'pending' ? 'Verify Client Payment' : 'Mark Operator Paid'}
+                      >
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            type === 'pending'
+                              ? handleOpenVerifyDialog(payment.id)
+                              : handleOpenOperatorPayDialog(payment.id)
+                          }
+                          color="primary"
+                        >
+                          <CheckCircleIcon />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+    );
+  };
+
+  // Calculate summary stats from live data
+  const totalReceived = useMemo(
+    () => completedPayments.reduce((sum, p) => sum + p.amount, 0),
+    [completedPayments]
+  );
+
+  const totalPending = useMemo(
+    () =>
+      pendingPayments.filter((p) => p.status === 'pending').reduce((sum, p) => sum + p.amount, 0),
+    [pendingPayments]
+  );
+
+  const totalOverdue = useMemo(
+    () =>
+      pendingPayments.filter((p) => p.status === 'overdue').reduce((sum, p) => sum + p.amount, 0),
+    [pendingPayments]
+  );
+
+  // This needs to be calculated based on amounts from 'operatorPayouts' list
+  const totalDueToOperators = useMemo(
+    () => operatorPayouts.reduce((sum, p) => sum + p.amount, 0), // Or use a specific 'payoutAmount' field if it exists
+    [operatorPayouts]
+  );
 
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" fontWeight="bold" gutterBottom>
-          Payment Management
-        </Typography>
-        <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-          Verify client payments and manage operator payouts
-        </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box>
+          <Typography variant="h5" fontWeight="bold" gutterBottom>
+            Payment Management
+          </Typography>
+          <Typography variant="subtitle1" color="text.secondary">
+            Verify client payments and manage operator payouts
+          </Typography>
+        </Box>
+        <Button
+          variant="outlined"
+          startIcon={<RefreshIcon />}
+          onClick={refetchPayments}
+          disabled={paymentsLoading || actionLoading}
+        >
+          Refresh
+        </Button>
       </Box>
-
-      <Grid container spacing={3}>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
         {/* Payment Stats Summary */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 3, borderRadius: 2 }}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={3}>
-                <Box>
-                  <Typography variant="h6" fontWeight="bold" sx={{ color: 'success.main' }}>
-                    R
-                    {mockCompletedPayments
-                      .reduce((total, payment) => total + payment.amount, 0)
-                      .toLocaleString()}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Total Payments Received
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <Box>
-                  <Typography variant="h6" fontWeight="bold" sx={{ color: 'warning.main' }}>
-                    R
-                    {mockPendingPayments
-                      .filter((p) => p.status === 'pending')
-                      .reduce((total, payment) => total + payment.amount, 0)
-                      .toLocaleString()}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Pending Payments
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <Box>
-                  <Typography variant="h6" fontWeight="bold" sx={{ color: 'error.main' }}>
-                    R
-                    {mockPendingPayments
-                      .filter((p) => p.status === 'overdue')
-                      .reduce((total, payment) => total + payment.amount, 0)
-                      .toLocaleString()}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Overdue Payments
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <Box>
-                  <Typography variant="h6" fontWeight="bold" sx={{ color: 'info.main' }}>
-                    R
-                    {mockCompletedPayments
-                      .filter((p) => !p.operatorPaid)
-                      .reduce((total, payment) => total + payment.amount * 0.97, 0)
-                      .toLocaleString()}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Due to Operators
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
+        <Grid
+          size={{
+            xs: 12,
+            md: 3
+          }}>
+          <Paper sx={{ p: 2, textAlign: 'center', borderRadius: 2, height: '100%' }}>
+            <Typography variant="h6" fontWeight="bold" sx={{ color: 'success.main' }}>
+              R
+              {totalReceived.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Total Payments Received
+            </Typography>
           </Paper>
         </Grid>
-
-        {/* Payment Tables */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 0, borderRadius: 2, overflow: 'hidden' }}>
-            <Box sx={{ p: 2, bgcolor: 'background.default' }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 2,
-                }}
-              >
-                <Tabs
-                  value={tabValue}
-                  onChange={handleTabChange}
-                  textColor="primary"
-                  indicatorColor="primary"
-                >
-                  <Tab
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Box component="span">Pending</Box>
-                        <Chip
-                          label={mockPendingPayments.length}
-                          size="small"
-                          color="warning"
-                          sx={{ ml: 1, height: 20, minWidth: 20 }}
-                        />
-                      </Box>
-                    }
-                  />
-                  <Tab
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Box component="span">Completed</Box>
-                        <Chip
-                          label={mockCompletedPayments.length}
-                          size="small"
-                          color="success"
-                          sx={{ ml: 1, height: 20, minWidth: 20 }}
-                        />
-                      </Box>
-                    }
-                  />
-                  <Tab
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Box component="span">Operator Payouts</Box>
-                        <Chip
-                          label={mockCompletedPayments.filter((p) => !p.operatorPaid).length}
-                          size="small"
-                          color="info"
-                          sx={{ ml: 1, height: 20, minWidth: 20 }}
-                        />
-                      </Box>
-                    }
-                  />
-                </Tabs>
-
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <TextField
-                    placeholder="Search payments..."
-                    size="small"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon fontSize="small" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                  <Button variant="outlined" startIcon={<FilterIcon />} size="small">
-                    Filter
-                  </Button>
-                </Box>
-              </Box>
-            </Box>
-
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Flight / Invoice</TableCell>
-                    <TableCell>Client</TableCell>
-                    <TableCell>Operator</TableCell>
-                    <TableCell>Amount</TableCell>
-                    {tabValue === 0 ? (
-                      <TableCell>Due Date</TableCell>
-                    ) : (
-                      <TableCell>Paid Date</TableCell>
-                    )}
-                    <TableCell>Status</TableCell>
-                    {tabValue === 2 && <TableCell>Charter Fee</TableCell>}
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {/* Render different content based on active tab */}
-                  {tabValue === 0 ? (
-                    // Pending payments
-                    filteredPendingPayments.length > 0 ? (
-                      filteredPendingPayments.map((payment) => (
-                        <TableRow key={payment.id}>
-                          <TableCell>
-                            <Box>
-                              <Typography variant="body2" fontWeight="medium">
-                                {payment.flightCode}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {payment.invoiceNumber}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell>{payment.client}</TableCell>
-                          <TableCell>{payment.operator}</TableCell>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight="medium">
-                              R{payment.amount.toLocaleString()}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <Typography variant="body2">
-                                {format(payment.dueDate, 'dd MMM yyyy')}
-                              </Typography>
-                              {payment.status === 'overdue' && (
-                                <Chip
-                                  label="Overdue"
-                                  color="error"
-                                  size="small"
-                                  sx={{ ml: 1, height: 20, fontSize: '0.7rem' }}
-                                />
-                              )}
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={
-                                payment.status.charAt(0).toUpperCase() + payment.status.slice(1)
-                              }
-                              color={getStatusColor(payment.status) as any}
-                              size="small"
-                              icon={
-                                payment.status === 'pending' ? (
-                                  <RefreshIcon fontSize="small" />
-                                ) : (
-                                  <WarningIcon fontSize="small" />
-                                )
-                              }
-                            />
-                          </TableCell>
-                          <TableCell align="right">
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                              <Tooltip title="Verify Payment">
-                                <IconButton
-                                  size="small"
-                                  color="success"
-                                  onClick={() => handleVerifyPayment(payment.id)}
-                                  sx={{ mr: 0.5 }}
-                                >
-                                  <CheckCircleIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="View Invoice">
-                                <IconButton size="small" sx={{ mr: 0.5 }}>
-                                  <ReceiptIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Send Reminder">
-                                <IconButton size="small" color="primary">
-                                  <SendIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                          <Typography color="text.secondary">No pending payments found</Typography>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  ) : tabValue === 1 ? (
-                    // Completed payments
-                    filteredCompletedPayments.length > 0 ? (
-                      filteredCompletedPayments.map((payment) => (
-                        <TableRow key={payment.id}>
-                          <TableCell>
-                            <Box>
-                              <Typography variant="body2" fontWeight="medium">
-                                {payment.flightCode}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {payment.invoiceNumber}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell>{payment.client}</TableCell>
-                          <TableCell>{payment.operator}</TableCell>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight="medium">
-                              R{payment.amount.toLocaleString()}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>{format(payment.paidDate, 'dd MMM yyyy')}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label="Paid"
-                              color="success"
-                              size="small"
-                              icon={<CheckCircleIcon fontSize="small" />}
-                            />
-                          </TableCell>
-                          <TableCell align="right">
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                              <Tooltip title="View Invoice">
-                                <IconButton size="small" sx={{ mr: 0.5 }}>
-                                  <ReceiptIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip
-                                title={
-                                  payment.operatorPaid ? 'Operator Paid' : 'Mark Operator Paid'
-                                }
-                              >
-                                <IconButton
-                                  size="small"
-                                  color={payment.operatorPaid ? 'success' : 'primary'}
-                                  onClick={() =>
-                                    !payment.operatorPaid && handleMarkOperatorPaid(payment.id)
-                                  }
-                                  disabled={payment.operatorPaid}
-                                >
-                                  <MoneyIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                          <Typography color="text.secondary">
-                            No completed payments found
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  ) : // Operator payouts
-                  filteredCompletedPayments.filter((p) => !p.operatorPaid).length > 0 ? (
-                    filteredCompletedPayments
-                      .filter((p) => !p.operatorPaid)
-                      .map((payment) => (
-                        <TableRow key={payment.id}>
-                          <TableCell>
-                            <Box>
-                              <Typography variant="body2" fontWeight="medium">
-                                {payment.flightCode}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {payment.invoiceNumber}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell>{payment.client}</TableCell>
-                          <TableCell>{payment.operator}</TableCell>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight="medium">
-                              R{payment.amount.toLocaleString()}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>{format(payment.paidDate, 'dd MMM yyyy')}</TableCell>
-                          <TableCell>
-                            <Chip label="Due to Operator" color="info" size="small" />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight="medium" color="success.main">
-                              R{Math.round(payment.amount * 0.03).toLocaleString()}
-                            </Typography>
-                          </TableCell>
-                          <TableCell align="right">
-                            <Button
-                              size="small"
-                              variant="contained"
-                              color="primary"
-                              startIcon={<MoneyIcon />}
-                              onClick={() => handleMarkOperatorPaid(payment.id)}
-                            >
-                              Mark Paid
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
-                        <Typography color="text.secondary">No pending operator payouts</Typography>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+        <Grid
+          size={{
+            xs: 12,
+            md: 3
+          }}>
+          <Paper sx={{ p: 2, textAlign: 'center', borderRadius: 2, height: '100%' }}>
+            <Typography variant="h6" fontWeight="bold" sx={{ color: 'warning.main' }}>
+              R
+              {totalPending.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Pending Client Payments
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid
+          size={{
+            xs: 12,
+            md: 3
+          }}>
+          <Paper sx={{ p: 2, textAlign: 'center', borderRadius: 2, height: '100%' }}>
+            <Typography variant="h6" fontWeight="bold" sx={{ color: 'error.main' }}>
+              R
+              {totalOverdue.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Overdue Client Payments
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid
+          size={{
+            xs: 12,
+            md: 3
+          }}>
+          <Paper sx={{ p: 2, textAlign: 'center', borderRadius: 2, height: '100%' }}>
+            <Typography variant="h6" fontWeight="bold" sx={{ color: 'info.main' }}>
+              R
+              {totalDueToOperators.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Due to Operators
+            </Typography>
           </Paper>
         </Grid>
       </Grid>
+      <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
+        <Box
+          sx={{
+            p: 2,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: 1,
+            borderColor: 'divider',
+          }}
+        >
+          <Tabs value={tabValue} onChange={handleTabChange} aria-label="payment categories">
+            <Tab
+              label={
+                <Box>
+                  Pending{' '}
+                  <Chip
+                    label={filteredPendingPayments.length}
+                    size="small"
+                    color="warning"
+                    sx={{ ml: 1 }}
+                  />
+                </Box>
+              }
+            />
+            <Tab
+              label={
+                <Box>
+                  Completed{' '}
+                  <Chip
+                    label={filteredCompletedPayments.length}
+                    size="small"
+                    color="success"
+                    sx={{ ml: 1 }}
+                  />
+                </Box>
+              }
+            />
+            <Tab
+              label={
+                <Box>
+                  Operator Payouts{' '}
+                  <Chip
+                    label={filteredOperatorPayouts.length}
+                    size="small"
+                    color="info"
+                    sx={{ ml: 1 }}
+                  />
+                </Box>
+              }
+            />
+          </Tabs>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <TextField
+              variant="outlined"
+              size="small"
+              placeholder="Search payments..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ width: { sm: 'auto', md: 300 } }}
+            />
+            {/* <Button variant="outlined" startIcon={<FilterIcon />} size="small">
+              Filter
+            </Button> */}
+          </Box>
+        </Box>
 
+        {tabValue === 0 && renderPaymentTable(filteredPendingPayments, 'pending')}
+        {tabValue === 1 && renderPaymentTable(filteredCompletedPayments, 'completed')}
+        {tabValue === 2 && renderPaymentTable(filteredOperatorPayouts, 'operatorPayout')}
+      </Paper>
       {/* Verify Payment Dialog */}
       <Dialog
         open={isVerifyDialogOpen}
@@ -603,111 +597,77 @@ export default function PaymentVerification() {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Verify Payment</DialogTitle>
+        <DialogTitle>Verify Client Payment</DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 1 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  <Typography variant="body2">
-                    Please confirm that you have received payment for this flight.
-                  </Typography>
-                </Alert>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Flight Code
-                </Typography>
-                <Typography variant="body1" fontWeight="medium">
-                  {paymentDetails?.flightCode}
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Invoice Number
-                </Typography>
-                <Typography variant="body1" fontWeight="medium">
-                  {paymentDetails?.invoiceNumber}
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Client
-                </Typography>
-                <Typography variant="body1">{paymentDetails?.client}</Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Amount
-                </Typography>
-                <Typography variant="body1" fontWeight="medium">
-                  R{paymentDetails?.amount.toLocaleString()}
-                </Typography>
-              </Grid>
-              <Grid item xs={12}>
-                <Divider sx={{ my: 1 }} />
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Payment Method
-                </Typography>
-                <FormControl component="fieldset">
-                  <RadioGroup defaultValue="bank_transfer" row>
-                    <FormControlLabel
-                      value="bank_transfer"
-                      control={<Radio />}
-                      label={
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <BankIcon fontSize="small" sx={{ mr: 0.5 }} />
-                          <span>Bank Transfer</span>
-                        </Box>
-                      }
-                    />
-                    <FormControlLabel
-                      value="credit_card"
-                      control={<Radio />}
-                      label={
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <CardIcon fontSize="small" sx={{ mr: 0.5 }} />
-                          <span>Credit Card</span>
-                        </Box>
-                      }
-                    />
-                  </RadioGroup>
+          {currentPaymentDetails ? (
+            <Box>
+              <Typography gutterBottom>
+                <strong>Invoice ID:</strong> {currentPaymentDetails.invoiceId}
+              </Typography>
+              <Typography gutterBottom>
+                <strong>Booking ID:</strong> {currentPaymentDetails.bookingId}
+              </Typography>
+              <Typography gutterBottom>
+                <strong>Amount:</strong> R
+                {currentPaymentDetails.amount.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Typography>
+              <Divider sx={{ my: 2 }} />
+              <FormControl component="fieldset" sx={{ mt: 2, mb: 1 }}>
+                <Typography component="legend" variant="subtitle1" sx={{ mb: 1 }}>
+                  Set Payment Status:
+              </Typography>
+                <RadioGroup
+                  row
+                  aria-label="payment-status"
+                  name="payment-status"
+                  value={verificationStatus}
+                  onChange={(e) => setVerificationStatus(e.target.value as PaymentStatus)}
+                >
+                  <FormControlLabel value="completed" control={<Radio />} label="Completed/Paid" />
+                  <FormControlLabel value="pending" control={<Radio />} label="Still Pending" />
+                  <FormControlLabel value="failed" control={<Radio />} label="Failed" />
+                </RadioGroup>
                 </FormControl>
-              </Grid>
-              <Grid item xs={12}>
                 <TextField
-                  label="Verification Notes"
+                label="Verification Notes (Optional)"
                   multiline
                   rows={3}
-                  fullWidth
-                  value={verificationNotes}
-                  onChange={(e) => setVerificationNotes(e.target.value)}
-                  placeholder="Enter any notes about this payment verification"
-                />
-              </Grid>
-            </Grid>
-          </Box>
+                fullWidth
+                value={verificationNotes}
+                onChange={(e) => setVerificationNotes(e.target.value)}
+                variant="outlined"
+                sx={{ mt: 1 }}
+              />
+            </Box>
+          ) : (
+            <CircularProgress />
+          )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsVerifyDialogOpen(false)} color="inherit">
+        <DialogActions sx={{ p: { xs: 2, sm: 3 } }}>
+          <Button
+            onClick={() => setIsVerifyDialogOpen(false)}
+            color="inherit"
+            variant="outlined"
+            disabled={actionLoading}
+          >
             Cancel
           </Button>
-          <Button
+          <Button 
             onClick={handleConfirmVerification}
-            variant="contained"
-            color="success"
-            disabled={isLoading}
+            color="primary"
+            variant="contained" 
+            disabled={actionLoading || !selectedPaymentId}
             startIcon={
-              isLoading ? <CircularProgress size={20} color="inherit" /> : <CheckCircleIcon />
+              actionLoading ? <CircularProgress size={20} color="inherit" /> : <CheckCircleIcon />
             }
           >
-            {isLoading ? 'Processing...' : 'Confirm Payment'}
+            {actionLoading ? 'Processing...' : 'Confirm & Update Status'}
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Mark Operator Paid Dialog */}
       <Dialog
         open={isOperatorPayDialogOpen}
@@ -715,96 +675,69 @@ export default function PaymentVerification() {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Mark Operator Payment</DialogTitle>
+        <DialogTitle>Mark Operator as Paid</DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 1 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  <Typography variant="body2">
-                    Please confirm that you have paid the operator for this flight.
+          {currentPaymentDetails ? (
+            <Box>
+              <Typography gutterBottom>
+                <strong>Invoice ID:</strong> {currentPaymentDetails.invoiceId}
                   </Typography>
-                </Alert>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Operator
-                </Typography>
-                <Typography variant="body1" fontWeight="medium">
-                  {paymentDetails?.operator}
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Flight Code
-                </Typography>
-                <Typography variant="body1" fontWeight="medium">
-                  {paymentDetails?.flightCode}
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Amount to Pay
-                </Typography>
-                <Typography variant="body1" fontWeight="medium">
-                  R{paymentDetails ? Math.round(paymentDetails.amount * 0.97).toLocaleString() : 0}
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  Charter Fee (3%)
-                </Typography>
-                <Typography variant="body1" fontWeight="medium" color="success.main">
-                  R{paymentDetails ? Math.round(paymentDetails.amount * 0.03).toLocaleString() : 0}
-                </Typography>
-              </Grid>
-              <Grid item xs={12}>
-                <Divider sx={{ my: 1 }} />
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Payment Method
-                </Typography>
-                <FormControl component="fieldset">
-                  <RadioGroup defaultValue="bank_transfer" row>
-                    <FormControlLabel
-                      value="bank_transfer"
-                      control={<Radio />}
-                      label={
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <BankIcon fontSize="small" sx={{ mr: 0.5 }} />
-                          <span>Bank Transfer</span>
-                        </Box>
-                      }
-                    />
-                  </RadioGroup>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Payment Reference"
-                  fullWidth
-                  placeholder="Enter payment reference or transaction ID"
-                />
-              </Grid>
-            </Grid>
-          </Box>
+              <Typography gutterBottom>
+                <strong>Booking ID:</strong> {currentPaymentDetails.bookingId} (Operator payout
+                portion)
+                    </Typography>
+              <Typography gutterBottom>
+                <strong>Amount Due to Operator:</strong>
+                {/* This should ideally be a separate field like 'operatorPayoutAmount' on the payment or booking */}
+                R
+                {(currentPaymentDetails.amount * 0.97).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}{' '}
+                (Assuming 3% commission)
+                    </Typography>
+              <Typography variant="caption" color="textSecondary">
+                Note: This is an estimate. The actual payout amount should be confirmed based on the
+                operator agreement.
+                    </Typography>
+              <TextField
+                label="Operator Payout Notes (Optional)"
+                multiline
+                rows={3}
+                fullWidth
+                // value={operatorPayoutNotes}
+                // onChange={(e) => setOperatorPayoutNotes(e.target.value)}
+                variant="outlined"
+                sx={{ mt: 2 }}
+                placeholder="e.g., Paid via EFT, Ref: OP12345"
+              />
+            </Box>
+          ) : (
+            <CircularProgress />
+          )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsOperatorPayDialogOpen(false)} color="inherit">
+        <DialogActions sx={{ p: { xs: 2, sm: 3 } }}>
+          <Button
+            onClick={() => setIsOperatorPayDialogOpen(false)}
+            color="inherit"
+            variant="outlined"
+            disabled={actionLoading}
+          >
             Cancel
           </Button>
-          <Button
+            <Button 
             onClick={handleConfirmOperatorPayment}
-            variant="contained"
             color="primary"
-            disabled={isLoading}
-            startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <MoneyIcon />}
+              variant="contained" 
+            disabled={actionLoading || !selectedPaymentId}
+            startIcon={
+              actionLoading ? <CircularProgress size={20} color="inherit" /> : <SendIcon />
+            }
           >
-            {isLoading ? 'Processing...' : 'Confirm Payment'}
-          </Button>
+            {actionLoading ? 'Processing...' : 'Confirm Operator Paid'}
+            </Button>
         </DialogActions>
       </Dialog>
     </Box>
   );
-}
+} 

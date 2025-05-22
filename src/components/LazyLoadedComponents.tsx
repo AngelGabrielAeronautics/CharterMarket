@@ -121,9 +121,9 @@ export const LazyVideoPlayer = dynamic(
 );
 
 // Usage example with Suspense and ErrorBoundary
-export const LazyComponent = ({ componentName, props = {} }: { componentName: string; props?: Record<string, unknown> }) => {
+export const LazyComponent = ({ componentName, props = {} }: { componentName: string; props?: any }) => {
   // This is a factory pattern to dynamically load components by name
-  const componentMap: Record<string, React.ComponentType<Record<string, unknown>>> = {
+  const componentMap: Record<string, React.ComponentType<any>> = {
     'chart': LazyChart,
     'dataGrid': LazyDataGrid,
     'pdfViewer': LazyPdfViewer,

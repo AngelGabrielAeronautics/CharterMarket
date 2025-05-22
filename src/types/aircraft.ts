@@ -31,6 +31,13 @@ export interface AircraftFormData {
   specifications: {
     maxPassengers: number;
     maxBaggageWeight: number;
+    maxRange: number;
+    maxSpeed: number;
+    cabinHeight: number;
+    cabinWidth: number;
+    cabinLength: number;
+    baggageCapacity: number;
+    features: string[];
     lastInteriorRefurb: number;
     lastExteriorRefurb: number;
     isPressurized: boolean;

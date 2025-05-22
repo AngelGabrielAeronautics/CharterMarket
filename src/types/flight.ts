@@ -7,6 +7,8 @@ export type CabinClass = 'standard' | 'premium' | 'vip';
 export interface FlightRouting {
   departureAirport: string; // ICAO code
   arrivalAirport: string; // ICAO code
+  departureAirportName?: string;
+  arrivalAirportName?: string;
   departureDate: Timestamp;
   returnDate?: Timestamp; // Only for return trips
   flexibleDates: boolean; // If true, +/- 2 days from specified dates
@@ -15,6 +17,8 @@ export interface FlightRouting {
 export interface MultiCityRoute {
   departureAirport: string; // ICAO code
   arrivalAirport: string; // ICAO code
+  departureAirportName?: string;
+  arrivalAirportName?: string;
   departureDate: Date;
   flexibleDate: boolean; // If true, +/- 2 days from specified date
 }
@@ -39,10 +43,12 @@ export interface Offer {
 
 export interface QuoteRequest {
   id: string;
-  requestCode: string; // Format: RQ-USERCODE-YYYYMMDD-XXXX
+  requestCode: string; // Format: QR-USERCODE-YYYYMMDD-XXXX
   clientUserCode: string; // User ID of the requesting client (renamed from clientId for clarity)
   tripType: TripType;
   routing: FlightRouting;
+  departureAirportName?: string; // Full name of the departure airport
+  arrivalAirportName?: string; // Full name of the arrival airport
   passengerCount: number;
   cabinClass: CabinClass;
   specialRequirements?: string;

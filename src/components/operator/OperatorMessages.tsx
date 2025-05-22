@@ -10,6 +10,7 @@ import {
   Button,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   ListItemAvatar,
   Avatar,
@@ -36,7 +37,7 @@ import { Avatar as MuiAvatar, Chip as MuiChip } from '@mui/material';
 import {
   SendIcon as LucideSendIcon,
   PaperclipIcon,
-  SmileyIcon,
+  SmileIcon as SmileyIcon,
   FileTextIcon,
   ImageIcon,
   VideoIcon,
@@ -199,78 +200,79 @@ export default function OperatorMessages() {
         <Box sx={{ overflow: 'auto', flexGrow: 1 }}>
           <List disablePadding>
             {filteredConversations.map((conversation) => (
-              <ListItem
-                key={conversation.id}
-                button
-                selected={selectedConversation === conversation.id}
-                onClick={() => setSelectedConversation(conversation.id)}
-                sx={{
-                  py: 1.5,
-                  borderBottom: '1px solid',
-                  borderColor: 'divider',
-                  '&.Mui-selected': {
-                    backgroundColor: 'action.selected',
-                  },
-                }}
-              >
-                <ListItemAvatar>
-                  <MuiChip
-                    color="error"
-                    label={conversation.unread}
-                    invisible={conversation.unread === 0}
-                  />
-                </ListItemAvatar>
-                <ListItemText
-                  primary={
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Typography
-                        variant="body1"
-                        fontWeight={conversation.unread > 0 ? 'bold' : 'regular'}
-                        noWrap
-                      >
-                        {conversation.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {format(conversation.timestamp, 'HH:mm')}
-                      </Typography>
-                    </Box>
-                  }
-                  secondary={
-                    <Box>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        noWrap
+              <ListItem disablePadding key={conversation.id}>
+                <ListItemButton
+                  selected={selectedConversation === conversation.id}
+                  onClick={() => setSelectedConversation(conversation.id)}
+                  sx={{
+                    py: 1.5,
+                    borderBottom: '1px solid',
+                    borderColor: 'divider',
+                    '&.Mui-selected': {
+                      backgroundColor: 'action.selected',
+                    },
+                  }}
+                >
+                  {conversation.unread > 0 && (
+                    <ListItemAvatar>
+                      <MuiChip
+                        color="error"
+                        label={conversation.unread}
+                        size="small"
+                      />
+                    </ListItemAvatar>
+                  )}
+                  <ListItemText
+                    primary={
+                      <Box
                         sx={{
-                          fontWeight: conversation.unread > 0 ? 'medium' : 'regular',
-                          color: conversation.unread > 0 ? 'text.primary' : 'text.secondary',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
                         }}
                       >
-                        {conversation.lastMessage}
-                      </Typography>
-                      {conversation.flightId && (
-                        <MuiChip
-                          size="small"
-                          label={conversation.flightId.split('-').slice(-1)[0]}
-                          variant="outlined"
-                          sx={{ mt: 0.5, height: 20, fontSize: '0.7rem' }}
-                        />
-                      )}
-                    </Box>
-                  }
-                />
+                        <Typography
+                          variant="body1"
+                          fontWeight={conversation.unread > 0 ? 'bold' : 'regular'}
+                          noWrap
+                        >
+                          {conversation.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {format(conversation.timestamp, 'HH:mm')}
+                        </Typography>
+                      </Box>
+                    }
+                    secondary={
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          noWrap
+                          sx={{
+                            fontWeight: conversation.unread > 0 ? 'medium' : 'regular',
+                            color: conversation.unread > 0 ? 'text.primary' : 'text.secondary',
+                          }}
+                        >
+                          {conversation.lastMessage}
+                        </Typography>
+                        {conversation.flightId && (
+                          <MuiChip
+                            size="small"
+                            label={conversation.flightId.split('-').slice(-1)[0]}
+                            variant="outlined"
+                            sx={{ mt: 0.5, height: 20, fontSize: '0.7rem' }}
+                          />
+                        )}
+                      </Box>
+                    }
+                  />
+                </ListItemButton>
               </ListItem>
             ))}
           </List>
         </Box>
       </Box>
-
       {/* Chat area */}
       <Box
         sx={{
@@ -397,7 +399,7 @@ export default function OperatorMessages() {
               }}
             >
               <Grid container spacing={1}>
-                <Grid item xs>
+                <Grid size="grow">
                   <TextField
                     placeholder="Type a message..."
                     fullWidth
@@ -416,7 +418,7 @@ export default function OperatorMessages() {
                     }}
                   />
                 </Grid>
-                <Grid item>
+                <Grid>
                   <Button
                     variant="contained"
                     color="primary"

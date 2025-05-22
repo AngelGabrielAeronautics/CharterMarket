@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBookingById } from '@/lib/booking';
 import { getPassengersForBooking } from '@/lib/passenger';
+import { generateETicketNumber } from '@/lib/serials';
+import { getAirportByICAO } from '@/lib/airport';
+import { db } from '@/lib/firebase';
+import { Timestamp } from 'firebase/firestore';
+import { format } from 'date-fns';
 
-export async function GET(_req: NextRequest, { params }: { params: { bookingId: string } }) {
+export async function GET(_req: NextRequest, context: any) {
   try {
-    const { bookingId } = await Promise.resolve(params);
+    const bookingId = context.params.bookingId as string;
 
     // Get booking data
     const booking = await getBookingById(bookingId);
@@ -17,16 +22,36 @@ export async function GET(_req: NextRequest, { params }: { params: { bookingId: 
       return NextResponse.json({ error: 'No passengers found for this booking' }, { status: 404 });
     }
 
+    // Resolve airport details
+    const depInfo = await getAirportByICAO(booking.routing.departureAirport);
+    const arrInfo = await getAirportByICAO(booking.routing.arrivalAirport);
+
+    // Format departure date and time
+    let departureDateTime = 'N/A';
+    if (
+      booking.routing.departureDate &&
+      typeof booking.routing.departureDate.toDate === 'function'
+    ) {
+      departureDateTime = format(booking.routing.departureDate.toDate(), 'dd MMM yyyy, HH:mm');
+    } else if ((booking.routing.departureDate as any).seconds) {
+      departureDateTime = format(
+        new Date((booking.routing.departureDate as any).seconds * 1000),
+        'dd MMM yyyy, HH:mm'
+      );
+    }
+
+    const issueDate = format(new Date(), 'dd MMM yyyy');
+
     // Format date from Firestore timestamp
     const formatDate = (timestamp: any) => {
       if (!timestamp) return 'N/A';
       if (typeof timestamp.toDate === 'function') {
-        return timestamp.toDate().toLocaleDateString();
+        return format(timestamp.toDate(), 'dd MMM yyyy');
       }
       if (timestamp.seconds) {
-        return new Date(timestamp.seconds * 1000).toLocaleDateString();
+        return format(new Date(timestamp.seconds * 1000), 'dd MMM yyyy');
       }
-      return new Date(timestamp).toLocaleDateString();
+      return format(new Date(timestamp), 'dd MMM yyyy');
     };
 
     // Create HTML ticket
@@ -89,12 +114,24 @@ export async function GET(_req: NextRequest, { params }: { params: { bookingId: 
         <div class="header">
           <h1>E-Ticket</h1>
           <p><strong>Booking ID:</strong> ${booking.bookingId}</p>
+          <p><strong>E-Ticket Issue Date:</strong> ${issueDate}</p>
         </div>
         
         <div class="flight-info">
           <h2>Flight Details</h2>
-          <p><strong>Route:</strong> ${booking.routing.departureAirport} → ${booking.routing.arrivalAirport}</p>
-          <p><strong>Date:</strong> ${formatDate(booking.routing.departureDate)}</p>
+          <p><strong>Operated by:</strong> ${booking.operatorName || 'N/A'}</p>
+          <p><strong>Flight Number:</strong> ${booking.flightNumber || 'N/A'}</p>
+          <p>
+            <strong>From:</strong> ${depInfo?.name || booking.routing.departureAirport} 
+            (${depInfo?.iata || ''}/${booking.routing.departureAirport})<br/>
+            <em>${depInfo?.city || ''}, ${depInfo?.country || ''}</em>
+          </p>
+          <p>
+            <strong>To:</strong> ${arrInfo?.name || booking.routing.arrivalAirport} 
+            (${arrInfo?.iata || ''}/${booking.routing.arrivalAirport})<br/>
+            <em>${arrInfo?.city || ''}, ${arrInfo?.country || ''}</em>
+          </p>
+          <p><strong>Departure:</strong> ${departureDateTime}</p>
           <p><strong>Status:</strong> ${booking.status.toUpperCase()}</p>
           <p><strong>Booking Date:</strong> ${formatDate(booking.createdAt)}</p>
         </div>
@@ -105,6 +142,7 @@ export async function GET(_req: NextRequest, { params }: { params: { bookingId: 
             (passenger, i) => `
           <div class="passenger-info">
             <h3>Passenger ${i + 1}: ${passenger.firstName} ${passenger.lastName}</h3>
+            <p><strong>E-Ticket Number:</strong> ${generateETicketNumber(booking.bookingId, passenger.passengerId)}</p>
             <p><strong>Passport:</strong> ${passenger.passportNumber}</p>
             <p><strong>Nationality:</strong> ${passenger.nationality}</p>
             ${passenger.specialRequirements ? `<p><strong>Special Requirements:</strong> ${passenger.specialRequirements}</p>` : ''}

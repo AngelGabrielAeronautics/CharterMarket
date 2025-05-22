@@ -1,55 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPassengerById, updatePassenger, deletePassenger } from '@/lib/passenger';
+import { db } from '@/lib/firebase';
+import { collection, doc, getDoc, updateDoc, deleteDoc, query, where, getDocs } from 'firebase/firestore';
+import { Passenger } from '@/types/passenger';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+// GET a specific passenger by ID
+export async function GET(req: NextRequest, context: any) {
   try {
-    const passengerId = params.id;
-    const passenger = await getPassengerById(passengerId);
+    const passengerId = context.params.id as string;
+    if (!passengerId) {
+      return NextResponse.json({ error: 'Passenger ID is required' }, { status: 400 });
+    }
+    const passengerRef = doc(db, 'passengers', passengerId);
+    const passengerSnap = await getDoc(passengerRef);
 
-    if (!passenger) {
+    if (!passengerSnap.exists()) {
       return NextResponse.json({ error: 'Passenger not found' }, { status: 404 });
     }
 
-    return NextResponse.json(passenger);
-  } catch (error: any) {
-    console.error(`APIGET /api/passengers/${params.id} error:`, error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    const passengerData = passengerSnap.data() as Passenger;
+    return NextResponse.json({ ...passengerData, id: passengerSnap.id });
+  } catch (error) {
+    console.error('Error fetching passenger:', error);
+    return NextResponse.json({ error: 'Failed to fetch passenger' }, { status: 500 });
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+// UPDATE a specific passenger by ID
+export async function PUT(req: NextRequest, context: any) {
   try {
-    const passengerId = params.id;
+    const passengerId = context.params.id as string;
+    if (!passengerId) {
+      return NextResponse.json({ error: 'Passenger ID is required' }, { status: 400 });
+    }
     const passengerData = await req.json();
+    const passengerRef = doc(db, 'passengers', passengerId);
 
-    // Check if passenger exists
-    const passenger = await getPassengerById(passengerId);
-    if (!passenger) {
-      return NextResponse.json({ error: 'Passenger not found' }, { status: 404 });
-    }
+    // Ensure updatedAt is set
+    passengerData.updatedAt = new Date();
 
-    await updatePassenger(passengerId, passengerData);
-    return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error(`APIPUT /api/passengers/${params.id} error:`, error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    await updateDoc(passengerRef, passengerData);
+    return NextResponse.json({ message: 'Passenger updated successfully', id: passengerId });
+  } catch (error) {
+    console.error('Error updating passenger:', error);
+    return NextResponse.json({ error: 'Failed to update passenger' }, { status: 500 });
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+// DELETE a specific passenger by ID
+export async function DELETE(req: NextRequest, context: any) {
   try {
-    const passengerId = params.id;
-
-    // Check if passenger exists
-    const passenger = await getPassengerById(passengerId);
-    if (!passenger) {
-      return NextResponse.json({ error: 'Passenger not found' }, { status: 404 });
+    const passengerId = context.params.id as string;
+    if (!passengerId) {
+      return NextResponse.json({ error: 'Passenger ID is required' }, { status: 400 });
     }
-
-    await deletePassenger(passengerId);
-    return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error(`APIDELETE /api/passengers/${params.id} error:`, error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    const passengerRef = doc(db, 'passengers', passengerId);
+    await deleteDoc(passengerRef);
+    return NextResponse.json({ message: 'Passenger deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting passenger:', error);
+    return NextResponse.json({ error: 'Failed to delete passenger' }, { status: 500 });
   }
 }

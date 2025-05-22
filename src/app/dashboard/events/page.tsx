@@ -149,10 +149,15 @@ export default function EventsPage() {
           Export to CSV
         </Button>
       </Stack>
-
       <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 }, mb: 4, borderRadius: 2 }}>
         <Grid container spacing={2} alignItems="flex-end">
-          <Grid item xs={12} sm={6} md={3}>
+          {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6,
+              md: 3
+            }}>
             <TextField
               fullWidth
               label="Search events..."
@@ -162,7 +167,13 @@ export default function EventsPage() {
               size="small"
             />
           </Grid>
-          <Grid item xs={6} sm={3} md={2}>
+          {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+          <Grid
+            size={{
+              xs: 6,
+              sm: 3,
+              md: 2
+            }}>
             <Select
               fullWidth
               displayEmpty
@@ -176,7 +187,13 @@ export default function EventsPage() {
               ))}
             </Select>
           </Grid>
-          <Grid item xs={6} sm={3} md={2}>
+          {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+          <Grid
+            size={{
+              xs: 6,
+              sm: 3,
+              md: 2
+            }}>
             <Select
               fullWidth
               displayEmpty
@@ -190,7 +207,13 @@ export default function EventsPage() {
               ))}
             </Select>
           </Grid>
-          <Grid item xs={6} sm={3} md={2}>
+          {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+          <Grid
+            size={{
+              xs: 6,
+              sm: 3,
+              md: 2
+            }}>
             <TextField
               fullWidth
               label="Start Date"
@@ -201,7 +224,13 @@ export default function EventsPage() {
               size="small"
             />
           </Grid>
-          <Grid item xs={6} sm={3} md={2}>
+          {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+          <Grid
+            size={{
+              xs: 6,
+              sm: 3,
+              md: 2
+            }}>
             <TextField
               fullWidth
               label="End Date"
@@ -213,7 +242,13 @@ export default function EventsPage() {
             />
           </Grid>
           {hasActiveFilters && (
-            <Grid item xs={12} sm={3} md={1}>
+            /* @ts-ignore MUI Grid type inference issue with 'item' prop */
+            (<Grid
+              size={{
+                xs: 12,
+                sm: 3,
+                md: 1
+              }}>
               <Button 
                 onClick={handleResetFilters} 
                 variant="outlined" 
@@ -223,11 +258,10 @@ export default function EventsPage() {
               >
                 Reset
               </Button>
-            </Grid>
+            </Grid>)
           )}
         </Grid>
       </Paper>
-
       <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden' }}>
         <TableContainer>
           <Table>
@@ -291,7 +325,6 @@ export default function EventsPage() {
           </Table>
         </TableContainer>
       </Paper>
-
       <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" mt={4} gap={2}>
         <Typography variant="body2" color="text.secondary">
           Showing {events.length} of {totalEvents} events

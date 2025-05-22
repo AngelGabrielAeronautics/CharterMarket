@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Aircraft, AircraftType } from '@/types/aircraft';
+import type { AircraftStatus } from '@/types/aircraft';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
@@ -23,14 +23,15 @@ import TuneIcon from '@mui/icons-material/Tune';
 import CloseIcon from '@mui/icons-material/Close';
 import ImageIcon from '@mui/icons-material/Image';
 
-// Extend Aircraft interface with additional properties used in this component
-interface ExtendedAircraft extends Aircraft {
+// Simplified aircraft data for search component
+interface ExtendedAircraft {
+  id: string;
   manufacturer: string;
   maxPassengers: number;
   maxRange: number;
   registration: string;
   model: string;
-  status: string;
+  status: AircraftStatus;
   images: string[];
 }
 

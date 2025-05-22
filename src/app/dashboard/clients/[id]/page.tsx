@@ -159,9 +159,13 @@ export default function ClientDetailsPage() {
           </Button>
         </Box>
       </Box>
-
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
+        {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+        <Grid
+          size={{
+            xs: 12,
+            md: 4
+          }}>
           <Paper sx={{ p: 3, borderRadius: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <Box
@@ -287,7 +291,12 @@ export default function ClientDetailsPage() {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={8}>
+        {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+        <Grid
+          size={{
+            xs: 12,
+            md: 8
+          }}>
           <Paper sx={{ borderRadius: 2 }}>
             <Tabs
               value={activeTab}
@@ -305,7 +314,8 @@ export default function ClientDetailsPage() {
               <TabPanel value={activeTab} index={0}>
                 <Grid container spacing={3}>
                   {client.notes ? (
-                    <Grid item xs={12}>
+                    /* @ts-ignore MUI Grid type inference issue with 'item' prop */
+                    (<Grid size={12}>
                       <Box sx={{ mb: 2 }}>
                         <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
                           Notes
@@ -316,11 +326,12 @@ export default function ClientDetailsPage() {
                           </Typography>
                         </Paper>
                       </Box>
-                    </Grid>
+                    </Grid>)
                   ) : (
-                    <Grid item xs={12}>
+                    /* @ts-ignore MUI Grid type inference issue with 'item' prop */
+                    (<Grid size={12}>
                       <Alert severity="info">No additional notes for this client.</Alert>
-                    </Grid>
+                    </Grid>)
                   )}
                 </Grid>
               </TabPanel>

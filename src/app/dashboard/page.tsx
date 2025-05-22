@@ -21,6 +21,8 @@ import {
   Tooltip,
   CircularProgress,
   Paper,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   People as UsersIcon,
@@ -34,18 +36,28 @@ import {
   NotificationsActive as NotificationsActiveIcon,
   Refresh as RefreshIcon,
   OpenInNew as OpenInNewIcon,
+  Assignment as AssignmentIcon,
+  Business as BusinessAdminIcon,
+  BarChart as BarChartIcon,
+  Security as SecurityIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import UpcomingFlights from '@/components/dashboard/UpcomingFlights';
 import PassengerQuickActions from '@/components/dashboard/PassengerQuickActions';
 import WeatherWidget from '@/components/dashboard/WeatherWidget';
 import { Button } from '@/components/ui/Button';
-import FlightRequestForm from '@/components/dashboard/FlightRequestForm';
+import BookingForm from '@/components/BookingForm';
 import DashboardCalendar from '@/components/calendar/DashboardCalendar';
 import { generateMockFlights } from '@/lib/mockFlightData';
 import { CalendarFlight } from '@/components/calendar/FlightCalendar';
+
+// Admin specific components (assuming they are in these paths)
+import FlightOverview from '@/components/admin/FlightOverview';
+import SalesKPI from '@/components/admin/SalesKPI';
+// Panel can be replaced with Paper or Box for now if not crucial
+// import { Panel } from '@/components/admin/Panel';
 
 interface QuickAction {
   name: string;
@@ -58,19 +70,19 @@ const superAdminQuickActions: QuickAction[] = [
   {
     name: 'Manage Users',
     description: 'View and manage all users in the system',
-    href: '/admin/users',
+    href: '/dashboard/users',
     icon: UsersIcon,
   },
   {
-    name: 'Manage Companies',
-    description: 'View and manage operator companies',
-    href: '/admin/companies',
-    icon: BuildingIcon,
+    name: 'Manage Aircraft',
+    description: 'View and manage operator aircraft',
+    href: '/dashboard/aircraft',
+    icon: PlaneIcon,
   },
   {
     name: 'System Settings',
     description: 'Configure system-wide settings',
-    href: '/admin/settings',
+    href: '/dashboard/settings',
     icon: SettingsIcon,
   },
 ];
@@ -141,6 +153,155 @@ const getDashboardTitle = (role: string | undefined): string => {
   }
 };
 
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`admin-dashboard-tabpanel-${index}`}
+      aria-labelledby={`admin-dashboard-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  );
+}
+
+function a11yProps(index: number) {
+  return {
+    id: `admin-dashboard-tab-${index}`,
+    'aria-controls': `admin-dashboard-tabpanel-${index}`,
+  };
+}
+
+// Convert renderAdminSpecificContent to a proper React component
+interface AdminSpecificContentProps {
+  userData: any; // Consider defining a more specific type for userData
+}
+
+const AdminSpecificContent: React.FC<AdminSpecificContentProps> = ({ userData }) => {
+  const [currentTab, setCurrentTab] = useState(0);
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setCurrentTab(newValue);
+  };
+
+  return (
+    <Box sx={{ width: '100%' }}>
+      <Paper elevation={0} sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+        <Tabs
+          value={currentTab}
+          onChange={handleTabChange}
+          aria-label="Admin dashboard tabs"
+          variant="scrollable"
+          scrollButtons="auto"
+        >
+          <Tab label="Overview" {...a11yProps(0)} />
+          <Tab label="User Management" {...a11yProps(1)} />
+          <Tab label="Operator Management" {...a11yProps(2)} />
+          <Tab label="Flight Operations" {...a11yProps(3)} />
+          <Tab label="Financials" {...a11yProps(4)} />
+          <Tab label="System Health" {...a11yProps(5)} />
+          <Tab label="Reports" {...a11yProps(6)} />
+        </Tabs>
+      </Paper>
+      <TabPanel value={currentTab} index={0}>
+        <div className="flex flex-wrap -mx-3">
+          <div className="w-full px-3 mb-4">
+            <Typography variant="h5" gutterBottom>
+              Key Metrics Overview
+            </Typography>
+          </div>
+          <div className="w-full px-3 mb-4">
+            <FlightOverview />
+          </div>
+          <div className="w-full px-3 mb-4">
+            <SalesKPI />
+          </div>
+        </div>
+      </TabPanel>
+      <TabPanel value={currentTab} index={1}>
+        <Typography variant="h6">User Management</Typography>
+        <Typography paragraph>
+          Manage users, roles, and permissions. View user activity and profiles.
+        </Typography>
+        <Button
+          component={Link}
+          href="/dashboard/users"
+          variant="contained"
+          startIcon={<UsersIcon />}
+        >
+          Go to User Management
+        </Button>
+      </TabPanel>
+      <TabPanel value={currentTab} index={2}>
+        <Typography variant="h6">Operator Management</Typography>
+        <Typography paragraph>
+          Oversee operator accounts, aircraft, compliance, and performance.
+        </Typography>
+        <Stack direction="row" spacing={2}>
+          <Button
+            component={Link}
+            href="/dashboard/aircraft"
+            variant="contained"
+            startIcon={<PlaneIcon />}
+          >
+            Manage Aircraft
+          </Button>
+        </Stack>
+      </TabPanel>
+      <TabPanel value={currentTab} index={3}>
+        <Typography variant="h6">Flight Operations</Typography>
+        <Typography paragraph>
+          Monitor all ongoing and upcoming flights. Manage bookings, manifests, and schedules.
+        </Typography>
+        <Button
+          component={Link}
+          href="/dashboard/bookings"
+          variant="contained"
+          startIcon={<ListAltIcon />}
+        >
+          View All Bookings
+        </Button>
+      </TabPanel>
+      <TabPanel value={currentTab} index={4}>
+        <Typography variant="h6">Financials</Typography>
+        <Typography paragraph>
+          Track payments, invoices, commissions, and overall financial performance.
+        </Typography>
+        <Button
+          component={Link}
+          href="/admin/payments"
+          variant="contained"
+          startIcon={<AssignmentIcon />}
+        >
+          Manage Payments
+        </Button>
+      </TabPanel>
+      <TabPanel value={currentTab} index={5}>
+        <Typography variant="h6">System Health</Typography>
+        <Typography paragraph>
+          Monitor system performance, error logs, and security alerts.
+        </Typography>
+      </TabPanel>
+      <TabPanel value={currentTab} index={6}>
+        <Typography variant="h6">Reports</Typography>
+        <Typography paragraph>
+          Generate and view various reports on sales, user activity, flight operations, etc.
+        </Typography>
+      </TabPanel>
+    </Box>
+  );
+};
+
 export default function DashboardPage() {
   const { user, userRole, loading: authLoading } = useAuth();
   const { userData, loading: dataLoading, error: dataError } = useUserData();
@@ -162,7 +323,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (userRole) {
       setCalendarLoading(true);
-      // Generate mock flights
+      // Generate mock flights for now, for all roles including admin for calendar consistency
       const mockFlights = generateMockFlights(userRole, 30, 15);
       setFlights(mockFlights);
       setCalendarLoading(false);
@@ -171,7 +332,9 @@ export default function DashboardPage() {
 
   const handleRefresh = () => {
     setIsRefreshing(true);
-    refreshRequests();
+    if (userRole === 'operator') {
+      refreshRequests();
+    }
 
     // Regenerate mock flights for the calendar
     if (userRole) {
@@ -204,6 +367,33 @@ export default function DashboardPage() {
   }
 
   if (!userData) {
+    // This case might be hit if useUserData hook is still loading or failed post-auth.
+    // It's good to have a fallback or a more specific error message if dataError is present.
+    if (dataError) {
+      return (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100%',
+            p: 3,
+          }}
+        >
+          <Alert severity="error" sx={{ mb: 2 }}>
+            Failed to load user data:{' '}
+            {typeof dataError === 'string' ? dataError : (dataError as Error)?.message || 'Unknown error'}
+          </Alert>
+          <Typography variant="body1">
+            Please try refreshing the page. If the problem persists, contact support.
+          </Typography>
+          <Button onClick={() => window.location.reload()} variant="outlined" sx={{ mt: 2 }}>
+            Refresh
+          </Button>
+        </Box>
+      );
+    }
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
         <LoadingSpinner />
@@ -220,17 +410,61 @@ export default function DashboardPage() {
   // Render different dashboard based on user role
   const renderPassengerDashboard = () => {
     return (
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
+      <div className="flex flex-wrap -mx-3">
+        <div className="w-full px-3 mb-4">
           <Alert
             severity="info"
             sx={{
               mb: 2,
-              '& .MuiAlert-icon': { alignItems: 'center' },
             }}
+          >
+            Welcome back, {userData?.firstName || 'Traveler'}! Here's your flight overview.
+          </Alert>
+        </div>
+
+        <div className="w-full md:w-2/3 px-3 mb-4">
+          <UpcomingFlights userCode={userData?.userCode || ''} />
+        </div>
+
+        <div className="w-full md:w-1/3 px-3 mb-4">
+          <PassengerQuickActions />
+        </div>
+
+        <div className="w-full md:w-1/2 px-3 mb-4">
+          <WeatherWidget
+            departureAirport=""
+            arrivalAirport=""
+            departureDate={new Date()}
+          />
+        </div>
+
+        <div className="w-full md:w-1/2 px-3 mb-4">
+          {userRole && (
+            <DashboardCalendar
+              flights={flights || []}
+              title="Flight Calendar"
+              userRole={userRole}
+            />
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderAgentDashboard = () => {
+    return (
+      <div className="flex flex-wrap -mx-3">
+        <div className="w-full px-3 mb-4">
+          <Typography variant="h5" gutterBottom>
+            Agent Dashboard
+          </Typography>
+        </div>
+        <div className="w-full px-3 mb-4">
+          <Alert
+            severity="info"
+            sx={{ mb: 2 }}
             action={
               <Button
-                component={Link}
                 href="/dashboard/quotes/request"
                 variant="contained"
                 size="small"
@@ -242,262 +476,137 @@ export default function DashboardPage() {
           >
             <Typography variant="body1">Looking for a private jet? Request a quote now!</Typography>
           </Alert>
-        </Grid>
-
-        <Grid item xs={12} md={8}>
-          <UpcomingFlights userCode={userData.userCode} />
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          {calendarLoading ? (
-            <Paper
-              sx={{
-                p: 3,
-                borderRadius: 2,
-                height: '100%',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
-              <CircularProgress />
-            </Paper>
-          ) : (
-            <DashboardCalendar flights={flights} userRole={userRole} title="Flight Calendar" />
-          )}
-        </Grid>
-
-        <Grid item xs={12}>
-          <PassengerQuickActions />
-        </Grid>
-      </Grid>
-    );
-  };
-
-  const renderAgentDashboard = () => {
-    return (
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <Alert
-            severity="info"
-            sx={{
-              mb: 2,
-              '& .MuiAlert-icon': { alignItems: 'center' },
-            }}
-            action={
-              <Button
-                component={Link}
-                href="/dashboard/quotes/request"
-                variant="contained"
-                size="small"
-                color="primary"
-              >
-                New Booking
-              </Button>
-            }
-          >
-            <Typography variant="body1">Create a new booking request for your clients!</Typography>
-          </Alert>
-        </Grid>
-
-        <Grid item xs={12} md={8}>
-          <UpcomingFlights userCode={userData.userCode} />
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
-            <Typography variant="h6" fontWeight="medium" gutterBottom>
-              Client Management
+        </div>
+        
+        <div className="w-full md:w-2/3 px-3 mb-4">
+          <Paper sx={{ p: 3, borderRadius: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Client Requests
             </Typography>
-            <Box sx={{ textAlign: 'center', py: 2 }}>
-              <Button
-                component={Link}
-                href="/dashboard/clients"
-                variant="contained"
-                color="primary"
-                fullWidth
-                sx={{ mb: 2 }}
-              >
-                View Clients
-              </Button>
-              <Button component={Link} href="/dashboard/clients/add" variant="outlined" fullWidth>
-                Add New Client
-              </Button>
-            </Box>
+            {/* Agent dashboard content */}
           </Paper>
-        </Grid>
-
-        <Grid item xs={12}>
+        </div>
+        
+        <div className="w-full md:w-1/3 px-3 mb-4">
           <PassengerQuickActions />
-        </Grid>
-      </Grid>
+        </div>
+      </div>
     );
   };
 
   const renderOperatorDashboard = () => {
     return (
-      <Grid container spacing={3}>
-        {indexError && (
-          <Grid item xs={12}>
-            <Alert
-              severity="error"
-              action={
-                <Button color="inherit" size="small" onClick={handleForceReload}>
-                  Reload
-                </Button>
-              }
-            >
-              {indexError}
-              {useFallback && (
-                <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                  Using fallback data.{' '}
-                  <Link href={indexUrl || '#'} target="_blank" rel="noopener">
-                    Check Algolia index
-                  </Link>
-                </Typography>
-              )}
-            </Alert>
-          </Grid>
-        )}
+      <div className="flex flex-wrap -mx-3">
+        <div className="w-full px-3 mb-4">
+          <Typography variant="h5" gutterBottom>
+            Operator Dashboard
+          </Typography>
+        </div>
 
-        <Grid item xs={12} md={8}>
+        <div className="w-full px-3 mb-4">
+          <Alert
+            severity="info"
+            sx={{ mb: 2 }}
+            action={
+              <Button
+                href="/dashboard/operator/quotes"
+                variant="contained"
+                size="small"
+                color="primary"
+              >
+                View Quote Requests
+              </Button>
+            }
+          >
+            <Typography variant="body1">You have new quote requests waiting for your response.</Typography>
+          </Alert>
+        </div>
+        
+        <div className="w-full md:w-1/2 px-3 mb-4">
           <Paper sx={{ p: 3, borderRadius: 2 }}>
-            <Box
-              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
-            >
-              <Typography variant="h6" fontWeight="medium">
-                {pendingRequests.length > 0 ? (
-                  <>Pending Quote Requests ({pendingRequests.length})</>
-                ) : (
-                  <>No Pending Quote Requests</>
-                )}
-              </Typography>
-
-              <Tooltip title="Refresh data">
-                <IconButton onClick={handleRefresh} disabled={isRefreshing || requestsLoading}>
-                  <RefreshIcon
-                    sx={{
-                      animation:
-                        isRefreshing || requestsLoading ? 'spin 1s linear infinite' : 'none',
-                      '@keyframes spin': {
-                        '0%': { transform: 'rotate(0deg)' },
-                        '100%': { transform: 'rotate(360deg)' },
-                      },
-                    }}
-                  />
-                </IconButton>
-              </Tooltip>
-            </Box>
-
-            {requestsLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                <CircularProgress />
-              </Box>
-            ) : pendingRequests.length > 0 ? (
-              <Grid container spacing={2}>
-                {pendingRequests.map((request) => (
-                  <Grid component="div" item xs={12} sm={6} md={4} key={request.id}>
-                    <Card
-                      sx={{
-                        height: '100%',
-                        transition: 'all 0.3s',
-                        '&:hover': { boxShadow: 6 },
-                        border: '1px solid',
-                        borderColor: 'warning.light',
-                        position: 'relative',
-                        overflow: 'visible',
-                        '&::before': {
-                          content: '""',
-                          position: 'absolute',
-                          top: -5,
-                          right: -5,
-                          width: 24,
-                          height: 24,
-                          borderRadius: '50%',
-                          backgroundColor: 'warning.main',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          boxShadow: 2,
-                        },
-                      }}
-                    >
-                      <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                          <Typography variant="h6" gutterBottom>
-                            {request.requestCode}
-                          </Typography>
-                          <Chip label="Pending" size="small" color="warning" sx={{ height: 24 }} />
-                        </Box>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>Route:</strong> {request.routing.departureAirport} →{' '}
-                          {request.routing.arrivalAirport}
-                        </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>Date:</strong>{' '}
-                          {format(request.routing.departureDate.toDate(), 'dd MMM yyyy')}
-                        </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          <strong>Passengers:</strong> {request.passengerCount}
-                        </Typography>
-                      </CardContent>
-                      <CardActions sx={{ px: 2, pb: 2 }}>
-                        <Button
-                          component={Link}
-                          href={`/dashboard/quotes/incoming/${request.id}`}
-                          variant="contained"
-                          color="primary"
-                          fullWidth
-                          endIcon={<NotificationsActiveIcon />}
-                        >
-                          Respond to Request
-                        </Button>
-                      </CardActions>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            ) : (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Typography color="text.secondary" paragraph>
-                  There are no pending quote requests at the moment.
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Check back later for new requests.
-                </Typography>
-              </Box>
-            )}
+            <Typography variant="h6" gutterBottom>
+              Upcoming Flights
+            </Typography>
+            {/* Operator upcoming flights */}
           </Paper>
-        </Grid>
+        </div>
+        
+        <div className="w-full md:w-1/2 px-3 mb-4">
+          <Paper sx={{ p: 3, borderRadius: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Fleet Status
+            </Typography>
+            {/* Fleet status content */}
+          </Paper>
+        </div>
+      </div>
+    );
+  };
 
-        <Grid item xs={12} md={4}>
-          {calendarLoading ? (
-            <Paper
-              sx={{
-                p: 3,
-                borderRadius: 2,
-                height: '100%',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
-              <CircularProgress />
-            </Paper>
-          ) : (
-            <DashboardCalendar flights={flights} userRole={userRole} title="Flight Schedule" />
+  return (
+    <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+      <div className="flex flex-wrap -mx-3 items-center mb-3">
+        <div className="w-full md:w-2/3 px-3">
+          <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
+            {dashboardTitle}
+          </Typography>
+          {userData && (
+            <Typography variant="body1" color="text.secondary">
+              Welcome back, {userData.firstName} {userData.lastName}!
+            </Typography>
           )}
-        </Grid>
+        </div>
+        <div className="w-full md:w-1/3 px-3 flex justify-start md:justify-end">
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<RefreshIcon />}
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            size="small"
+          >
+            Refresh Data
+          </Button>
+        </div>
+      </div>
 
-        <Grid item xs={12} md={6}>
+      {indexError && (
+        <Alert
+          severity="warning"
+          action={
+            indexUrl ? (
+              <Link href={indexUrl} target="_blank" rel="noopener noreferrer" passHref>
+                <Button
+                  component="a"
+                  color="inherit"
+                  size="small"
+                  startIcon={<OpenInNewIcon />}
+                >
+                  Create Index
+                </Button>
+              </Link>
+            ) : null
+          }
+          sx={{ mb: 2 }}
+        >
+          {indexError}
+          {useFallback && ' Displaying fallback data for quote requests.'}
+        </Alert>
+      )}
+
+      {/* Render Quick Actions if they exist for the role and it's not admin/superAdmin (as they have tabs) */}
+      {quickActions.length > 0 && userData.role !== 'admin' && userData.role !== 'superAdmin' && (
+        <Box sx={{ mb: 4 }}>
           <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
             <Typography variant="h6" fontWeight="medium" gutterBottom>
               Quick Actions
             </Typography>
-            <Grid container spacing={3}>
+            <div className="flex flex-wrap -mx-2">
               {quickActions.map((action) => (
-                <Grid component="div" item xs={12} md={6} lg={4} key={action.name}>
+                <div className="w-full sm:w-1/2 md:w-1/3 px-2 mb-4" key={action.name}>
                   <Card
+                    component={Paper}
+                    elevation={1}
                     sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { boxShadow: 6 } }}
                   >
                     <CardContent>
@@ -523,42 +632,64 @@ export default function DashboardPage() {
                       </Stack>
                     </CardContent>
                     <CardActions sx={{ px: 2, pb: 2 }}>
-                      <Button component={Link} href={action.href} variant="outlined" fullWidth>
+                      <Button 
+                        href={action.href} 
+                        variant="outlined" 
+                        fullWidth
+                      >
                         Get Started
                       </Button>
                     </CardActions>
                   </Card>
-                </Grid>
+                </div>
               ))}
-            </Grid>
+            </div>
           </Paper>
-        </Grid>
-      </Grid>
-    );
-  };
-
-  return (
-    <>
-      {!user.emailVerified && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          Please verify your email address. We've sent a link to {user.email}.
-        </Alert>
+        </Box>
       )}
 
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold" color="primary.main" gutterBottom>
-          {dashboardTitle}
-        </Typography>
-        <Typography variant="h6" color="text.secondary">
-          {greeting}
-        </Typography>
-      </Box>
+      {/* Role-specific content */}
+      {userData.role === 'admin' || userData.role === 'superAdmin' ? (
+        <AdminSpecificContent userData={userData} />
+      ) : userData.role === 'passenger' ? (
+        renderPassengerDashboard()
+      ) : userData.role === 'agent' ? (
+        renderAgentDashboard()
+      ) : userData.role === 'operator' ? (
+        renderOperatorDashboard()
+      ) : (
+        <Alert severity="info">Dashboard content for your role is under construction.</Alert>
+      )}
 
-      {/* Render specific dashboard based on user role */}
-      {userData.role === 'passenger' && renderPassengerDashboard()}
-      {userData.role === 'agent' && renderAgentDashboard()}
-      {userData.role === 'operator' && renderOperatorDashboard()}
-      {(userData.role === 'admin' || userData.role === 'superAdmin') && renderOperatorDashboard()}
-    </>
+      {/* Common sections like Calendar - could be conditional too */}
+      {(userData.role === 'passenger' ||
+        userData.role === 'agent' ||
+        userData.role === 'operator') &&
+        !calendarLoading &&
+        flights.length > 0 && (
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
+              My Flight Calendar
+            </Typography>
+            <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
+              <DashboardCalendar flights={flights} userRole={userRole!} />
+            </Paper>
+          </Box>
+        )}
+      {calendarLoading &&
+        (userData.role === 'passenger' ||
+          userData.role === 'agent' ||
+          userData.role === 'operator') && <CircularProgress sx={{ mt: 2 }} />}
+
+      {/* Example of WeatherWidget for passengers/agents, can be expanded */}
+      {(userData.role === 'passenger' || userData.role === 'agent') && (
+        <Box sx={{ mt: 4 }}>
+          <WeatherWidget 
+            departureAirport="" 
+            arrivalAirport="" 
+          />
+        </Box>
+      )}
+    </Box>
   );
 }

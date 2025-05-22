@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Airport } from '@/types/airport';
-import { Select } from './Select';
+import Select from '@/components/ui/Select';
 
 interface AirportSelectProps {
   value?: string;
@@ -57,13 +57,13 @@ export function AirportSelect({
       name={name}
       label={label}
       value={value}
-      onChange={onChange}
+      onChange={(e) => onChange(e.target.value)}
       options={options}
       required={required}
       isLoading={isLoading}
       onInputChange={setSearchQuery}
       placeholder="Search for an airport..."
-      noOptionsMessage={() => searchQuery.length < 2 ? 'Type at least 2 characters to search' : 'No airports found'}
+      noOptionsMessage={() => searchQuery.length < 2 ? 'Type at least 2 characters to search' : 'Undocumented airfields can be added manually'}
       error={error}
     />
   );

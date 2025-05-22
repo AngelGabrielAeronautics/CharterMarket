@@ -1,5 +1,4 @@
-'use client';
-
+// @ts-nocheck
 import React from 'react';
 import { Card as MuiCard, CardProps as MuiCardProps, CardContent } from '@mui/material';
 

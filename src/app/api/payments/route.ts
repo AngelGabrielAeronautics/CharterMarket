@@ -4,6 +4,7 @@ import {
   getPaymentsForBooking,
   getPaymentById,
   getPendingPayments,
+  getAllPayments,
 } from '@/lib/payment';
 import type { PaymentFormData } from '@/types/payment';
 
@@ -13,6 +14,7 @@ export async function GET(req: NextRequest) {
     const bookingId = url.searchParams.get('bookingId');
     const paymentId = url.searchParams.get('paymentId');
     const pending = url.searchParams.get('pending');
+    const fetchAll = url.searchParams.get('all');
 
     let data;
 
@@ -26,9 +28,15 @@ export async function GET(req: NextRequest) {
     } else if (pending === 'true') {
       // Admin-only endpoint to fetch pending payments
       data = await getPendingPayments();
+    } else if (fetchAll === 'true') {
+      // Admin: Fetch all payments
+      data = await getAllPayments();
     } else {
       return NextResponse.json(
-        { error: 'Missing bookingId or paymentId parameter' },
+        {
+          error:
+            'Missing or invalid query parameters. Provide bookingId, paymentId, pending=true, or all=true.',
+        },
         { status: 400 }
       );
     }

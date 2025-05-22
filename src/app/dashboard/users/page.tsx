@@ -142,7 +142,7 @@ export default function UsersPage(): JSX.Element {
                         color={
                           usr.status === 'active'
                             ? 'success'
-                            : usr.status === 'pending'
+                            : usr.status === 'incomplete'
                               ? 'warning'
                               : 'default'
                         }

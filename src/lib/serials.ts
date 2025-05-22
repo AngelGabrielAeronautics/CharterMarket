@@ -1,4 +1,13 @@
-import { nanoid } from 'nanoid';
+import { nanoid, customAlphabet } from 'nanoid';
+import { db } from '@/lib/firebase';
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  Timestamp,
+  getCountFromServer,
+} from 'firebase/firestore';
 
 /**
  * Generates a quote ID
@@ -39,13 +48,13 @@ export function generateFlightId(operatorCode: string): string {
 /**
  * Generates a quote request code
  * @param userCode The user's code
- * @returns Quote request code in format RQ-USERCODE-YYYYMMDD-XXXX
+ * @returns Quote request code in format QR-USERCODE-YYYYMMDD-XXXX
  */
 export function generateQuoteRequestCode(userCode: string): string {
   const date = new Date();
   const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
   const random = generateRandomString(4);
-  return `RQ-${userCode}-${dateStr}-${random}`;
+  return `QR-${userCode}-${dateStr}-${random}`;
 }
 
 /**
@@ -94,7 +103,10 @@ export function generateClientId(agentCode: string): string {
  * @returns Random string of uppercase letters and numbers
  */
 function generateRandomString(length: number): string {
-  return nanoid(length).toUpperCase();
+  // Generate an alphanumeric-only string (uppercase letters and digits)
+  const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const nano = customAlphabet(alphabet, length);
+  return nano();
 }
 
 /**
@@ -138,4 +150,11 @@ export function generatePaymentId(): string {
   const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
   const random = generateRandomString(6);
   return `PMT-${dateStr}-${random}`;
+}
+
+export function generateETicketNumber(bookingId: string, passengerId: string): string {
+  const randomSuffix = nanoid(6).toUpperCase();
+  const cleanBookingIdPart = bookingId.split('-').pop() || nanoid(4);
+  const cleanPassengerIdPart = passengerId.split('-').pop() || nanoid(4);
+  return `ETKT-${cleanBookingIdPart}-${cleanPassengerIdPart}-${randomSuffix}`;
 }

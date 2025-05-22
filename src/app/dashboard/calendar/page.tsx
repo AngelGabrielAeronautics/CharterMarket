@@ -145,7 +145,7 @@ export default function CalendarPage() {
           <Skeleton variant="rectangular" height={500} animation="wave" sx={{ borderRadius: 2 }} />
         </Box>
       ) : viewType === 'calendar' ? (
-        <FlightCalendar flights={flights} userRole={userRole} />
+        <FlightCalendar flights={flights} userRole={userRole!} />
       ) : (
         <Paper sx={{ p: 3, borderRadius: 2, mb: 4 }}>
           <Typography variant="h6" sx={{ mb: 3 }}>

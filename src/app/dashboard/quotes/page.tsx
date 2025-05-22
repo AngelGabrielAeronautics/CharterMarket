@@ -48,7 +48,7 @@ interface GridItemProps extends GridProps {
 
 // Create a custom GridItem component to work with Material UI v7
 const GridItem: React.FC<GridItemProps> = ({ children, ...props }) => (
-  <Grid component="div" item {...props}>
+  <Grid component="div">
     {children}
   </Grid>
 );

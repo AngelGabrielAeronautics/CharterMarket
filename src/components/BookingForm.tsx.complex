@@ -1,0 +1,33 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Box, Paper, Typography } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+
+export default function BookingForm() {
+  const theme = useTheme();
+  const [loading, setLoading] = useState(false);
+
+  return (
+    <>
+      <Paper
+        component="form"
+        noValidate
+        elevation={6}
+        sx={{
+          p: 3,
+          borderRadius: 3,
+          display: 'flex',
+          alignItems: 'center',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
+        <Typography variant="h5">Booking Form</Typography>
+        <Box sx={{ width: '100%' }}>
+          <Typography>The form is temporarily unavailable while we fix some issues.</Typography>
+        </Box>
+      </Paper>
+    </>
+  );
+}

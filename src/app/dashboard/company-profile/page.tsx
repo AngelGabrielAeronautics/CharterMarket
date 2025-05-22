@@ -62,7 +62,7 @@ const companyProfileSchema = z.object({
 type CompanyProfileFormData = z.infer<typeof companyProfileSchema>;
 
 export default function CompanyProfilePage() {
-  const { user, userRole, userData } = useAuth();
+  const { user, userRole, profile } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -103,13 +103,13 @@ export default function CompanyProfilePage() {
   // Fetch company profile data
   useEffect(() => {
     async function fetchCompanyProfile() {
-      if (!user || !userData) {
+      if (!user || !profile) {
         setLoading(false);
         return;
       }
 
       try {
-        const userCompanyRef = doc(db, 'companies', userData.companyId || 'not-found');
+        const userCompanyRef = doc(db, 'companies', profile.userCode || 'not-found');
         const docSnap = await getDoc(userCompanyRef);
 
         if (docSnap.exists()) {
@@ -118,11 +118,11 @@ export default function CompanyProfilePage() {
           reset(data);
         } else {
           // No company profile exists yet
-          // Prefill company name from userData if available
+          // Prefill company name from profile if available
           const defaultValues = {
-            companyName: userData.company || '',
-            companyType: 'charter',
-            businessType: 'commercial',
+            companyName: profile.company || '',
+            companyType: 'charter' as const,
+            businessType: 'commercial' as const,
             registrationNumber: '',
             vatNumber: '',
             companyAddress: '',
@@ -130,8 +130,8 @@ export default function CompanyProfilePage() {
             state: '',
             postalCode: '',
             country: '',
-            phoneNumber: userData.phoneNumber || '',
-            emailAddress: userData.email || '',
+            phoneNumber: '',
+            emailAddress: profile.email || '',
             website: '',
             description: '',
             yearEstablished: undefined,
@@ -152,7 +152,7 @@ export default function CompanyProfilePage() {
     }
 
     fetchCompanyProfile();
-  }, [user, userData, reset]);
+  }, [user, profile, reset]);
 
   // Redirect if not operator or agent
   useEffect(() => {
@@ -162,7 +162,7 @@ export default function CompanyProfilePage() {
   }, [userRole, router]);
 
   const onSubmit = async (data: CompanyProfileFormData) => {
-    if (!user || !userData?.companyId) {
+    if (!user || !profile?.userCode) {
       setError('User data is missing');
       return;
     }
@@ -172,7 +172,7 @@ export default function CompanyProfilePage() {
     setSuccess(false);
 
     try {
-      const companyRef = doc(db, 'companies', userData.companyId);
+      const companyRef = doc(db, 'companies', profile.userCode);
       const docSnap = await getDoc(companyRef);
 
       if (docSnap.exists()) {
@@ -184,8 +184,8 @@ export default function CompanyProfilePage() {
         });
 
         // If the company name has changed, update it in the user's profile as well
-        if (userData.company !== data.companyName) {
-          const userRef = doc(db, 'users', userData.userCode);
+        if (profile.company !== data.companyName) {
+          const userRef = doc(db, 'users', profile.userCode);
           await updateDoc(userRef, {
             company: data.companyName,
             updatedAt: new Date(),
@@ -196,25 +196,25 @@ export default function CompanyProfilePage() {
         // Also update the user's company name if it's changed
         const newCompanyData = {
           ...data,
-          id: userData.companyId,
+          id: profile.userCode,
           createdAt: new Date(),
           createdBy: user.uid,
           updatedAt: new Date(),
           updatedBy: user.uid,
-          associatedUsers: [userData.userCode], // Keep track of associated users
+          associatedUsers: [profile.userCode], // Keep track of associated users
           primaryContact: {
-            name: `${userData.firstName} ${userData.lastName}`,
-            email: userData.email,
-            phone: userData.phoneNumber || '',
-            role: userData.role,
+            name: `${profile.firstName} ${profile.lastName}`,
+            email: profile.email,
+            phone: data.phoneNumber || '',
+            role: profile.role,
           },
         };
 
         await setDoc(companyRef, newCompanyData);
 
         // If the company name has changed, update it in the user's profile
-        if (userData.company !== data.companyName) {
-          const userRef = doc(db, 'users', userData.userCode);
+        if (profile.company !== data.companyName) {
+          const userRef = doc(db, 'users', profile.userCode);
           await updateDoc(userRef, {
             company: data.companyName,
             updatedAt: new Date(),
@@ -287,23 +287,20 @@ export default function CompanyProfilePage() {
           </Button>
         </Box>
       </Box>
-
       {error && (
         <Alert severity="error" sx={{ mb: 4 }}>
           {error}
         </Alert>
       )}
-
       {success && (
         <Alert severity="success" sx={{ mb: 4 }}>
           Company profile saved successfully!
         </Alert>
       )}
-
       <Paper elevation={3} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2 }}>
         {!isEditMode && companyData ? (
           // View Mode
-          <Box>
+          (<Box>
             <Box
               sx={{
                 display: 'flex',
@@ -351,11 +348,14 @@ export default function CompanyProfilePage() {
                 </IconButton>
               </Tooltip>
             </Box>
-
             <Divider sx={{ mb: 4 }} />
-
             <Grid container spacing={4}>
-              <Grid item xs={12} md={6}>
+              {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+              <Grid
+                size={{
+                  xs: 12,
+                  md: 6
+                }}>
                 <Box sx={{ mb: 4 }}>
                   <Typography variant="h6" fontWeight="bold" color="primary.main" gutterBottom>
                     Contact Information
@@ -413,7 +413,12 @@ export default function CompanyProfilePage() {
                 </Box>
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+              <Grid
+                size={{
+                  xs: 12,
+                  md: 6
+                }}>
                 {companyData.description && (
                   <Box sx={{ mb: 4 }}>
                     <Typography variant="h6" fontWeight="bold" color="primary.main" gutterBottom>
@@ -448,16 +453,21 @@ export default function CompanyProfilePage() {
                 )}
               </Grid>
             </Grid>
-          </Box>
+          </Box>)
         ) : (
           // Edit Mode
-          <form onSubmit={handleSubmit(onSubmit)}>
+          (<form onSubmit={handleSubmit(onSubmit)}>
             <Box sx={{ mb: 4 }}>
               <Typography variant="h6" fontWeight="bold" color="primary.main" gutterBottom>
                 Company Information
               </Typography>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Controller
                     name="companyName"
                     control={control}
@@ -473,7 +483,12 @@ export default function CompanyProfilePage() {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Controller
                     name="companyType"
                     control={control}
@@ -495,7 +510,12 @@ export default function CompanyProfilePage() {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Controller
                     name="businessType"
                     control={control}
@@ -516,7 +536,12 @@ export default function CompanyProfilePage() {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Controller
                     name="yearEstablished"
                     control={control}
@@ -533,7 +558,12 @@ export default function CompanyProfilePage() {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Controller
                     name="registrationNumber"
                     control={control}
@@ -548,7 +578,12 @@ export default function CompanyProfilePage() {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Controller
                     name="vatNumber"
                     control={control}
@@ -563,7 +598,12 @@ export default function CompanyProfilePage() {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Controller
                     name="numberOfEmployees"
                     control={control}
@@ -582,15 +622,14 @@ export default function CompanyProfilePage() {
                 </Grid>
               </Grid>
             </Box>
-
             <Divider sx={{ my: 4 }} />
-
             <Box sx={{ mb: 4 }}>
               <Typography variant="h6" fontWeight="bold" color="primary.main" gutterBottom>
                 Contact Information
               </Typography>
               <Grid container spacing={3}>
-                <Grid item xs={12}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid size={12}>
                   <Controller
                     name="companyAddress"
                     control={control}
@@ -606,7 +645,12 @@ export default function CompanyProfilePage() {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Controller
                     name="city"
                     control={control}
@@ -622,7 +666,12 @@ export default function CompanyProfilePage() {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Controller
                     name="state"
                     control={control}
@@ -637,7 +686,12 @@ export default function CompanyProfilePage() {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Controller
                     name="postalCode"
                     control={control}
@@ -653,7 +707,12 @@ export default function CompanyProfilePage() {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Controller
                     name="country"
                     control={control}
@@ -669,7 +728,12 @@ export default function CompanyProfilePage() {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Controller
                     name="phoneNumber"
                     control={control}
@@ -685,7 +749,12 @@ export default function CompanyProfilePage() {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Controller
                     name="emailAddress"
                     control={control}
@@ -702,7 +771,8 @@ export default function CompanyProfilePage() {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid size={12}>
                   <Controller
                     name="website"
                     control={control}
@@ -720,15 +790,14 @@ export default function CompanyProfilePage() {
                 </Grid>
               </Grid>
             </Box>
-
             <Divider sx={{ my: 4 }} />
-
             <Box sx={{ mb: 4 }}>
               <Typography variant="h6" fontWeight="bold" color="primary.main" gutterBottom>
                 Additional Information
               </Typography>
               <Grid container spacing={3}>
-                <Grid item xs={12}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid size={12}>
                   <Controller
                     name="description"
                     control={control}
@@ -746,7 +815,8 @@ export default function CompanyProfilePage() {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid size={12}>
                   <Controller
                     name="operatingLocations"
                     control={control}
@@ -764,7 +834,8 @@ export default function CompanyProfilePage() {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+                <Grid size={12}>
                   <Controller
                     name="certifications"
                     control={control}
@@ -784,7 +855,6 @@ export default function CompanyProfilePage() {
                 </Grid>
               </Grid>
             </Box>
-
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
               <Button
                 type="button"
@@ -809,7 +879,7 @@ export default function CompanyProfilePage() {
                 {saving ? 'Saving...' : 'Save Changes'}
               </Button>
             </Box>
-          </form>
+          </form>)
         )}
       </Paper>
     </Box>

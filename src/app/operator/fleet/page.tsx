@@ -207,7 +207,6 @@ export default function FleetManagementPage() {
           Manage your aircraft and maintenance schedule
         </Typography>
       </Box>
-
       <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <TextField
@@ -285,7 +284,7 @@ export default function FleetManagementPage() {
 
         {tabValue === 3 ? (
           // Maintenance schedule tab
-          <TableContainer component={Paper} variant="outlined">
+          (<TableContainer component={Paper} variant="outlined">
             <Table sx={{ minWidth: 650 }}>
               <TableHead>
                 <TableRow>
@@ -343,17 +342,23 @@ export default function FleetManagementPage() {
                 ))}
               </TableBody>
             </Table>
-          </TableContainer>
+          </TableContainer>)
         ) : (
           // Aircraft grid view for other tabs
-          <Grid container spacing={3}>
+          (<Grid container spacing={3}>
             {(tabValue === 0
               ? filteredAircraft
               : tabValue === 1
                 ? activeAircraft
                 : maintenanceAircraft
             ).map((aircraft) => (
-              <Grid item key={aircraft.id} xs={12} sm={6} md={4}>
+              <Grid
+                key={aircraft.id}
+                size={{
+                  xs: 12,
+                  sm: 6,
+                  md: 4
+                }}>
                 <Card
                   sx={{
                     height: '100%',
@@ -473,7 +478,6 @@ export default function FleetManagementPage() {
                 </Card>
               </Grid>
             ))}
-
             {/* Empty state */}
             {(tabValue === 0
               ? filteredAircraft
@@ -481,7 +485,7 @@ export default function FleetManagementPage() {
                 ? activeAircraft
                 : maintenanceAircraft
             ).length === 0 && (
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <Paper
                   sx={{
                     p: 4,
@@ -518,10 +522,9 @@ export default function FleetManagementPage() {
                 </Paper>
               </Grid>
             )}
-          </Grid>
+          </Grid>)
         )}
       </Paper>
-
       {/* Delete confirmation dialog */}
       <Dialog open={isDeleteDialogOpen} onClose={() => setIsDeleteDialogOpen(false)}>
         <DialogTitle>Confirm Deletion</DialogTitle>

@@ -7,7 +7,6 @@ import { addAircraftAvailability, getAircraftAvailability } from '@/lib/aircraft
 import { AircraftAvailability } from '@/types/aircraft';
 import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
-import { Timestamp } from 'firebase/firestore';
 
 interface AircraftAvailabilityCalendarProps {
   aircraftId: string;
@@ -45,8 +44,8 @@ export default function AircraftAvailabilityCalendar({ aircraftId }: AircraftAva
 
     try {
       await addAircraftAvailability(aircraftId, {
-        startDate: Timestamp.fromDate(date.from),
-        endDate: Timestamp.fromDate(date.to),
+        startDate: date.from,
+        endDate: date.to,
         type: 'blocked',
       });
 

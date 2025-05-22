@@ -264,7 +264,6 @@ export default function OperatorManagement({ onViewDetails }: OperatorManagement
           </Button>
         </Box>
       </Box>
-
       <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
         <Table>
           <TableHead>
@@ -415,7 +414,6 @@ export default function OperatorManagement({ onViewDetails }: OperatorManagement
           </TableBody>
         </Table>
       </TableContainer>
-
       {/* Documents Dialog */}
       <Dialog
         open={isDocumentDialogOpen}
@@ -476,7 +474,11 @@ export default function OperatorManagement({ onViewDetails }: OperatorManagement
               Upload New Document
             </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Document Type</InputLabel>
                   <Select label="Document Type" value="">
@@ -487,7 +489,11 @@ export default function OperatorManagement({ onViewDetails }: OperatorManagement
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Button variant="outlined" fullWidth component="label">
                   Select File
                   <input type="file" hidden />
@@ -507,7 +513,6 @@ export default function OperatorManagement({ onViewDetails }: OperatorManagement
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Operator Action Dialog */}
       <Dialog open={isOperatorDialogOpen} onClose={() => setIsOperatorDialogOpen(false)}>
         <DialogTitle>

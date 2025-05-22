@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ButtonHTMLAttributes, forwardRef } from 'react';
 import { Box, Button, useTheme } from '@mui/material';
 

@@ -143,6 +143,29 @@ export default function RequestDetailsPage() {
   if (error && !request) return <div className="p-8 text-center text-red-600">{error}</div>;
   if (!request) return <div className="p-8 text-center text-red-600">Request not found.</div>;
 
+  const MAP_WIDTH = 600;
+  const MAP_HEIGHT = 300;
+  let staticMapUrl = '';
+
+  if (
+    departureAirportDetails?.latitude &&
+    departureAirportDetails?.longitude &&
+    arrivalAirportDetails?.latitude &&
+    arrivalAirportDetails?.longitude
+  ) {
+    const depLat = departureAirportDetails.latitude;
+    const depLon = departureAirportDetails.longitude;
+    const arrLat = arrivalAirportDetails.latitude;
+    const arrLon = arrivalAirportDetails.longitude;
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+    if (apiKey) {
+      staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?size=${MAP_WIDTH}x${MAP_HEIGHT}&maptype=roadmap&markers=color:red|label:D|${depLat},${depLon}&markers=color:red|label:A|${arrLat},${arrLon}&path=color:0x0000ff|weight:2|${depLat},${depLon}|${arrLat},${arrLon}&key=${apiKey}`;
+    } else {
+      console.warn('Google Maps API key is missing. Map will not be displayed.');
+    }
+  }
+
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2 }}>
@@ -150,107 +173,85 @@ export default function RequestDetailsPage() {
           Request {request.requestCode}
         </Typography>
 
-        <Grid container spacing={2} sx={{ mb: 3, alignItems: 'center' }}>
-          <Grid item xs={12} sm={5}>
+        <div className="flex flex-wrap -mx-2 mb-3 items-center">
+          <div className="w-full sm:w-5/12 px-2 mb-4 sm:mb-0">
             {imageLoading ? (
               <Box
                 sx={{
+                  width: '100%',
+                  height: '300px',
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  height: 150,
+                  bgcolor: 'background.paper',
+                  borderRadius: 2,
                 }}
               >
                 <CircularProgress />
               </Box>
             ) : (
-              <Grid
-                container
-                spacing={2}
-                alignItems="center"
-                justifyContent="center"
-                sx={{ mt: 2, mb: 2 }}
-              >
-                {departureAirportDetails && departureCityImageUrl && (
-                  <Grid item xs={12} sm={5}>
-                    <Paper
-                      elevation={3}
-                      sx={{
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        height: 150,
-                        position: 'relative',
-                      }}
-                    >
-                      <Image
-                        src={departureCityImageUrl}
-                        alt={`City image for ${departureAirportDetails.city}`}
-                        layout="fill"
-                        objectFit="cover"
-                        priority={false}
-                      />
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          bottom: 0,
-                          left: 0,
-                          width: '100%',
-                          background: 'rgba(0,0,0,0.5)',
-                          color: 'white',
-                          p: 1,
-                        }}
-                      >
-                        <Typography variant="subtitle1" align="center">
-                          {departureAirportDetails.city}, {departureAirportDetails.country}
-                        </Typography>
-                      </Box>
-                    </Paper>
-                  </Grid>
-                )}
-                {arrivalAirportDetails && arrivalCityImageUrl && (
-                  <Grid item xs={12} sm={5}>
-                    <Paper
-                      elevation={3}
-                      sx={{
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        height: 150,
-                        position: 'relative',
-                      }}
-                    >
-                      <Image
-                        src={arrivalCityImageUrl}
-                        alt={`City image for ${arrivalAirportDetails.city}`}
-                        layout="fill"
-                        objectFit="cover"
-                      />
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          bottom: 0,
-                          left: 0,
-                          width: '100%',
-                          background: 'rgba(0,0,0,0.5)',
-                          color: 'white',
-                          p: 1,
-                        }}
-                      >
-                        <Typography variant="subtitle1" align="center">
-                          {arrivalAirportDetails.city}, {arrivalAirportDetails.country}
-                        </Typography>
-                      </Box>
-                    </Paper>
-                  </Grid>
-                )}
-              </Grid>
+              departureCityImageUrl && (
+                <Box
+                  component="img"
+                  src={departureCityImageUrl}
+                  alt={`City image for ${departureAirportDetails?.city}`}
+                  sx={{
+                    width: '100%',
+                    height: 'auto',
+                    maxHeight: '300px',
+                    objectFit: 'cover',
+                    borderRadius: 2,
+                  }}
+                />
+              )
             )}
-          </Grid>
-          <Grid item xs={12} sm={2} sx={{ textAlign: 'center' }}>
-            <Typography variant="h5" sx={{ my: { xs: 1, sm: 0 } }}>
-              →
+          </div>
+          <div className="w-full sm:w-7/12 px-2">
+            <Typography variant="h5" component="h2" gutterBottom sx={{ mt: { xs: 2, sm: 0 } }}>
+              {departureAirportDetails?.city}, {departureAirportDetails?.country}
             </Typography>
-          </Grid>
-        </Grid>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap -mx-2 mb-3 items-center">
+          <div className="w-full sm:w-5/12 px-2 mb-4 sm:mb-0">
+            {imageLoading ? (
+              <Box
+                sx={{
+                  width: '100%',
+                  height: '300px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  bgcolor: 'background.paper',
+                  borderRadius: 2,
+                }}
+              >
+                <CircularProgress />
+              </Box>
+            ) : (
+              arrivalCityImageUrl && (
+                <Box
+                  component="img"
+                  src={arrivalCityImageUrl}
+                  alt={`City image for ${arrivalAirportDetails?.city}`}
+                  sx={{
+                    width: '100%',
+                    height: 'auto',
+                    maxHeight: '300px',
+                    objectFit: 'cover',
+                    borderRadius: 2,
+                  }}
+                />
+              )
+            )}
+          </div>
+          <div className="w-full sm:w-7/12 px-2">
+            <Typography variant="h5" component="h2" gutterBottom sx={{ mt: { xs: 2, sm: 0 } }}>
+              {arrivalAirportDetails?.city}, {arrivalAirportDetails?.country}
+            </Typography>
+          </div>
+        </div>
 
         <Box sx={{ mb: 3, pl: 1 }}>
           <Typography variant="body1">
@@ -289,6 +290,32 @@ export default function RequestDetailsPage() {
           )}
         </Box>
 
+        {/* Route Map Section */}
+        {staticMapUrl && (
+          <Box sx={{ my: 4 }}>
+            <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'medium' }}>
+              Route Map
+            </Typography>
+            <Paper
+              elevation={2}
+              sx={{
+                overflow: 'hidden',
+                borderRadius: 2,
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              <Image
+                src={staticMapUrl}
+                alt={`Route map from ${departureAirportDetails?.name || 'Departure'} to ${arrivalAirportDetails?.name || 'Arrival'}`}
+                width={MAP_WIDTH}
+                height={MAP_HEIGHT}
+                // layout="responsive" // Use this if you want the map to scale with container width
+              />
+            </Paper>
+          </Box>
+        )}
+
         <Box>
           <Typography
             variant="h5"
@@ -301,18 +328,16 @@ export default function RequestDetailsPage() {
           {!request.offers || request.offers.length === 0 ? (
             <Typography color="textSecondary">No offers available yet.</Typography>
           ) : (
-            <Grid container spacing={2}>
-              {request.offers.map((offer) => (
-                <Grid item xs={12} key={offer.offerId}>
+            <div className="flex flex-wrap -mx-2">
+            {request.offers.map((offer) => (
+                <div className="w-full px-2 mb-4" key={offer.offerId}>
                   <Paper
                     variant="outlined"
                     sx={{
-                      p: 2,
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                      gap: 1,
+                      p: 3,
+                      borderRadius: 2,
+                      borderColor: offer.offerStatus === 'accepted-by-client' ? 'success.main' : 'divider',
+                      borderWidth: offer.offerStatus === 'accepted-by-client' ? 2 : 1,
                     }}
                   >
                     <Box>
@@ -333,9 +358,9 @@ export default function RequestDetailsPage() {
                         Offer ID: {offer.offerId}
                       </Typography>
                     </Box>
-                    <Button
-                      variant="outlined"
-                      onClick={() => handleAccept(offer)}
+                <Button
+                  variant="outlined"
+                  onClick={() => handleAccept(offer)}
                       disabled={
                         submitting ||
                         offer.offerStatus !== 'pending-client-acceptance' ||
@@ -343,13 +368,13 @@ export default function RequestDetailsPage() {
                         request.status === 'cancelled'
                       }
                       size="small"
-                    >
-                      {submitting ? 'Processing...' : 'Accept Offer'}
-                    </Button>
+                >
+                  {submitting ? 'Processing...' : 'Accept Offer'}
+                </Button>
                   </Paper>
-                </Grid>
+                </div>
               ))}
-            </Grid>
+            </div>
           )}
         </Box>
         {error && (

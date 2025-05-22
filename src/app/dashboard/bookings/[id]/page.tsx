@@ -73,7 +73,7 @@ export default function BookingDetailsPage() {
     booking,
     loading: loadingBooking,
     error: bookingError,
-  } = useBookingDetail(bookingDocId, user?.userCode, userRole);
+  } = useBookingDetail(bookingDocId, user?.userCode, userRole ?? undefined);
   const { invoices, loading: loadingInvoices, error: invoicesError } = useInvoices(bookingDocId);
   const {
     payments,
@@ -115,7 +115,7 @@ export default function BookingDetailsPage() {
   };
 
   const handleSubmitRating = async () => {
-    if (!userRating || !user?.userCode) return;
+    if (!userRating || !user?.userCode || !bookingDocId || !booking?.operatorId) return;
     await createRating(bookingDocId, booking.operatorId, user.userCode, userRating, comments);
   };
 
@@ -237,7 +237,7 @@ export default function BookingDetailsPage() {
           <Tab label="Feedback" id="tab-2" />
         </Tabs>
 
-        {activeTab === 0 && (
+        {activeTab === 0 && bookingDocId && (
           <Box>
             <PassengerManifest
               bookingId={bookingDocId}
@@ -466,7 +466,7 @@ export default function BookingDetailsPage() {
       <Dialog open={isPaymentDialogOpen} onClose={closePaymentDialog} maxWidth="md" fullWidth>
         <DialogTitle>Make Payment</DialogTitle>
         <DialogContent>
-          {selectedInvoice && (
+          {selectedInvoice && bookingDocId && (
             <PaymentForm
               bookingId={bookingDocId}
               invoiceId={selectedInvoice.id}

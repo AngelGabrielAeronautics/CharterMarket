@@ -96,7 +96,11 @@ export default function FlightStatusCard({
       onClick={onClick}
     >
       <Grid container spacing={2} alignItems="center">
-        <Grid item xs={12} md={4}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 4
+          }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <FlightTakeoff color="primary" fontSize="small" sx={{ mr: 1 }} />
             <Box>
@@ -128,7 +132,11 @@ export default function FlightStatusCard({
           </Box>
         </Grid>
 
-        <Grid item xs={6} md={3}>
+        <Grid
+          size={{
+            xs: 6,
+            md: 3
+          }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <AccessTime color="action" fontSize="small" sx={{ mr: 1 }} />
             <Box>
@@ -140,7 +148,11 @@ export default function FlightStatusCard({
           </Box>
         </Grid>
 
-        <Grid item xs={6} md={3}>
+        <Grid
+          size={{
+            xs: 6,
+            md: 3
+          }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
             <Chip
               icon={statusInfo.icon}
@@ -165,7 +177,7 @@ export default function FlightStatusCard({
           </Box>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Divider sx={{ my: 1 }} />
           <Box
             sx={{

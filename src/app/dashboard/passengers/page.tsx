@@ -249,97 +249,66 @@ export default function PassengersPage() {
 
         {isAddingPassenger ? (
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+            <div className="flex flex-wrap -mx-2">
+              <div className="w-full sm:w-1/2 px-2 mb-4">
                 <Input
                   label="First Name"
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleChange}
+                  fullWidth
                   required
-                  helperText="Passenger's legal first name"
-                  autoComplete="given-name"
                 />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </div>
+              <div className="w-full sm:w-1/2 px-2 mb-4">
                 <Input
-                  label="Last Name"
+                  label="Last Name" 
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleChange}
+                  fullWidth
                   required
-                  helperText="Passenger's legal last name"
-                  autoComplete="family-name"
                 />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </div>
+              <div className="w-full px-2 mb-4">
                 <Input
                   label="Email"
-                  type="email"
                   name="email"
+                  type="email"
                   value={formData.email}
                   onChange={handleChange}
+                  fullWidth
                   required
-                  helperText="Passenger's contact email"
-                  autoComplete="email"
                 />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <PhoneInput
-                  value={formData.phoneNumber}
-                  onChange={(value) => {
-                    const syntheticEvent = {
-                      target: { name: 'phoneNumber', value }
-                    };
-                    handleChange(syntheticEvent as React.ChangeEvent<HTMLInputElement>);
-                  }}
-                  required
-                  helperText="Passenger's contact phone number"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <DateInput
-                  label="Date of Birth"
-                  name="dateOfBirth"
-                  value={formData.dateOfBirth}
-                  onChange={handleChange}
-                  required
-                  helperText="Passenger's date of birth"
-                  max={new Date().toISOString().split('T')[0]}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </div>
+              <div className="w-full px-2 mb-4">
                 <Input
-                  label="Nationality"
-                  name="nationality"
-                  value={formData.nationality}
+                  label="Phone Number"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
                   onChange={handleChange}
-                  required
-                  helperText="Passenger's nationality"
+                  fullWidth
                 />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </div>
+              <div className="w-full sm:w-1/2 px-2 mb-4">
                 <Input
                   label="Passport Number"
                   name="passportNumber"
                   value={formData.passportNumber}
                   onChange={handleChange}
-                  required
-                  helperText="Passenger's passport number"
+                  fullWidth
                 />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <DateInput
-                  label="Passport Expiry"
-                  name="passportExpiry"
-                  value={formData.passportExpiry}
+              </div>
+              <div className="w-full sm:w-1/2 px-2 mb-4">
+                <Input
+                  label="Nationality"
+                  name="nationality"
+                  value={formData.nationality}
                   onChange={handleChange}
-                  required
-                  helperText="Passport expiry date"
-                  min={new Date().toISOString().split('T')[0]}
+                  fullWidth
                 />
-              </Grid>
-            </Grid>
+              </div>
+            </div>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
               <Button
                 type="button"
@@ -365,32 +334,23 @@ export default function PassengersPage() {
               <Paper key={passenger.id} variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: 'background.paper', '&:hover': { bgcolor: 'action.hover' } }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Box>
-                    <Typography variant="subtitle1" fontWeight="medium" color="text.primary">
+                    <Typography variant="h6" component="h3" gutterBottom>
                       {passenger.firstName} {passenger.lastName}
-                      {passenger.isDefault && (
-                        <Chip label="Default" size="small" color="primary" sx={{ ml: 1 }} />
-                      )}
                     </Typography>
-                    <Grid container spacing={1} sx={{ mt: 1 }}>
-                      <Grid item xs={12} sm={6}>
+                    <div className="flex flex-wrap -mx-1 mt-1">
+                      <div className="w-full sm:w-1/2 px-1 mb-2">
                         <Typography variant="body2" color="text.secondary"><b>Email:</b> {passenger.email}</Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="body2" color="text.secondary"><b>Phone:</b> {passenger.phoneNumber}</Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="body2" color="text.secondary"><b>Date of Birth:</b> {passenger.dateOfBirth}</Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="body2" color="text.secondary"><b>Nationality:</b> {passenger.nationality}</Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="body2" color="text.secondary"><b>Passport:</b> {passenger.passportNumber}</Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="body2" color="text.secondary"><b>Passport Expiry:</b> {passenger.passportExpiry}</Typography>
-                      </Grid>
-                    </Grid>
+                      </div>
+                      <div className="w-full sm:w-1/2 px-1 mb-2">
+                        <Typography variant="body2" color="text.secondary"><b>Phone:</b> {passenger.phoneNumber || 'Not provided'}</Typography>
+                      </div>
+                      <div className="w-full sm:w-1/2 px-1 mb-2">
+                        <Typography variant="body2" color="text.secondary"><b>Passport:</b> {passenger.passportNumber || 'Not provided'}</Typography>
+                      </div>
+                      <div className="w-full sm:w-1/2 px-1 mb-2">
+                        <Typography variant="body2" color="text.secondary"><b>Nationality:</b> {passenger.nationality || 'Not provided'}</Typography>
+                      </div>
+                    </div>
                   </Box>
                   {!passenger.isDefault && (
                     <Button

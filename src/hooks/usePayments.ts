@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Payment, PaymentFormData, PaymentStatus } from '@/types/payment';
 
 /**
@@ -179,4 +179,42 @@ export function usePaymentManagement() {
     error,
     success,
   };
+}
+
+const isDev = process.env.NODE_ENV === 'development';
+
+export function usePayments(adminView: boolean = false) {
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchPayments = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // In a real app, for adminView, you might have a different endpoint
+      // or pass an admin flag to fetch all payments.
+      // For now, assuming /api/payments can return all if no specific ID is given,
+      // or if an admin token/role is detected server-side.
+      const response = await fetch(adminView ? '/api/payments?all=true' : '/api/payments');
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch payments: ${response.status} ${errorText}`);
+      }
+      const data = await response.json();
+      setPayments(data);
+    } catch (e: any) {
+      console.error('Error in usePayments:', e);
+      setError(e.message || 'An unknown error occurred');
+      setPayments([]); // Clear payments on error
+    } finally {
+      setLoading(false);
+    }
+  }, [adminView]);
+
+  useEffect(() => {
+    fetchPayments();
+  }, [fetchPayments]);
+
+  return { payments, loading, error, refetchPayments: fetchPayments };
 }

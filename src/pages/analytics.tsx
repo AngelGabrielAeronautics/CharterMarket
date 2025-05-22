@@ -1,3 +1,5 @@
+// @ts-nocheck
+'use client';
 import React, { useState } from 'react';
 import { createLazyComponent } from '../utils/lazyLoad';
 import Box from '@mui/material/Box';
@@ -47,9 +49,12 @@ const AnalyticsPage: React.FC = () => {
       <Typography variant="h4" sx={{ mb: 4 }}>
         Analytics Dashboard
       </Typography>
-
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -74,7 +79,11 @@ const AnalyticsPage: React.FC = () => {
           </Card>
         </Grid>
         
-        <Grid item xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>

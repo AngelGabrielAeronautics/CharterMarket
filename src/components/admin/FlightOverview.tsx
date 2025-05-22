@@ -122,9 +122,17 @@ export default function FlightOverview() {
     <Box>
       <Grid container spacing={3}>
         {/* Flight stats */}
-        <Grid item xs={12} md={8}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 8
+          }}>
           <Grid container spacing={2}>
-            <Grid item xs={6} sm={3}>
+            <Grid
+              size={{
+                xs: 6,
+                sm: 3
+              }}>
               <FlightStatCard
                 title="Today's Flights"
                 value={flightStats.today}
@@ -132,7 +140,11 @@ export default function FlightOverview() {
                 color="primary"
               />
             </Grid>
-            <Grid item xs={6} sm={3}>
+            <Grid
+              size={{
+                xs: 6,
+                sm: 3
+              }}>
               <FlightStatCard
                 title="Upcoming Flights"
                 value={flightStats.upcoming}
@@ -142,7 +154,11 @@ export default function FlightOverview() {
                 secondaryLabel="alerts"
               />
             </Grid>
-            <Grid item xs={6} sm={3}>
+            <Grid
+              size={{
+                xs: 6,
+                sm: 3
+              }}>
               <FlightStatCard
                 title="Confirmed"
                 value={flightStats.completed}
@@ -150,7 +166,11 @@ export default function FlightOverview() {
                 color="success"
               />
             </Grid>
-            <Grid item xs={6} sm={3}>
+            <Grid
+              size={{
+                xs: 6,
+                sm: 3
+              }}>
               <FlightStatCard
                 title="Pending"
                 value={flightStats.pending}
@@ -182,7 +202,7 @@ export default function FlightOverview() {
             />
 
             <Grid container spacing={1} sx={{ mt: 0.5 }}>
-              <Grid item xs={4}>
+              <Grid size={4}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Box
                     sx={{
@@ -198,7 +218,7 @@ export default function FlightOverview() {
                   </Typography>
                 </Box>
               </Grid>
-              <Grid item xs={4}>
+              <Grid size={4}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Box
                     sx={{
@@ -214,7 +234,7 @@ export default function FlightOverview() {
                   </Typography>
                 </Box>
               </Grid>
-              <Grid item xs={4}>
+              <Grid size={4}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Box
                     sx={{
@@ -235,7 +255,11 @@ export default function FlightOverview() {
         </Grid>
 
         {/* Quick Actions */}
-        <Grid item xs={12} md={4}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 4
+          }}>
           <Card
             sx={{ height: '100%', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}
           >
@@ -251,7 +275,7 @@ export default function FlightOverview() {
 
               {tabValue === 0 ? (
                 <Grid container spacing={1}>
-                  <Grid item xs={12}>
+                  <Grid size={12}>
                     <Button
                       fullWidth
                       variant="outlined"
@@ -263,7 +287,7 @@ export default function FlightOverview() {
                       Flight Search
                     </Button>
                   </Grid>
-                  <Grid item xs={12}>
+                  <Grid size={12}>
                     <Button
                       fullWidth
                       variant="outlined"
@@ -275,7 +299,7 @@ export default function FlightOverview() {
                       Calendar View
                     </Button>
                   </Grid>
-                  <Grid item xs={12}>
+                  <Grid size={12}>
                     <Button
                       fullWidth
                       variant="outlined"

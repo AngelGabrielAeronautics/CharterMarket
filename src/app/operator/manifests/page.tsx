@@ -253,7 +253,6 @@ export default function PassengerManifestsPage() {
           View and manage passenger information for all flights
         </Typography>
       </Box>
-
       <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <TextField
@@ -420,7 +419,6 @@ export default function PassengerManifestsPage() {
           </Table>
         </TableContainer>
       </Paper>
-
       {/* Passenger Manifest Dialog */}
       <Dialog
         open={isPassengerDialogOpen}
@@ -440,7 +438,11 @@ export default function PassengerManifestsPage() {
           {flightDetails && (
             <Box sx={{ mb: 3 }}>
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Flight
                   </Typography>
@@ -448,7 +450,11 @@ export default function PassengerManifestsPage() {
                     {flightDetails.bookingId}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Route
                   </Typography>
@@ -456,7 +462,11 @@ export default function PassengerManifestsPage() {
                     {flightDetails.route}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Date & Time
                   </Typography>
@@ -464,7 +474,11 @@ export default function PassengerManifestsPage() {
                     {format(flightDetails.departureDate, 'dd MMM yyyy HH:mm')}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Aircraft
                   </Typography>

@@ -20,7 +20,8 @@
     "test:coverage": "jest --coverage",
     "find-console-logs": "node scripts/remove-console-logs.js",
     "remove-console-logs": "node scripts/remove-console-logs.js --fix",
-    "build:tokens": "style-dictionary build --config style-dictionary/config.json"
+    "build:tokens": "style-dictionary build --config style-dictionary/config.json",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
@@ -46,11 +47,13 @@
     "firebase": "^10.14.1",
     "firebase-admin": "^13.4.0",
     "framer-motion": "^12.7.4",
+    "lodash": "^4.17.21",
     "lodash.kebabcase": "^4.1.1",
     "lucide-react": "^0.488.0",
     "nanoid": "^5.1.5",
     "next": "15.3.0",
     "pdfkit": "^0.17.1",
+    "puppeteer": "^24.9.0",
     "react": "^18.2.0",
     "react-cookie": "^8.0.1",
     "react-day-picker": "^9.6.7",
@@ -69,6 +72,10 @@
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^15.3.1",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/jest": "^29.5.14",
+    "@types/lodash": "^4.17.17",
     "@types/node": "^20.17.48",
     "@types/react": "^18.3.21",
     "@types/react-dom": "^18.2.0",
@@ -80,13 +87,14 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",
     "husky": "^9.1.7",
+    "jest-environment-jsdom": "^29.7.0",
     "jest-watch-typeahead": "^2.2.2",
     "lint-staged": "^15.5.1",
     "postcss": "^8.4.35",
     "prettier": "^3.2.4",
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "5.3.3"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

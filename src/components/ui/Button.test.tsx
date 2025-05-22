@@ -27,10 +27,10 @@ describe('Button', () => {
   });
   
   it('renders with the correct variant', () => {
-    render(<Button variant="outline">Outline Button</Button>);
+    render(<Button variant="outlined">Outline Button</Button>);
     
     const button = screen.getByRole('button', { name: /outline button/i });
     // Check if the button has the outline class
-    expect(button).toHaveClass('border');
+    expect(button).toHaveClass('MuiButton-outline');
   });
 }); 

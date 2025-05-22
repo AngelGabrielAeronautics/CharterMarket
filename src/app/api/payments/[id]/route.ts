@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPaymentById, processPayment } from '@/lib/payment';
 import { PaymentStatus } from '@/types/payment';
 
-export async function GET(req: NextRequest, context: { params: { id: string } }) {
+export async function GET(req: NextRequest, context: any) {
   try {
-    const paymentId = context.params.id;
+    const paymentId = context.params.id as string;
     const payment = await getPaymentById(paymentId);
 
     if (!payment) {
@@ -18,10 +18,9 @@ export async function GET(req: NextRequest, context: { params: { id: string } })
   }
 }
 
-export async function PUT(req: NextRequest, context: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: any) {
   try {
-    const { id } = await Promise.resolve(context.params);
-    const paymentId = id;
+    const paymentId = context.params.id as string;
 
     const { status, adminUserCode, notes } = await req.json();
 

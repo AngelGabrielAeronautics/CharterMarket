@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import EmailVerificationBanner from '@/components/EmailVerificationBanner';
 import OperatorOnboardingBanner from '@/components/OperatorOnboardingBanner';
 import AppDownloadBanner from '@/components/ui/AppDownloadBanner';
@@ -14,8 +14,8 @@ import { UserStatus } from '@/types/user';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Box, Container, IconButton, Tooltip } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import tokens from '@/styles/tokens';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
+import { markEmailVerified } from '@/lib/user';
 
 interface UserData {
   email: string;
@@ -40,45 +40,107 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const expandedSideNavWidth = muiTheme.spacing(32); // 256px
   const collapsedSideNavWidth = muiTheme.spacing(6); // 48px - ultra compact
 
+  const previousEmailVerifiedState = useRef<boolean | undefined>(undefined);
+
   const toggleSideNavMini = () => setIsSideNavMini((prev) => !prev);
   const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (!firebaseUser) {
         router.push('/login');
+        setLoading(false);
         return;
       }
 
       try {
-        // Fetch user data from Firestore
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('email', '==', user.email));
-        const querySnapshot = await getDocs(q);
+        // Fetch user data from Firestore using user's UID as document ID if possible, or email as fallback
+        // Assuming userCode is the document ID in 'users' collection
+        // We need to get userCode first if it's not directly firebaseUser.uid
+        // For now, let's assume we need to query by email to get the userDoc which contains userCode
 
-        if (!querySnapshot.empty) {
-          const userDoc = querySnapshot.docs[0].data();
-          setUserData({
-            email: user.email!,
-            emailVerified: userDoc.emailVerified || false,
-            userCode: userDoc.userCode,
-            userId: user.uid,
-            role: userDoc.role,
-            firstName: userDoc.firstName || user.email!.split('@')[0], // Fallback to email username if firstName not set
-            status: userDoc.status as UserStatus,
-            isProfileComplete: userDoc.isProfileComplete || false,
-            hasAircraft: userDoc.hasAircraft || false,
-          });
+        const usersRef = collection(db, 'users');
+        // Try to get userDoc by email first to retrieve userCode
+        const qByEmail = query(usersRef, where('email', '==', firebaseUser.email));
+        const emailQuerySnapshot = await getDocs(qByEmail);
+
+        let userDocData: any = null;
+        let userDocId: string | null = null;
+
+        if (!emailQuerySnapshot.empty) {
+          const docSnapshot = emailQuerySnapshot.docs[0];
+          userDocData = docSnapshot.data();
+          userDocId = docSnapshot.id; // This should be the userCode
+        } else {
+          // Fallback or error: user exists in Auth but not in Firestore 'users' collection by email
+          // This case should ideally not happen if registration is robust
+          console.error(
+            `User with email ${firebaseUser.email} found in Auth but not in Firestore users collection.`
+          );
+          setLoading(false);
+          // Optionally redirect to an error page or logout
+          router.push('/login?error=user_not_found_in_db');
+          return;
         }
+
+        const currentUserData: UserData = {
+          email: firebaseUser.email!,
+          // Use emailVerified from Firebase Auth source of truth first, then Firestore's as fallback
+          emailVerified: firebaseUser.emailVerified || userDocData.emailVerified || false,
+          userCode: userDocId!, // userCode is the document ID
+          userId: firebaseUser.uid,
+          role: userDocData.role,
+          firstName: userDocData.firstName || firebaseUser.email!.split('@')[0],
+          status: userDocData.status as UserStatus,
+          isProfileComplete: userDocData.isProfileComplete || false,
+          hasAircraft: userDocData.hasAircraft || false,
+        };
+
+        setUserData(currentUserData);
+
+        // Check if email verification status changed to true
+        if (currentUserData.emailVerified && previousEmailVerifiedState.current === false) {
+          console.log(
+            `Email for ${currentUserData.userCode} was just verified. Updating Firestore.`
+          );
+          await markEmailVerified(currentUserData.userCode);
+        }
+        previousEmailVerifiedState.current = currentUserData.emailVerified;
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error('Error fetching user data or processing auth state:', error);
+        // Potentially redirect to login or error page
+        router.push('/login?error=auth_error');
       } finally {
         setLoading(false);
       }
     });
 
     return () => unsubscribe();
+    // router is a stable function, muiTheme is stable if not changed. Adding them for completeness but main dependency is auth object.
   }, [router]);
+
+  // Effect to update Firestore if Firebase Auth emailVerified is true and Firestore is false
+  useEffect(() => {
+    if (
+      userData &&
+      userData.userCode &&
+      auth.currentUser &&
+      auth.currentUser.emailVerified &&
+      !userData.emailVerified
+    ) {
+      console.log(
+        `Syncing emailVerified status for ${userData.userCode}. Firebase: true, Firestore: false.`
+      );
+      markEmailVerified(userData.userCode)
+        .then(() => {
+          setUserData((prev) => (prev ? { ...prev, emailVerified: true } : null));
+          console.log(`Successfully updated Firestore emailVerified for ${userData.userCode}`);
+        })
+        .catch((err) =>
+          console.error(`Failed to sync emailVerified for ${userData.userCode}:`, err)
+        );
+    }
+  }, [userData]); // Rerun when userData changes, specifically userData.emailVerified
 
   if (loading || !userData) {
     return <LoadingSpinner fullscreen />;
@@ -194,25 +256,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             }}
           >
             {userData && !userData.emailVerified && (
-              <EmailVerificationBanner
-                email={userData.email}
-                userId={userData.userId}
-                userCode={userData.userCode}
-                isVerified={userData.emailVerified}
-              />
+              <EmailVerificationBanner isVerified={userData.emailVerified} />
             )}
             {userData && userData.role === 'operator' && (
               <OperatorOnboardingBanner
                 profile={{
-                  ...userData,
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-                  company: null,
-                  lastReminderSent: null,
-                  reminderCount: 0,
-                  profileIncompleteDate: null,
-                  dormantDate: null,
-                  lastName: '',
+                  status: userData.status,
+                  isProfileComplete: userData.isProfileComplete,
+                  hasAircraft: userData.hasAircraft,
                 }}
                 isEmailVerified={userData.emailVerified}
               />

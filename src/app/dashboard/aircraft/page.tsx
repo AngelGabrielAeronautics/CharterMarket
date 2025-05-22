@@ -119,7 +119,13 @@ export default function AircraftPage() {
         </Button>
       </Box>
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={4}>
+        {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+        <Grid
+          component="div"
+          size={{
+            xs: 12,
+            md: 4
+          }}>
           <TextField
             label="Search aircraft"
             value={searchTerm}
@@ -130,7 +136,13 @@ export default function AircraftPage() {
             }}
           />
         </Grid>
-        <Grid item xs={12} md={3}>
+        {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+        <Grid
+          component="div"
+          size={{
+            xs: 12,
+            md: 3
+          }}>
           <TextField
             select
             label="Aircraft Type"
@@ -144,7 +156,13 @@ export default function AircraftPage() {
             ))}
           </TextField>
         </Grid>
-        <Grid item xs={12} md={3}>
+        {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+        <Grid
+          component="div"
+          size={{
+            xs: 12,
+            md: 3
+          }}>
           <TextField
             select
             label="Status"
@@ -158,7 +176,14 @@ export default function AircraftPage() {
             ))}
           </TextField>
         </Grid>
-        <Grid item xs={12} md={2} sx={{ display: 'flex', alignItems: 'flex-end' }}>
+        {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
+        <Grid
+          component="div"
+          sx={{ display: 'flex', alignItems: 'flex-end' }}
+          size={{
+            xs: 12,
+            md: 2
+          }}>
           <Button
             variant="outlined"
             onClick={resetFilters}

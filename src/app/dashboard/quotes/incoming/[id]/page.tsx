@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { createNotification } from '@/lib/notification';
 import toast from 'react-hot-toast';
+import { QuoteRequest } from '@/types/flight';
 
 // Import MUI components directly
 import Typography from '@mui/material/Typography';
@@ -40,12 +41,12 @@ export default function OperatorQuoteSubmissionPage() {
   const requestId = Array.isArray(id) ? id[0] : id;
   const { user } = useAuth();
   const router = useRouter();
-  const [request, setRequest] = useState(null);
+  const [request, setRequest] = useState<QuoteRequest | null>(null);
   const [price, setPrice] = useState('');
   const [declineReason, setDeclineReason] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [openDeclineDialog, setOpenDeclineDialog] = useState(false);
 
   useEffect(() => {
@@ -71,10 +72,14 @@ export default function OperatorQuoteSubmissionPage() {
     fetchData();
   }, [requestId]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!request || !user?.userCode) {
       setError('User information is missing or request not loaded.');
+      return;
+    }
+    if (!requestId) {
+      setError('Request ID is missing.');
       return;
     }
 
@@ -130,6 +135,10 @@ export default function OperatorQuoteSubmissionPage() {
 
   const handleDeclineRequest = async () => {
     if (!request || !user?.userCode || !request.clientUserCode) return;
+    if (!requestId) {
+      setError('Request ID is missing.');
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -260,7 +269,7 @@ export default function OperatorQuoteSubmissionPage() {
         // From
         React.createElement(
           Grid,
-          { item: true, xs: 12, sm: 6 },
+          { size: { xs: 12, sm: 6 } },
           React.createElement(
             'div',
             { className: 'flex items-center mb-2' },
@@ -272,7 +281,7 @@ export default function OperatorQuoteSubmissionPage() {
         // To
         React.createElement(
           Grid,
-          { item: true, xs: 12, sm: 6 },
+          { size: { xs: 12, sm: 6 } },
           React.createElement(
             'div',
             { className: 'flex items-center mb-2' },
@@ -284,7 +293,7 @@ export default function OperatorQuoteSubmissionPage() {
         // Passengers
         React.createElement(
           Grid,
-          { item: true, xs: 12, sm: 6 },
+          { size: { xs: 12, sm: 6 } },
           React.createElement(
             'div',
             { className: 'flex items-center mb-2' },

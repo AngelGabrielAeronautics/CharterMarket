@@ -195,7 +195,6 @@ export default function FlightCalendar({
           icon={<FlightIcon />}
         />
       </Box>
-
       {/* Calendar Grid */}
       <Paper
         elevation={0}
@@ -213,15 +212,13 @@ export default function FlightCalendar({
         <Grid container sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
             <Grid
-              item
-              xs={12 / 7}
               key={index}
               sx={{
                 p: 1,
                 textAlign: 'center',
                 bgcolor: 'background.default',
               }}
-            >
+              size={12 / 7}>
               <Typography variant="body2" fontWeight="medium">
                 {day}
               </Typography>
@@ -236,8 +233,6 @@ export default function FlightCalendar({
               if (day === null) {
                 return (
                   <Grid
-                    item
-                    xs={12 / 7}
                     key={`blank-${i}`}
                     sx={{
                       height: dashboardView ? '65px' : '85px',
@@ -246,7 +241,7 @@ export default function FlightCalendar({
                       border: '1px solid',
                       borderColor: 'divider',
                     }}
-                  />
+                    size={12 / 7} />
                 );
               }
 
@@ -258,8 +253,6 @@ export default function FlightCalendar({
 
               return (
                 <Grid
-                  item
-                  xs={12 / 7}
                   key={day.toString()}
                   sx={{
                     height: dashboardView ? '65px' : '85px',
@@ -280,7 +273,7 @@ export default function FlightCalendar({
                     },
                   }}
                   onClick={(e) => handleDateClick(day, dayFlights, e)}
-                >
+                  size={12 / 7}>
                   <Box
                     sx={{
                       display: 'flex',
@@ -351,7 +344,6 @@ export default function FlightCalendar({
           </Grid>
         </Box>
       </Paper>
-
       {/* Flight details popper */}
       <Popper
         id={popperId}

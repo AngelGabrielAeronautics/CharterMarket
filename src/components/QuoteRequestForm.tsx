@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
@@ -13,11 +13,11 @@ import Select from '@/components/ui/Select';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { useAuth } from '@/contexts/AuthContext';
 import { createQuoteRequest, submitQuoteRequest } from '@/lib/flight';
-import { findAvailableOperators } from '@/lib/operator';
 import { useRouter } from 'next/navigation';
+import { ToggleButton, ToggleButtonGroup, FormControl, FormLabel, Grid, Box } from '@mui/material';
 
 const schema = z.object({
-  tripType: z.enum(['oneWay', 'return']),
+  tripType: z.enum(['oneWay', 'return', 'multiCity']),
   departureAirport: z.string().length(4, 'ICAO code must be 4 characters'),
   arrivalAirport: z.string().length(4, 'ICAO code must be 4 characters'),
   departureDate: z.date().min(new Date(), 'Departure date must be in the future'),
@@ -39,6 +39,7 @@ export default function QuoteRequestForm() {
     handleSubmit,
     watch,
     setValue,
+    control,
     formState: { errors },
   } = useForm<QuoteRequestFormData>({
     resolver: zodResolver(schema),
@@ -62,31 +63,8 @@ export default function QuoteRequestForm() {
     setError(null);
 
     try {
-      // Find available operators for this quote request
-      const availableOperators = await findAvailableOperators(
-        data.departureAirport,
-        data.arrivalAirport,
-        data.passengerCount
-      );
-
-      if (availableOperators.length === 0) {
-        setError(
-          'No operators available for this route. Please try different airports or passenger count.'
-        );
-        return;
-      }
-
-      // Use the first available operator
-      const operatorId = availableOperators[0].id;
-
-      // Create the quote request (initially in draft status)
-      const requestId = await createQuoteRequest(user.userCode, operatorId, data);
-
-      // CRITICAL: Submit the quote request to change status from 'draft' to 'pending'
-      // This ensures operators can see the request
+      const requestId = await createQuoteRequest(user.userCode, data);
       await submitQuoteRequest(requestId);
-
-      // Navigate to the quote request detail page
       router.push(`/dashboard/quotes/${requestId}`);
     } catch (err) {
       console.error('Error submitting quote request:', err);
@@ -98,18 +76,38 @@ export default function QuoteRequestForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Select
-          label="Trip Type"
-          value={watch('tripType')}
-          {...register('tripType')}
-          error={errors.tripType?.message}
-          options={[
-            { value: 'oneWay', label: 'One Way' },
-            { value: 'return', label: 'Return' },
-          ]}
+      <FormControl component="fieldset" sx={{ width: '100%', mb: 1 }}>
+        <FormLabel component="legend" className="sr-only">Trip Type</FormLabel>
+        <Controller
+          name="tripType"
+          control={control}
+          render={({ field }) => (
+            <ToggleButtonGroup
+              value={field.value}
+              exclusive
+              onChange={(event, newValue) => {
+                if (newValue !== null) {
+                  field.onChange(newValue);
+                }
+              }}
+              aria-label="Trip type"
+              fullWidth
+            >
+              <ToggleButton value="oneWay" aria-label="One way">
+                One Way
+              </ToggleButton>
+              <ToggleButton value="return" aria-label="Return">
+                Return
+              </ToggleButton>
+              <ToggleButton value="multiCity" aria-label="Multi-city">
+                Multi-City
+              </ToggleButton>
+            </ToggleButtonGroup>
+          )}
         />
+      </FormControl>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ border: '2px solid red' }}>
         <Input
           label="Number of Passengers"
           type="number"

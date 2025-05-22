@@ -47,10 +47,12 @@ const nextConfig = {
   reactStrictMode: true,  // Enable React strict mode for improved development experience
   poweredByHeader: false, // Remove X-Powered-By header
   eslint: {
-    ignoreDuringBuilds: true,
+    // Do not skip ESLint during builds; fail build on lint errors
+    ignoreDuringBuilds: false,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    // Do not skip type checking during builds; fail build on TS errors
+    ignoreBuildErrors: false,
   },
   
   images: {

@@ -163,14 +163,13 @@ export default function WeatherWidget({
           </Typography>
         )}
       </Typography>
-
       <Grid container spacing={3} sx={{ mt: 1 }}>
-        <Grid item xs={6}>
+        <Grid size={6}>
           {loading ? renderSkeleton() : renderWeatherCard(departureWeather)}
         </Grid>
 
         {arrivalWeather && (
-          <Grid item xs={6}>
+          <Grid size={6}>
             {loading ? renderSkeleton() : renderWeatherCard(arrivalWeather)}
           </Grid>
         )}
