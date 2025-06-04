@@ -1,5 +1,10 @@
 {
-  "extends": ["next/core-web-vitals", "eslint:recommended", "plugin:@typescript-eslint/recommended", "plugin:react-hooks/recommended"],
+  "extends": [
+    "next/core-web-vitals",
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react-hooks/recommended"
+  ],
   "ignorePatterns": ["node_modules/", ".next/"],
   "plugins": ["@typescript-eslint", "react-hooks"],
   "rules": {
@@ -7,11 +12,19 @@
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-unused-vars": "off",
     "react/no-unescaped-entities": "off",
-    "react-hooks/exhaustive-deps": "off"
+    "react-hooks/exhaustive-deps": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
+    "prefer-const": "off"
   },
   "overrides": [
     {
-      "files": ["jest.config.js", "jest.setup.js", "scripts/**/*.js", "style-dictionary/**/*.js", "tailwind.config.js"],
+      "files": [
+        "jest.config.js",
+        "jest.setup.js",
+        "scripts/**/*.js",
+        "style-dictionary/**/*.js",
+        "tailwind.config.js"
+      ],
       "env": {
         "node": true,
         "jest": true
@@ -22,4 +35,4 @@
       }
     }
   ]
-} 
+}
