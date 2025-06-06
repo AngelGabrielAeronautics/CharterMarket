@@ -12,13 +12,17 @@ import {
 /**
  * Generates a quote ID
  * @param operatorCode The operator's code
+ * @param requestId Optional request ID to extract the last 4 characters from for linking
  * @returns Quote ID in format QT-OPERATORCODE-YYYYMMDD-XXXX
  */
-export function generateQuoteId(operatorCode: string): string {
+export function generateQuoteId(operatorCode: string, requestId?: string): string {
   const date = new Date();
   const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
-  const random = generateRandomString(4);
-  return `QT-${operatorCode}-${dateStr}-${random}`;
+
+  // If requestId is provided, use its last 4 characters; otherwise generate random
+  const suffix = requestId ? requestId.slice(-4) : generateRandomString(4);
+
+  return `QT-${operatorCode}-${dateStr}-${suffix}`;
 }
 
 /**

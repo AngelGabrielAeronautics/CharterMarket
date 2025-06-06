@@ -48,7 +48,7 @@ const nextConfig = {
   poweredByHeader: false, // Remove X-Powered-By header
   eslint: {
     // Do not skip ESLint during builds; fail build on lint errors
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   typescript: {
     // Do not skip type checking during builds; fail build on TS errors
@@ -60,6 +60,16 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'placehold.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'maps.googleapis.com',
+        port: '',
+        pathname: '/maps/api/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
       },
     ],
     dangerouslyAllowSVG: true,

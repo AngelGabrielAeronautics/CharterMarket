@@ -33,6 +33,7 @@ export type OfferStatus =
 export interface Offer {
   offerId: string; // Unique ID for this specific offer (e.g., QT-OPERATORCODE-YYYYMMDD-XXXX)
   operatorId: string; // UserCode of the operator making the offer
+  clientUserCode?: string; // UserCode of the originating client (for reference and permissions)
   price: number;
   commission: number;
   totalPrice: number;

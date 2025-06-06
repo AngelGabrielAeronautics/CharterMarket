@@ -11,8 +11,15 @@ import {
   Stepper,
   Step,
   StepLabel,
+  Alert,
+  LinearProgress,
+  Chip,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { Visibility, VisibilityOff, Check, Close } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useModal } from '@/contexts/ModalContext';
@@ -20,21 +27,59 @@ import tokens from '@/styles/tokens';
 import Image from 'next/image';
 import { grey } from '@mui/material/colors';
 import { alpha } from '@mui/material/styles';
+import { registerUser } from '@/lib/auth';
+import { UserRole } from '@/lib/userCode';
 
 interface RegisterModalProps {
   isOpen?: boolean;
   onClose?: () => void;
-  defaultUserType?: 'passenger' | 'agent' | 'operator';
+  defaultUserType?: UserRole;
 }
+
+// Password validation utilities
+interface PasswordRequirement {
+  text: string;
+  met: boolean;
+}
+
+const validatePassword = (
+  password: string
+): { requirements: PasswordRequirement[]; strength: number; isValid: boolean } => {
+  const requirements: PasswordRequirement[] = [
+    { text: 'At least 8 characters long', met: password.length >= 8 },
+    { text: 'Contains uppercase letter (A-Z)', met: /[A-Z]/.test(password) },
+    { text: 'Contains lowercase letter (a-z)', met: /[a-z]/.test(password) },
+    { text: 'Contains number (0-9)', met: /\d/.test(password) },
+    { text: 'Contains special character (!@#$%^&*)', met: /[!@#$%^&*]/.test(password) },
+  ];
+
+  const metCount = requirements.filter((req) => req.met).length;
+  const strength = Math.round((metCount / requirements.length) * 100);
+  const isValid = metCount === requirements.length;
+
+  return { requirements, strength, isValid };
+};
+
+const getStrengthColor = (strength: number): string => {
+  if (strength < 40) return '#f44336'; // red
+  if (strength < 60) return '#ff9800'; // orange
+  if (strength < 80) return '#ffeb3b'; // yellow
+  return '#4caf50'; // green
+};
+
+const getStrengthText = (strength: number): string => {
+  if (strength < 40) return 'Weak';
+  if (strength < 60) return 'Fair';
+  if (strength < 80) return 'Good';
+  return 'Strong';
+};
 
 export default function RegisterModal({ isOpen, onClose, defaultUserType }: RegisterModalProps) {
   const { isRegisterModalOpen, closeRegisterModal, openLoginModal } = useModal();
   const router = useRouter();
 
   const [step, setStep] = useState(1);
-  const [userType, setUserType] = useState<'passenger' | 'agent' | 'operator' | ''>(
-    defaultUserType || ''
-  );
+  const [userType, setUserType] = useState<UserRole | ''>(defaultUserType || '');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -45,15 +90,22 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
   const [isLoading, setIsLoading] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const accountImages: Record<'passenger' | 'agent' | 'operator', string> = {
+  const [passwordValidation, setPasswordValidation] = useState(validatePassword(''));
+  const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
+
+  const accountImages: Record<UserRole, string> = {
     passenger: '/images/register/passenger.mp4',
     agent: '/images/register/agent.mp4',
     operator: '/images/register/operator.png',
+    admin: '/images/register/operator.png', // Fallback for admin
+    superAdmin: '/images/register/operator.png', // Fallback for superAdmin
   };
-  const accountDescriptions: Record<'passenger' | 'agent' | 'operator', string> = {
+  const accountDescriptions: Record<UserRole, string> = {
     passenger: 'Book your flights quickly and easily.',
     agent: 'Manage bookings and client relationships.',
     operator: 'Oversee aircraft operations and schedules.',
+    admin: 'Manage platform administration.',
+    superAdmin: 'Full platform administration access.',
   };
 
   useEffect(() => {
@@ -66,23 +118,77 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
     }
   }, [defaultUserType, isRegisterModalOpen]);
 
+  // Update password validation when password changes
+  useEffect(() => {
+    setPasswordValidation(validatePassword(password));
+  }, [password]);
+
   const handleTogglePassword = () => setShowPassword((prev) => !prev);
   const handleToggleConfirm = () => setShowConfirm((prev) => !prev);
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    setError(''); // Clear errors when user types
+  };
+
+  const handlePasswordFocus = () => {
+    setShowPasswordRequirements(true);
+  };
+
+  const handlePasswordBlur = () => {
+    // Keep requirements visible if password is not valid
+    if (passwordValidation.isValid) {
+      setShowPasswordRequirements(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validate password strength
+    if (!passwordValidation.isValid) {
+      setError('Password does not meet security requirements');
+      setShowPasswordRequirements(true);
+      return;
+    }
+
+    // Check password confirmation
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
+
+    // Validate required fields
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    // Validate company field for agents and operators
+    if ((userType === 'agent' || userType === 'operator') && !company.trim()) {
+      setError('Company name is required for agents and operators');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // TODO: register user
+      // Register user with Firebase and Firestore
+      await registerUser(
+        email.trim(),
+        password,
+        firstName.trim(),
+        lastName.trim(),
+        userType as UserRole,
+        userType === 'agent' || userType === 'operator' ? company.trim() : undefined
+      );
+
+      // Registration successful - redirect to dashboard
       router.push('/dashboard');
       closeRegisterModal();
     } catch (err) {
-      setError('Registration failed');
+      console.error('Registration error:', err);
+      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -95,6 +201,64 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
 
   const currentImageSrc = userType ? accountImages[userType] : '/images/register/operator.png';
   const isVideo = userType && accountImages[userType]?.endsWith('.mp4');
+
+  const renderPasswordRequirements = () => {
+    if (!showPasswordRequirements) return null;
+
+    return (
+      <Box sx={{ mt: 1, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+        <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+          Password Requirements:
+        </Typography>
+        <List dense sx={{ py: 0 }}>
+          {passwordValidation.requirements.map((req, index) => (
+            <ListItem key={index} sx={{ py: 0.25, px: 0 }}>
+              <ListItemIcon sx={{ minWidth: 28 }}>
+                {req.met ? (
+                  <Check sx={{ fontSize: 16, color: 'success.main' }} />
+                ) : (
+                  <Close sx={{ fontSize: 16, color: 'error.main' }} />
+                )}
+              </ListItemIcon>
+              <ListItemText
+                primary={req.text}
+                primaryTypographyProps={{
+                  variant: 'body2',
+                  color: req.met ? 'success.main' : 'text.secondary',
+                }}
+              />
+            </ListItem>
+          ))}
+        </List>
+        <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="body2">Strength:</Typography>
+          <Box sx={{ flex: 1, mr: 1 }}>
+            <LinearProgress
+              variant="determinate"
+              value={passwordValidation.strength}
+              sx={{
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: 'grey.300',
+                '& .MuiLinearProgress-bar': {
+                  backgroundColor: getStrengthColor(passwordValidation.strength),
+                },
+              }}
+            />
+          </Box>
+          <Chip
+            label={getStrengthText(passwordValidation.strength)}
+            size="small"
+            sx={{
+              backgroundColor: getStrengthColor(passwordValidation.strength),
+              color: 'white',
+              fontSize: '0.75rem',
+            }}
+          />
+        </Box>
+      </Box>
+    );
+  };
 
   return (
     <Dialog
@@ -115,8 +279,8 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
           m: { xs: tokens.spacing[2].value, sm: tokens.spacing[4].value },
           maxWidth: '1200px',
           width: { xs: '100%', md: '1200px' },
-          maxHeight: { xs: '60vh', md: '50vh' },
-          height: { xs: '60vh', md: '50vh' },
+          maxHeight: { xs: '80vh', md: '70vh' },
+          height: { xs: '80vh', md: '70vh' },
         },
       }}
     >
@@ -150,8 +314,8 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                 key={currentImageSrc}
                 src={currentImageSrc}
                 alt={`${userType || 'Charter'} illustration`}
-                layout="fill"
-                objectFit="cover"
+                fill
+                style={{ objectFit: 'cover' }}
                 priority
               />
             )}
@@ -342,9 +506,9 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                   Register as {userType ? userType.charAt(0).toUpperCase() + userType.slice(1) : ''}
                 </Typography>
                 {error && (
-                  <Typography color="error" sx={{ mb: 2, alignSelf: 'center' }}>
+                  <Alert severity="error" sx={{ mb: 2, alignSelf: 'stretch' }}>
                     {error}
-                  </Typography>
+                  </Alert>
                 )}
                 {(userType === 'agent' || userType === 'operator') && (
                   <TextField
@@ -389,24 +553,35 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
-                <TextField
-                  label="Password"
-                  type={showPassword ? 'text' : 'password'}
-                  fullWidth
-                  size="small"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton onClick={handleTogglePassword} edge="end">
-                          {showPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
+                <Box>
+                  <TextField
+                    label="Password"
+                    type={showPassword ? 'text' : 'password'}
+                    fullWidth
+                    size="small"
+                    value={password}
+                    onChange={handlePasswordChange}
+                    onFocus={handlePasswordFocus}
+                    onBlur={handlePasswordBlur}
+                    required
+                    error={password.length > 0 && !passwordValidation.isValid}
+                    helperText={
+                      password.length > 0 && !passwordValidation.isValid
+                        ? 'Password must meet all requirements'
+                        : ''
+                    }
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={handleTogglePassword} edge="end">
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                  {renderPasswordRequirements()}
+                </Box>
                 <TextField
                   label="Confirm Password"
                   type={showConfirm ? 'text' : 'password'}
@@ -415,6 +590,12 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
+                  error={confirmPassword.length > 0 && password !== confirmPassword}
+                  helperText={
+                    confirmPassword.length > 0 && password !== confirmPassword
+                      ? 'Passwords do not match'
+                      : ''
+                  }
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">
@@ -457,7 +638,9 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                   fullWidth
                   variant="contained"
                   color="primary"
-                  disabled={isLoading}
+                  disabled={
+                    isLoading || !passwordValidation.isValid || password !== confirmPassword
+                  }
                 >
                   {isLoading ? 'Registering...' : 'Register'}
                 </Button>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { auth } from '@/lib/firebase';
 import { QuoteRequest, Offer } from '@/types/flight';
 import { Airport } from '@/types/airport';
 import { getAirportByICAO } from '@/lib/airport';
@@ -94,7 +95,39 @@ export default function RequestDetailsPage() {
     setSubmitting(true);
     setError(null);
     try {
+      console.log('Starting quote acceptance process:', {
+        requestId,
+        offerId: offer.offerId,
+        userCode: user.userCode,
+        userRole: user.role,
+      });
+
+      // First, check if user has proper authentication claims
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        if (token) {
+          const response = await fetch('/api/debug/user-claims', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (response.ok) {
+            const claims = await response.json();
+            console.log('User claims verification:', claims);
+
+            if (!claims.tokenClaims.role || !claims.tokenClaims.userCode) {
+              console.warn('Missing custom claims detected, attempting to refresh token...');
+              // Force token refresh to get updated claims
+              await auth.currentUser?.getIdToken(true);
+            }
+          }
+        }
+      } catch (claimsError) {
+        console.warn('Could not verify user claims, proceeding anyway:', claimsError);
+      }
+
+      console.log('Accepting operator quote...');
       await acceptOperatorQuote(requestId, offer.offerId);
+
+      console.log('Fetching updated quote request...');
       const updatedRequest = await fetchQuoteRequest(requestId);
       if (
         !updatedRequest ||
@@ -105,19 +138,41 @@ export default function RequestDetailsPage() {
           'Failed to retrieve updated quote request details after acceptance, or accepted offer details are missing.'
         );
       }
+
       const acceptedOfferDetails = updatedRequest.offers?.find(
         (o) => o.offerId === updatedRequest.acceptedOfferId
       );
       if (!acceptedOfferDetails) {
         throw new Error('Could not find details of the accepted offer in the updated request.');
       }
+
+      console.log('Creating booking with data:', {
+        updatedRequest: {
+          id: updatedRequest.id,
+          requestCode: updatedRequest.requestCode,
+          clientUserCode: updatedRequest.clientUserCode,
+        },
+        acceptedOfferDetails: {
+          offerId: acceptedOfferDetails.offerId,
+          operatorId: acceptedOfferDetails.operatorId,
+          price: acceptedOfferDetails.price,
+          totalPrice: acceptedOfferDetails.totalPrice,
+        },
+      });
+
       const bookingDocId = await createBooking(updatedRequest, acceptedOfferDetails);
+      console.log('Booking created successfully with ID:', bookingDocId);
+
+      console.log('Creating invoice...');
       await createInvoice(
         bookingDocId,
         updatedRequest.clientUserCode,
         updatedRequest.requestCode,
         Number(acceptedOfferDetails.totalPrice)
       );
+      console.log('Invoice created successfully');
+
+      console.log('Creating notification...');
       await createNotification(
         acceptedOfferDetails.operatorId,
         'QUOTE_ACCEPTED',
@@ -126,12 +181,31 @@ export default function RequestDetailsPage() {
         { quoteRequestId: requestId, quoteId: acceptedOfferDetails.offerId },
         `/dashboard/bookings/operator/${bookingDocId}`
       );
+      console.log('Notification created successfully');
+
       toast.success('Quote accepted successfully! Booking process initiated.');
+      // Navigate using the custom booking ID (which is now the same as the document ID)
       router.push(`/dashboard/bookings/${bookingDocId}`);
     } catch (err) {
       console.error('Error during quote acceptance process:', err);
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to accept quote and create booking.';
+      console.error('Error details:', {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : undefined,
+        name: err instanceof Error ? err.name : undefined,
+      });
+
+      let errorMessage = 'Failed to accept quote and create booking.';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+
+        // Provide more helpful error messages for common issues
+        if (err.message.includes('permission') || err.message.includes('Firestore')) {
+          errorMessage = 'Permission error: Please try refreshing the page and logging in again.';
+        } else if (err.message.includes('custom claims') || err.message.includes('token')) {
+          errorMessage = 'Authentication error: Please log out and log back in, then try again.';
+        }
+      }
+
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -329,14 +403,15 @@ export default function RequestDetailsPage() {
             <Typography color="textSecondary">No offers available yet.</Typography>
           ) : (
             <div className="flex flex-wrap -mx-2">
-            {request.offers.map((offer) => (
+              {request.offers.map((offer) => (
                 <div className="w-full px-2 mb-4" key={offer.offerId}>
                   <Paper
                     variant="outlined"
                     sx={{
                       p: 3,
                       borderRadius: 2,
-                      borderColor: offer.offerStatus === 'accepted-by-client' ? 'success.main' : 'divider',
+                      borderColor:
+                        offer.offerStatus === 'accepted-by-client' ? 'success.main' : 'divider',
                       borderWidth: offer.offerStatus === 'accepted-by-client' ? 2 : 1,
                     }}
                   >
@@ -358,9 +433,9 @@ export default function RequestDetailsPage() {
                         Offer ID: {offer.offerId}
                       </Typography>
                     </Box>
-                <Button
-                  variant="outlined"
-                  onClick={() => handleAccept(offer)}
+                    <Button
+                      variant="outlined"
+                      onClick={() => handleAccept(offer)}
                       disabled={
                         submitting ||
                         offer.offerStatus !== 'pending-client-acceptance' ||
@@ -368,9 +443,9 @@ export default function RequestDetailsPage() {
                         request.status === 'cancelled'
                       }
                       size="small"
-                >
-                  {submitting ? 'Processing...' : 'Accept Offer'}
-                </Button>
+                    >
+                      {submitting ? 'Processing...' : 'Accept Offer'}
+                    </Button>
                   </Paper>
                 </div>
               ))}

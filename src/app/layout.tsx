@@ -26,7 +26,7 @@ const sen = Sen({
 
 export const metadata: Metadata = {
   title: 'Charter - Private Jet Booking Platform',
-  description:'The worlds first and only charter marketplace.',
+  description: 'The worlds first and only charter marketplace.',
   // Adding Open Graph and Twitter card metadata for SEO and social sharing
   openGraph: {
     title: 'Charter. - Private Jet Booking Platform',
@@ -56,27 +56,26 @@ export const metadata: Metadata = {
       {
         url: '/branding/favicon/Charter-favicon-16x16.png',
         sizes: '16x16',
-        type: 'image/png'
+        type: 'image/png',
       },
       {
         url: '/branding/favicon/Charter-favicon-32x32.png',
         sizes: '32x32',
-        type: 'image/png'
+        type: 'image/png',
       },
       {
         url: '/branding/favicon/favicon.ico',
-        sizes: 'any'
-      }
+        sizes: 'any',
+      },
     ],
     apple: [
       {
         url: '/branding/favicon/apple-touch-icon.png',
         sizes: '180x180',
-        type: 'image/png'
-      }
-    ]
+        type: 'image/png',
+      },
+    ],
   },
-  manifest: '/manifest.json',
   robots: {
     index: true,
     follow: true,
@@ -91,11 +90,7 @@ export const viewport = {
   maximumScale: 1,
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={sen.variable}>
       <body suppressHydrationWarning>
@@ -105,4 +100,4 @@ export default function RootLayout({
       </body>
     </html>
   );
-} 
+}

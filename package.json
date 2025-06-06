@@ -5,7 +5,7 @@
   "scripts": {
     "predev": "npm run build:tokens",
     "dev": "npm run build:tokens && next dev",
-    "build": "next build",
+    "build": "next lint && next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "eslint src --fix",

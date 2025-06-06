@@ -37,6 +37,8 @@ export const createQuoteRequest = async (
 
     const { returnDate, multiCityRoutes, ...restData } = data;
     requestCode = await generateQuoteRequestCode(clientUserCode);
+    console.log(`Generated request code: ${requestCode}`);
+
     const expiresAt = new Timestamp(
       Timestamp.now().seconds + 24 * 60 * 60, // 24 hours from now
       0
@@ -66,8 +68,12 @@ export const createQuoteRequest = async (
           return {
             departureAirport: route.departureAirport,
             arrivalAirport: route.arrivalAirport,
-            departureAirportName: depAirportDetails ? `${depAirportDetails.name} (${depAirportDetails.icao})` : null,
-            arrivalAirportName: arrAirportDetails ? `${arrAirportDetails.name} (${arrAirportDetails.icao})` : null,
+            departureAirportName: depAirportDetails
+              ? `${depAirportDetails.name} (${depAirportDetails.icao})`
+              : null,
+            arrivalAirportName: arrAirportDetails
+              ? `${arrAirportDetails.name} (${arrAirportDetails.icao})`
+              : null,
             departureDate: Timestamp.fromDate(route.departureDate),
             flexibleDate: route.flexibleDate,
           };
@@ -78,7 +84,7 @@ export const createQuoteRequest = async (
       // and add names for the primary routing display
       const firstLeg = quoteRequestData.multiCityRoutes[0];
       const lastLeg = quoteRequestData.multiCityRoutes[quoteRequestData.multiCityRoutes.length - 1];
-      
+
       quoteRequestData.routing = {
         departureAirport: firstLeg.departureAirport,
         arrivalAirport: lastLeg.arrivalAirport,
@@ -87,10 +93,9 @@ export const createQuoteRequest = async (
         departureDate: firstLeg.departureDate,
         flexibleDates: data.flexibleDates,
       };
-       // Add top-level airport names for the overall trip (first departure, last arrival)
+      // Add top-level airport names for the overall trip (first departure, last arrival)
       quoteRequestData.departureAirportName = firstLeg.departureAirportName;
       quoteRequestData.arrivalAirportName = lastLeg.arrivalAirportName;
-
     } else {
       // For one-way and return trips, use the standard routing object
       // and fetch airport names
@@ -102,18 +107,29 @@ export const createQuoteRequest = async (
       quoteRequestData.routing = {
         departureAirport: data.departureAirport,
         arrivalAirport: data.arrivalAirport,
-        departureAirportName: departureAirportDetails ? `${departureAirportDetails.name} (${departureAirportDetails.icao})` : null,
-        arrivalAirportName: arrivalAirportDetails ? `${arrivalAirportDetails.name} (${arrivalAirportDetails.icao})` : null,
+        departureAirportName: departureAirportDetails
+          ? `${departureAirportDetails.name} (${departureAirportDetails.icao})`
+          : null,
+        arrivalAirportName: arrivalAirportDetails
+          ? `${arrivalAirportDetails.name} (${arrivalAirportDetails.icao})`
+          : null,
         departureDate: Timestamp.fromDate(data.departureDate),
         returnDate: data.returnDate ? Timestamp.fromDate(data.returnDate) : null,
         flexibleDates: data.flexibleDates,
       };
       // Add top-level airport names
-      quoteRequestData.departureAirportName = departureAirportDetails ? `${departureAirportDetails.name} (${departureAirportDetails.icao})` : null;
-      quoteRequestData.arrivalAirportName = arrivalAirportDetails ? `${arrivalAirportDetails.name} (${arrivalAirportDetails.icao})` : null;
+      quoteRequestData.departureAirportName = departureAirportDetails
+        ? `${departureAirportDetails.name} (${departureAirportDetails.icao})`
+        : null;
+      quoteRequestData.arrivalAirportName = arrivalAirportDetails
+        ? `${arrivalAirportDetails.name} (${arrivalAirportDetails.icao})`
+        : null;
     }
 
-    console.log('Quote request data to be saved (with airport names):', JSON.stringify(quoteRequestData, null, 2));
+    console.log(
+      'Quote request data to be saved (with airport names):',
+      JSON.stringify(quoteRequestData, null, 2)
+    );
     console.log(`Attempting to create quote request with structured document ID: ${requestCode}`);
 
     const requestDocRef = doc(db, 'quoteRequests', requestCode);

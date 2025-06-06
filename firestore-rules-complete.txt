@@ -1,0 +1,402 @@
+/**
+ * Complete Firestore Security Rules for Charter Aviation Platform
+ * 
+ * This file contains comprehensive security rules for all collections
+ * used in the Charter platform. These rules ensure proper authentication,
+ * authorization, and data security.
+ * 
+ * Last Updated: December 2024
+ * Version: 2.0
+ * 
+ * Collections Covered:
+ * - users: User profiles and authentication data
+ * - quoteRequests: Flight quote requests from clients
+ * - eventLogs: System event logging for audit trails
+ * - airports: Airport reference data
+ * - operators: Aircraft operator profiles
+ * - aircraft: Aircraft information
+ * - flights: Flight data and schedules
+ * - bookings: Flight bookings and reservations
+ * - quotes: Price quotes from operators
+ * - payments: Payment transactions
+ * - clients: Client relationship management
+ * - passengers: Passenger information
+ * - documents: Document management
+ * - notifications: User notifications
+ * 
+ * Helper Functions:
+ * - isLocked(): Checks if a document is locked for editing
+ * - isSuperAdmin(): Checks if user has super admin privileges
+ * - isOwner(): Checks if user owns the resource
+ * - hasRole(): Checks if user has specific role
+ */
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // =====================================================
+    // HELPER FUNCTIONS
+    // =====================================================
+    
+    // Check if a document is locked for editing
+    function isLocked(data) {
+      return data != null && data.locked == true;
+    }
+    
+    // Check if user is superAdmin
+    function isSuperAdmin() {
+      return request.auth != null && request.auth.token.role == 'superAdmin';
+    }
+    
+    // Check if user is admin or superAdmin
+    function isAdmin() {
+      return request.auth != null && 
+             (request.auth.token.role == 'admin' || request.auth.token.role == 'superAdmin');
+    }
+    
+    // Check if user owns the resource
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Check if user has specific role
+    function hasRole(role) {
+      return request.auth != null && request.auth.token.role == role;
+    }
+    
+    // Check if user owns the resource by userCode
+    function isOwnerByUserCode(userCode) {
+      return request.auth != null && request.auth.token.userCode == userCode;
+    }
+
+    // =====================================================
+    // CORE COLLECTIONS
+    // =====================================================
+
+    // Users collection - user profiles and authentication data
+    match /users/{userCode} {
+      // Allow read if authenticated
+      allow read: if request.auth != null;
+      
+      // Allow create for authenticated users (for registration)
+      allow create: if request.auth != null;
+      
+      // Allow update/delete only if not locked or user is superAdmin
+      allow update, delete: if request.auth != null && (!isLocked(resource.data) || isSuperAdmin());
+    }
+
+    // Quote Requests collection - flight quote requests from clients
+    match /quoteRequests/{requestId} {
+      // Allow read if authenticated
+      allow read: if request.auth != null;
+      
+      // Allow create for authenticated users (for booking submissions)
+      allow create: if request.auth != null;
+      
+      // Allow update for authenticated users (needed for status changes like draft -> pending)
+      allow update: if request.auth != null;
+      
+      // Allow delete only if not locked or user is superAdmin
+      allow delete: if request.auth != null && (!isLocked(resource.data) || isSuperAdmin());
+    }
+
+    // Event Logs collection - system event logging for audit trails
+    match /eventLogs/{eventId} {
+      // Allow read for authenticated users (needed for admin dashboards)
+      allow read: if request.auth != null;
+      
+      // Allow create for authenticated users (needed for event logging during registration, login, etc.)
+      allow create: if request.auth != null;
+      
+      // Allow update/delete only for superAdmin (event logs should generally be immutable)
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // Airports collection - airport reference data
+    match /airports/{airportId} {
+      // Allow read for authenticated users (needed for airport lookups)
+      allow read: if request.auth != null;
+      
+      // Allow write only for admins (reference data maintenance)
+      allow write: if isAdmin();
+    }
+
+    // =====================================================
+    // OPERATOR COLLECTIONS
+    // =====================================================
+
+    // Operators collection - aircraft operator profiles
+    match /operators/{operatorCode} {
+      // Allow read if authenticated
+      allow read: if request.auth != null;
+      
+      // Allow create for authenticated users registering as operators
+      allow create: if request.auth != null && hasRole('operator');
+      
+      // Allow update if user owns the operator profile or is admin
+      allow update: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.userCode) || isAdmin()) &&
+                       (!isLocked(resource.data) || isSuperAdmin());
+      
+      // Allow delete only for superAdmin
+      allow delete: if isSuperAdmin();
+    }
+
+    // Aircraft collection - aircraft information
+    match /aircraft/{aircraftId} {
+      // Allow read if authenticated
+      allow read: if request.auth != null;
+      
+      // Allow create for operators
+      allow create: if request.auth != null && hasRole('operator');
+      
+      // Allow update if user owns the aircraft or is admin
+      allow update: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.operatorUserCode) || isAdmin()) &&
+                       (!isLocked(resource.data) || isSuperAdmin());
+      
+      // Allow delete if user owns the aircraft or is superAdmin
+      allow delete: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.operatorUserCode) || isSuperAdmin());
+    }
+
+    // =====================================================
+    // FLIGHT & BOOKING COLLECTIONS
+    // =====================================================
+
+    // Flights collection - flight data and schedules
+    match /flights/{flightId} {
+      // Allow read if authenticated
+      allow read: if request.auth != null;
+      
+      // Allow create for operators
+      allow create: if request.auth != null && hasRole('operator');
+      
+      // Allow update if user owns the flight or is admin
+      allow update: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.operatorUserCode) || isAdmin()) &&
+                       (!isLocked(resource.data) || isSuperAdmin());
+      
+      // Allow delete if user owns the flight or is superAdmin
+      allow delete: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.operatorUserCode) || isSuperAdmin());
+    }
+
+    // Bookings collection - flight bookings and reservations
+    match /bookings/{bookingId} {
+      // Allow read if authenticated and (owns booking, is operator of flight, or is admin)
+      allow read: if request.auth != null && 
+                     (isOwnerByUserCode(resource.data.clientUserCode) || 
+                      isOwnerByUserCode(resource.data.operatorUserCode) || 
+                      isAdmin());
+      
+      // Allow create for authenticated users
+      allow create: if request.auth != null;
+      
+      // Allow update if user owns the booking, is operator, or is admin
+      allow update: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.clientUserCode) || 
+                        isOwnerByUserCode(resource.data.operatorUserCode) || 
+                        isAdmin()) &&
+                       (!isLocked(resource.data) || isSuperAdmin());
+      
+      // Allow delete only for superAdmin
+      allow delete: if isSuperAdmin();
+    }
+
+    // Quotes collection - price quotes from operators
+    match /quotes/{quoteId} {
+      // Allow read if authenticated and (owns quote request, is operator, or is admin)
+      allow read: if request.auth != null && 
+                     (isOwnerByUserCode(resource.data.clientUserCode) || 
+                      isOwnerByUserCode(resource.data.operatorUserCode) || 
+                      isAdmin());
+      
+      // Allow create for operators
+      allow create: if request.auth != null && hasRole('operator');
+      
+      // Allow update if user owns the quote or is admin
+      allow update: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.operatorUserCode) || isAdmin()) &&
+                       (!isLocked(resource.data) || isSuperAdmin());
+      
+      // Allow delete if user owns the quote or is superAdmin
+      allow delete: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.operatorUserCode) || isSuperAdmin());
+    }
+
+    // =====================================================
+    // PAYMENT & CLIENT COLLECTIONS
+    // =====================================================
+
+    // Payments collection - payment transactions
+    match /payments/{paymentId} {
+      // Allow read if authenticated and (owns payment, is operator, or is admin)
+      allow read: if request.auth != null && 
+                     (isOwnerByUserCode(resource.data.clientUserCode) || 
+                      isOwnerByUserCode(resource.data.operatorUserCode) || 
+                      isAdmin());
+      
+      // Allow create for authenticated users
+      allow create: if request.auth != null;
+      
+      // Allow update only for admins (payments should be mostly immutable)
+      allow update: if isAdmin() && (!isLocked(resource.data) || isSuperAdmin());
+      
+      // Allow delete only for superAdmin
+      allow delete: if isSuperAdmin();
+    }
+
+    // Clients collection - client relationship management (for agents)
+    match /clients/{clientId} {
+      // Allow read if authenticated and (owns client relationship or is admin)
+      allow read: if request.auth != null && 
+                     (isOwnerByUserCode(resource.data.agentUserCode) || isAdmin());
+      
+      // Allow create for agents
+      allow create: if request.auth != null && hasRole('agent');
+      
+      // Allow update if user owns the client relationship or is admin
+      allow update: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.agentUserCode) || isAdmin()) &&
+                       (!isLocked(resource.data) || isSuperAdmin());
+      
+      // Allow delete if user owns the client or is superAdmin
+      allow delete: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.agentUserCode) || isSuperAdmin());
+    }
+
+    // Passengers collection - passenger information
+    match /passengers/{passengerId} {
+      // Allow read if authenticated and (owns passenger record, is related agent, or is admin)
+      allow read: if request.auth != null && 
+                     (isOwnerByUserCode(resource.data.createdByUserCode) || isAdmin());
+      
+      // Allow create for agents and passengers
+      allow create: if request.auth != null && 
+                       (hasRole('agent') || hasRole('passenger'));
+      
+      // Allow update if user owns the passenger record or is admin
+      allow update: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.createdByUserCode) || isAdmin()) &&
+                       (!isLocked(resource.data) || isSuperAdmin());
+      
+      // Allow delete if user owns the record or is superAdmin
+      allow delete: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.createdByUserCode) || isSuperAdmin());
+    }
+
+    // =====================================================
+    // DOCUMENT & NOTIFICATION COLLECTIONS
+    // =====================================================
+
+    // Documents collection - document management
+    match /documents/{documentId} {
+      // Allow read if authenticated and (owns document or is admin)
+      allow read: if request.auth != null && 
+                     (isOwnerByUserCode(resource.data.ownerUserCode) || isAdmin());
+      
+      // Allow create for authenticated users
+      allow create: if request.auth != null;
+      
+      // Allow update if user owns the document or is admin
+      allow update: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.ownerUserCode) || isAdmin()) &&
+                       (!isLocked(resource.data) || isSuperAdmin());
+      
+      // Allow delete if user owns the document or is superAdmin
+      allow delete: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.ownerUserCode) || isSuperAdmin());
+    }
+
+    // Notifications collection - user notifications
+    match /notifications/{notificationId} {
+      // Allow read if authenticated and (notification is for user or is admin)
+      allow read: if request.auth != null && 
+                     (isOwnerByUserCode(resource.data.recipientUserCode) || isAdmin());
+      
+      // Allow create for authenticated users (system notifications)
+      allow create: if request.auth != null;
+      
+      // Allow update if notification is for user or is admin
+      allow update: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.recipientUserCode) || isAdmin());
+      
+      // Allow delete if notification is for user or is superAdmin
+      allow delete: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.recipientUserCode) || isSuperAdmin());
+    }
+
+    // =====================================================
+    // SYSTEM COLLECTIONS
+    // =====================================================
+
+    // System settings and configuration (admin only)
+    match /systemSettings/{settingId} {
+      allow read: if isAdmin();
+      allow write: if isSuperAdmin();
+    }
+
+    // Analytics and metrics (admin only)
+    match /analytics/{analyticsId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // App configuration (read-only for authenticated users, write for admins)
+    match /appConfig/{configId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // =====================================================
+    // DEFAULT CATCH-ALL RULE
+    // =====================================================
+
+    // All other documents - more restrictive rules
+    match /{document=**} {
+      // Allow read if authenticated
+      allow read: if request.auth != null;
+      
+      // Allow write only if:
+      // 1. Document is not locked, or
+      // 2. User is a superAdmin
+      allow write: if request.auth != null && (!isLocked(resource.data) || isSuperAdmin());
+    }
+  }
+}
+
+/**
+ * DEPLOYMENT INSTRUCTIONS:
+ * 
+ * 1. Copy the rules section (everything between "rules_version = '2';" and the closing brace)
+ * 2. Go to Firebase Console > Firestore Database > Rules
+ * 3. Replace the existing rules with the copied content
+ * 4. Click "Publish"
+ * 
+ * TESTING:
+ * 
+ * Use the Firebase Console Rules Playground to test specific scenarios:
+ * - Test user registration (users collection create)
+ * - Test quote submission (quoteRequests collection create/update)
+ * - Test operator aircraft management (aircraft collection CRUD)
+ * - Test booking creation and management
+ * 
+ * SECURITY CONSIDERATIONS:
+ * 
+ * 1. All operations require authentication
+ * 2. Role-based access control via custom claims
+ * 3. Document locking mechanism prevents unauthorized modifications
+ * 4. Event logging for audit trails
+ * 5. Owner-based permissions for data privacy
+ * 6. Admin overrides for platform management
+ * 
+ * CUSTOM CLAIMS REQUIRED:
+ * 
+ * Each user should have custom claims set in Firebase Auth:
+ * - role: 'passenger' | 'agent' | 'operator' | 'admin' | 'superAdmin'
+ * - userCode: The user's unique code (e.g., 'PA-PAX-X50X')
+ * 
+ * These claims should be set during user registration via Firebase Admin SDK.
+ */ 

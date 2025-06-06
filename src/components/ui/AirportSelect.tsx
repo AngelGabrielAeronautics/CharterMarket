@@ -55,9 +55,9 @@ export default function AirportSelect({
     iata: '',
     timezone: '',
     latitude: 0,
-    longitude: 0
+    longitude: 0,
   };
-  
+
   const [options, setOptions] = useState<Airport[]>([manualEntryOption]);
   const [loading, setLoading] = useState(false);
   const [selectedValue, setSelectedValue] = useState<Airport | string | null>(null);
@@ -128,10 +128,11 @@ export default function AirportSelect({
       if (selectedValue && typeof selectedValue !== 'string') currentICAO = selectedValue.icao;
       else if (typeof selectedValue === 'string') currentICAO = selectedValue;
 
-      if (value !== currentICAO) { // Only process if the prop value is actually different
+      if (value !== currentICAO) {
+        // Only process if the prop value is actually different
         setLoading(true);
         try {
-          let airport = options.find(opt => typeof opt !== 'string' && opt.icao === value);
+          let airport = options.find((opt) => typeof opt !== 'string' && opt.icao === value);
           if (!airport) {
             const response = await fetch(`/api/airports/search?q=${value}`);
             const data: Airport[] = await response.json();
@@ -151,7 +152,7 @@ export default function AirportSelect({
           } else {
             // If value is an ICAO but not found, clear out to avoid stale display
             setSelectedValue(null);
-            setInputValue(''); 
+            setInputValue('');
             if (onAirportSelected) onAirportSelected(null);
           }
         } catch (err) {
@@ -176,10 +177,7 @@ export default function AirportSelect({
     }
   }, [loading, inputValue, options]);
 
-  const handleSelectionChange = async (
-    event: unknown,
-    newValue: Airport | string | null
-  ) => {
+  const handleSelectionChange = async (event: unknown, newValue: Airport | string | null) => {
     if (disabled) return;
 
     // If the value is an Airport object, keep it; otherwise store the free-text string.
@@ -236,9 +234,7 @@ export default function AirportSelect({
   // Helper to determine if we need to commit free text
   function freeSoloCommitNeeded() {
     // No airport object selected and user has typed something.
-    return (
-      (selectedValue === null || selectedValue === '') && inputValue.trim().length > 0
-    );
+    return (selectedValue === null || selectedValue === '') && inputValue.trim().length > 0;
   }
 
   return (
@@ -282,8 +278,8 @@ export default function AirportSelect({
               error
                 ? `${error}${showUndocumented ? ' — Undocumented airfields can be added manually' : ''}`
                 : showUndocumented
-                ? 'Undocumented airfields can be added manually'
-                : ' '
+                  ? 'Undocumented airfields can be added manually'
+                  : ' '
             }
             InputLabelProps={{
               shrink: true,
@@ -292,8 +288,16 @@ export default function AirportSelect({
               ...params.InputProps,
               startAdornment: (
                 <>
-                  {label === 'From' && <InputAdornment position="start"><FlightTakeoffIcon /></InputAdornment>}
-                  {label === 'To' && <InputAdornment position="start"><FlightLandIcon /></InputAdornment>}
+                  {label === 'From' && (
+                    <InputAdornment position="start">
+                      <FlightTakeoffIcon />
+                    </InputAdornment>
+                  )}
+                  {label === 'To' && (
+                    <InputAdornment position="start">
+                      <FlightLandIcon />
+                    </InputAdornment>
+                  )}
                   {params.InputProps.startAdornment}
                 </>
               ),
@@ -306,25 +310,25 @@ export default function AirportSelect({
             }}
           />
         )}
-        renderOption={(props, option) => (
+        renderOption={(props, option) =>
           typeof option === 'string' ? (
             <Box component="li" {...props} key={option}>
               {option}
             </Box>
           ) : option.icao === 'MANUAL' ? (
-            <Box 
+            <Box
               component="li"
               {...props}
               onClick={(e) => e.stopPropagation()} // Prevent selection
               key={option.icao}
-              sx={{ 
+              sx={{
                 fontStyle: 'italic',
                 color: theme.palette.primary.main,
                 fontWeight: 'bold',
                 borderTop: '1px solid',
                 borderColor: theme.palette.divider,
                 py: 1.5,
-                pointerEvents: 'none'  // Make non-clickable
+                pointerEvents: 'none', // Make non-clickable
               }}
             >
               {option.name}
@@ -359,7 +363,7 @@ export default function AirportSelect({
               </Grid>
             </Box>
           )
-        )}
+        }
         isOptionEqualToValue={(option, val) => {
           if (typeof option === 'string' || typeof val === 'string') {
             return option === val;
@@ -399,8 +403,8 @@ export default function AirportSelect({
             <Image
               src={cityImageUrl}
               alt={`${selectedValue.city}, ${selectedValue.country}`}
-              layout="fill" // Use fill for responsive behavior within the Box
-              objectFit="cover"
+              fill
+              style={{ objectFit: 'cover' }}
               loading="lazy"
             />
           )}

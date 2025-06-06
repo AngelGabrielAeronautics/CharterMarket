@@ -5,6 +5,9 @@
     "plugin:@typescript-eslint/recommended",
     "plugin:react-hooks/recommended"
   ],
+  "parserOptions": {
+    "warnOnUnsupportedTypeScriptVersion": false
+  },
   "ignorePatterns": ["node_modules/", ".next/"],
   "plugins": ["@typescript-eslint", "react-hooks"],
   "rules": {

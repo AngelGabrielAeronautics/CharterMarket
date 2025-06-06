@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // TEMPORARY DEBUG RULES - MORE PERMISSIVE
+    // These rules allow broader access to help debug the permission issues
+    
+    // Helper function to check if user is superAdmin
+    function isSuperAdmin() {
+      return request.auth != null && request.auth.token.role == 'superAdmin';
+    }
+
+    // Helper function to check if user is admin or superAdmin
+    function isAdmin() {
+      return request.auth != null && 
+             (request.auth.token.role == 'admin' || request.auth.token.role == 'superAdmin');
+    }
+
+    // Helper function to check if user has specific role
+    function hasRole(role) {
+      return request.auth != null && request.auth.token.role == role;
+    }
+
+    // Helper function to check if user owns the resource by userCode
+    function isOwnerByUserCode(userCode) {
+      return request.auth != null && request.auth.token.userCode == userCode;
+    }
+
+    // TEMPORARY: More permissive resource access
+    function canAccessResource(userCode) {
+      return request.auth != null && 
+             (request.auth.token.userCode == userCode || 
+              request.auth.token.role == 'admin' || 
+              request.auth.token.role == 'superAdmin' ||
+              request.auth.token.role == 'passenger'); // Temporary: allow passengers broader access
+    }
+
+    // Users collection
+    match /users/{userCode} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null;
+    }
+
+    // Quote Requests collection
+    match /quoteRequests/{requestId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+
+    // Quotes collection
+    match /quotes/{quoteId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+
+    // BOOKINGS - TEMPORARY PERMISSIVE RULES
+    match /bookings/{bookingId} {
+      // TEMPORARY: Allow any authenticated user to read/write bookings
+      allow read, write: if request.auth != null;
+    }
+
+    // INVOICES - TEMPORARY PERMISSIVE RULES  
+    match /invoices/{invoiceId} {
+      // TEMPORARY: Allow any authenticated user to read/write invoices
+      allow read, write: if request.auth != null;
+    }
+
+    // PAYMENTS - TEMPORARY PERMISSIVE RULES
+    match /payments/{paymentId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // All other collections - permissive for debugging
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+} 

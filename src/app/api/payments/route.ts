@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  createPayment,
-  getPaymentsForBooking,
-  getPaymentById,
-  getPendingPayments,
-  getAllPayments,
-} from '@/lib/payment';
+  createPaymentServer,
+  getPaymentsForBookingServer,
+  getPaymentByIdServer,
+  getPendingPaymentsServer,
+} from '@/lib/payment-server';
 import type { PaymentFormData } from '@/types/payment';
 
 export async function GET(req: NextRequest) {
@@ -19,18 +18,21 @@ export async function GET(req: NextRequest) {
     let data;
 
     if (paymentId) {
-      data = await getPaymentById(paymentId);
+      data = await getPaymentByIdServer(paymentId);
       if (!data) {
         return NextResponse.json({ error: 'Payment not found' }, { status: 404 });
       }
     } else if (bookingId) {
-      data = await getPaymentsForBooking(bookingId);
+      data = await getPaymentsForBookingServer(bookingId);
     } else if (pending === 'true') {
       // Admin-only endpoint to fetch pending payments
-      data = await getPendingPayments();
+      data = await getPendingPaymentsServer();
     } else if (fetchAll === 'true') {
-      // Admin: Fetch all payments
-      data = await getAllPayments();
+      // Admin: Fetch all payments - TODO: implement getAllPaymentsServer
+      return NextResponse.json(
+        { error: 'getAllPayments not implemented for server-side yet' },
+        { status: 501 }
+      );
     } else {
       return NextResponse.json(
         {
@@ -80,7 +82,7 @@ export async function POST(req: NextRequest) {
       paymentDate: parsedPaymentDate,
     };
 
-    const id = await createPayment(bookingId, invoiceId, paymentData);
+    const id = await createPaymentServer(bookingId, invoiceId, paymentData);
     return NextResponse.json({ id }, { status: 201 });
   } catch (error: any) {
     console.error('APIPOST /api/payments error:', error);

@@ -1,6 +1,6 @@
 /**
  * Serial/ID generation for various entities in the system
- * 
+ *
  * Format examples:
  * - Quotes:    QT-OPERATORCODE-YYYYMMDD-XXXX
  * - Invoices:  INV-FLIGHTCODE-YYYYMMDD-XXXXXXXXX
@@ -34,12 +34,16 @@ function formatDateYYYYMMDD(date: Date): string {
 /**
  * Generates a quote ID
  * @param operatorCode The operator's code
+ * @param requestId Optional request ID to extract the last 4 characters from for linking
  * @returns Quote ID in format QT-OPERATORCODE-YYYYMMDD-XXXX
  */
-export function generateQuoteId(operatorCode: string): string {
+export function generateQuoteId(operatorCode: string, requestId?: string): string {
   const date = formatDateYYYYMMDD(new Date());
-  const random = generateRandomString(4);
-  return `QT-${operatorCode}-${date}-${random}`;
+
+  // If requestId is provided, use its last 4 characters; otherwise generate random
+  const suffix = requestId ? requestId.slice(-4) : generateRandomString(4);
+
+  return `QT-${operatorCode}-${date}-${suffix}`;
 }
 
 /**
@@ -186,4 +190,4 @@ export function isValidClientId(id: string): boolean {
 export function parseClientId(id: string) {
   const [, agentCode, unique] = id.split('-');
   return { agentCode, unique };
-} 
+}

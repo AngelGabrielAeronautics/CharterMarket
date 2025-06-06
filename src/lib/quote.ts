@@ -1,6 +1,33 @@
 // @ts-nocheck
 'use client';
 
+/**
+ * HYBRID QUOTE SYSTEM
+ *
+ * This module implements a hybrid approach for managing quotes:
+ *
+ * 1. STANDALONE QUOTES COLLECTION (/quotes/{quoteId})
+ *    - Full quote documents with detailed information
+ *    - Better for querying, analytics, and management
+ *    - Supports rich quote data (aircraft details, terms, etc.)
+ *
+ * 2. EMBEDDED REFERENCES (/quoteRequests/{requestId}/offers[])
+ *    - Simplified quote references in quote request documents
+ *    - Maintains backward compatibility
+ *    - Enables quick access to basic quote info
+ *
+ * BENEFITS:
+ * - Best of both worlds: detailed standalone docs + quick embedded access
+ * - Backward compatibility with existing code
+ * - Better data normalization and querying capabilities
+ * - Future-proof for complex quote management features
+ *
+ * SYNC STRATEGY:
+ * - Creation: Both locations created atomically in transaction
+ * - Updates: Status changes sync both locations
+ * - Details: Only update standalone collection (embedded refs stay simple)
+ */
+
 import { db } from '@/lib/firebase';
 import {
   collection,
@@ -15,6 +42,7 @@ import {
   runTransaction,
   orderBy,
   arrayUnion,
+  setDoc,
 } from 'firebase/firestore';
 import { generateQuoteId } from '@/lib/serials';
 import { QuoteFormData } from '@/types/quote';
@@ -22,7 +50,10 @@ import { Offer, OfferStatus, QuoteRequest, FlightStatus } from '@/types/flight';
 
 /**
  * Submit an operator's offer for a specific quote request.
- * Adds the offer to the QuoteRequest's 'offers' array and updates its status.
+ * Creates a standalone quote document AND adds a reference to the QuoteRequest's 'offers' array.
+ * HYBRID APPROACH: Best of both worlds!
+ *
+ * The generated quote ID will have the same last 4 characters as the originating request ID for easy linking.
  */
 export const createQuote = async (
   requestId: string,
@@ -30,23 +61,16 @@ export const createQuote = async (
   data: QuoteFormData
 ): Promise<string> => {
   const quoteRequestRef = doc(db, 'quoteRequests', requestId);
-  const offerId = generateQuoteId(operatorId);
+  const offerId = generateQuoteId(operatorId, requestId);
+  const quoteRef = doc(db, 'quotes', offerId);
 
   const commission = parseFloat((data.price * 0.03).toFixed(2));
   const totalPrice = parseFloat((data.price + commission).toFixed(2));
 
-  const newOffer: Offer = {
-    offerId,
-    operatorId,
-    price: data.price,
-    commission,
-    totalPrice,
-    offerStatus: 'pending-client-acceptance' as OfferStatus,
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
-  };
-
   try {
+    let finalQuoteData: any;
+    let finalEmbeddedOffer: any;
+
     await runTransaction(db, async (transaction) => {
       const quoteRequestSnap = await transaction.get(quoteRequestRef);
       if (!quoteRequestSnap.exists()) {
@@ -68,8 +92,54 @@ export const createQuote = async (
         throw new Error(`Operator ${operatorId} has already submitted an offer for this request.`);
       }
 
+      // Extract clientUserCode from the quote request
+      const clientUserCode = quoteRequestData.clientUserCode;
+
+      // Full quote document for the quotes collection
+      finalQuoteData = {
+        offerId,
+        operatorId,
+        operatorUserCode: operatorId, // For Firestore rules
+        clientUserCode, // Include the originating client's userCode
+        requestId,
+        price: data.price,
+        commission,
+        totalPrice,
+        currency: 'USD', // Default currency
+        validUntil: null, // Can be updated later
+        notes: null, // Can be updated later
+        aircraftType: null, // Can be updated later
+        aircraftRegistration: null, // Can be updated later
+        departureTime: null, // Can be updated later
+        estimatedFlightTime: null, // Can be updated later
+        includedServices: [], // Can be updated later
+        excludedServices: [], // Can be updated later
+        termsAndConditions: null, // Can be updated later
+        cancellationPolicy: null, // Can be updated later
+        offerStatus: 'pending-client-acceptance' as OfferStatus,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+
+      // Simplified offer object for embedded reference in quoteRequest
+      finalEmbeddedOffer = {
+        offerId,
+        operatorId,
+        clientUserCode, // Include in embedded offer for consistency
+        price: data.price,
+        commission,
+        totalPrice,
+        offerStatus: 'pending-client-acceptance' as OfferStatus,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+
+      // 1. Create the standalone quote document
+      transaction.set(quoteRef, finalQuoteData);
+
+      // 2. Add embedded reference to the quoteRequest
       transaction.update(quoteRequestRef, {
-        offers: arrayUnion(newOffer),
+        offers: arrayUnion(finalEmbeddedOffer),
         operatorIdsWhoHaveQuoted: arrayUnion(operatorId),
         status: 'quoted' as FlightStatus,
         updatedAt: Timestamp.now(),
@@ -77,11 +147,11 @@ export const createQuote = async (
     });
 
     console.log(
-      `Successfully submitted offer ${offerId} by operator ${operatorId} for QuoteRequest ${requestId}.`
+      `Successfully created quote ${offerId} for client ${finalQuoteData.clientUserCode} in quotes collection and added reference to QuoteRequest ${requestId}.`
     );
     return offerId;
   } catch (error) {
-    console.error('Error in submitOffer (createQuote) transaction:', error);
+    console.error('Error in createQuote transaction:', error);
     if (error instanceof Error) {
       throw new Error(`Failed to submit offer: ${error.message}`);
     }
@@ -90,7 +160,21 @@ export const createQuote = async (
 };
 
 /**
- * Fetch all quotes for a given quote request
+ * Get detailed quotes for a specific request from the standalone quotes collection
+ * This provides more information than the embedded offers array
+ */
+export const getDetailedQuotesForRequest = async (requestId: string) => {
+  try {
+    return await getAllQuotes({ requestId });
+  } catch (error) {
+    console.error(`Error fetching detailed quotes for request ${requestId}:`, error);
+    throw new Error('Failed to fetch detailed quotes for request');
+  }
+};
+
+/**
+ * Fetch all quotes for a given quote request (LEGACY - uses embedded approach)
+ * For detailed quote information, use getDetailedQuotesForRequest instead
  */
 export const getQuotesForRequest = async (requestId: string): Promise<Offer[]> => {
   try {
@@ -247,3 +331,171 @@ export const getOperatorSubmittedQuotes = async (operatorId: string): Promise<Of
     throw new Error('Failed to fetch submitted offers');
   }
 };
+
+/**
+ * Get a specific quote by its ID from the quotes collection
+ */
+export const getQuoteById = async (quoteId: string) => {
+  try {
+    const quoteRef = doc(db, 'quotes', quoteId);
+    const quoteSnap = await getDoc(quoteRef);
+
+    if (!quoteSnap.exists()) {
+      throw new Error(`Quote with ID ${quoteId} not found`);
+    }
+
+    return {
+      id: quoteSnap.id,
+      ...quoteSnap.data(),
+    };
+  } catch (error) {
+    console.error('Error fetching quote by ID:', error);
+    throw new Error('Failed to fetch quote');
+  }
+};
+
+/**
+ * Get all quotes from the quotes collection (with optional filtering)
+ */
+export const getAllQuotes = async (filters?: {
+  operatorId?: string;
+  requestId?: string;
+  status?: OfferStatus;
+}) => {
+  try {
+    let q = query(collection(db, 'quotes'), orderBy('createdAt', 'desc'));
+
+    if (filters?.operatorId) {
+      q = query(q, where('operatorId', '==', filters.operatorId));
+    }
+
+    if (filters?.requestId) {
+      q = query(q, where('requestId', '==', filters.requestId));
+    }
+
+    if (filters?.status) {
+      q = query(q, where('offerStatus', '==', filters.status));
+    }
+
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    console.error('Error fetching quotes:', error);
+    throw new Error('Failed to fetch quotes');
+  }
+};
+
+/**
+ * Update a quote status in both the standalone quotes collection AND the embedded reference
+ * HYBRID SYNC: Keeps both locations in sync
+ */
+export const updateQuoteStatusHybrid = async (
+  quoteId: string,
+  newStatus: OfferStatus
+): Promise<void> => {
+  try {
+    const quoteRef = doc(db, 'quotes', quoteId);
+
+    await runTransaction(db, async (transaction) => {
+      // 1. Get the standalone quote to find the requestId
+      const quoteSnap = await transaction.get(quoteRef);
+      if (!quoteSnap.exists()) {
+        throw new Error(`Quote with ID ${quoteId} not found`);
+      }
+
+      const quoteData = quoteSnap.data();
+      const requestId = quoteData.requestId;
+
+      // 2. Update the standalone quote document
+      transaction.update(quoteRef, {
+        offerStatus: newStatus,
+        updatedAt: Timestamp.now(),
+      });
+
+      // 3. Update the embedded reference in the quoteRequest
+      const quoteRequestRef = doc(db, 'quoteRequests', requestId);
+      const quoteRequestSnap = await transaction.get(quoteRequestRef);
+
+      if (quoteRequestSnap.exists()) {
+        const quoteRequestData = quoteRequestSnap.data() as QuoteRequest;
+        const updatedOffers = quoteRequestData.offers?.map((offer) => {
+          if (offer.offerId === quoteId) {
+            return { ...offer, offerStatus: newStatus, updatedAt: Timestamp.now() };
+          }
+          return offer;
+        });
+
+        transaction.update(quoteRequestRef, {
+          offers: updatedOffers,
+          updatedAt: Timestamp.now(),
+        });
+      }
+    });
+
+    console.log(`Updated quote ${quoteId} status to ${newStatus} in both collections`);
+  } catch (error) {
+    console.error('Error updating quote status:', error);
+    throw new Error('Failed to update quote status');
+  }
+};
+
+/**
+ * Get all quotes for a specific operator from the standalone quotes collection
+ * This provides more detailed quote information than the embedded approach
+ */
+export const getOperatorQuotesDetailed = async (operatorId: string) => {
+  try {
+    return await getAllQuotes({ operatorId });
+  } catch (error) {
+    console.error(`Error fetching detailed quotes for operator ${operatorId}:`, error);
+    throw new Error('Failed to fetch operator quotes');
+  }
+};
+
+/**
+ * Update quote details in the standalone quotes collection
+ */
+export const updateQuoteDetails = async (
+  quoteId: string,
+  updates: {
+    notes?: string;
+    aircraftType?: string;
+    aircraftRegistration?: string;
+    departureTime?: Date;
+    estimatedFlightTime?: string;
+    includedServices?: string[];
+    excludedServices?: string[];
+    termsAndConditions?: string;
+    cancellationPolicy?: string;
+    validUntil?: Date;
+  }
+): Promise<void> => {
+  try {
+    const quoteRef = doc(db, 'quotes', quoteId);
+
+    // Convert Date objects to Timestamps
+    const updateData: any = {
+      ...updates,
+      updatedAt: Timestamp.now(),
+    };
+
+    if (updates.departureTime) {
+      updateData.departureTime = Timestamp.fromDate(updates.departureTime);
+    }
+
+    if (updates.validUntil) {
+      updateData.validUntil = Timestamp.fromDate(updates.validUntil);
+    }
+
+    await updateDoc(quoteRef, updateData);
+    console.log(`Updated quote ${quoteId} details`);
+  } catch (error) {
+    console.error('Error updating quote details:', error);
+    throw new Error('Failed to update quote details');
+  }
+};
+
+// Keep the existing functions for backward compatibility

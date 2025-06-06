@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   createInvoice,
   getInvoicesForBooking,
+  getInvoicesForBookingDebug,
   getInvoiceById,
+  getInvoiceByDocId,
+  getInvoiceByInvoiceId,
   getInvoicesByClientId,
 } from '@/lib/invoice';
 
@@ -11,30 +14,47 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const bookingId = url.searchParams.get('bookingId');
     const invoiceId = url.searchParams.get('invoiceId');
+    const docId = url.searchParams.get('docId'); // For legacy document ID support
     const clientId = url.searchParams.get('clientId');
 
     let data;
 
     if (invoiceId) {
-      data = await getInvoiceById(invoiceId);
+      console.log(`Retrieving invoice by invoiceId: ${invoiceId}`);
+      // Try custom invoice ID first, then fallback methods
+      data = await getInvoiceByInvoiceId(invoiceId);
+      if (!data) {
+        return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+      }
+    } else if (docId) {
+      console.log(`Retrieving invoice by document ID: ${docId}`);
+      // Legacy support for document IDs
+      data = await getInvoiceByDocId(docId);
       if (!data) {
         return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
       }
     } else if (bookingId) {
       console.log(`Retrieving invoices for booking: ${bookingId}`);
+      // Temporarily use debug function to isolate composite index issues
       try {
-        data = await getInvoicesForBooking(bookingId);
-        console.log(`Found ${data.length} invoices for booking ${bookingId}`);
-      } catch (err) {
-        console.error(`Error retrieving invoices for booking ${bookingId}:`, err);
-        return NextResponse.json(
-          {
-            error: err instanceof Error ? err.message : 'Failed to fetch invoices',
-            details: err instanceof Error ? err.stack : undefined,
-          },
-          { status: 500 }
-        );
+        data = await getInvoicesForBookingDebug(bookingId);
+      } catch (debugError) {
+        console.error('Debug function failed, trying regular function:', debugError);
+        // If debug function fails, fall back to regular function
+        try {
+          data = await getInvoicesForBooking(bookingId);
+        } catch (err) {
+          console.error(`Error retrieving invoices for booking ${bookingId}:`, err);
+          return NextResponse.json(
+            {
+              error: err instanceof Error ? err.message : 'Failed to fetch invoices',
+              details: err instanceof Error ? err.stack : undefined,
+            },
+            { status: 500 }
+          );
+        }
       }
+      console.log(`Found ${data.length} invoices for booking ${bookingId}`);
     } else if (clientId) {
       try {
         data = await getInvoicesByClientId(clientId);
@@ -50,7 +70,7 @@ export async function GET(req: NextRequest) {
       }
     } else {
       return NextResponse.json(
-        { error: 'Missing bookingId, invoiceId, or clientId parameter' },
+        { error: 'Missing required parameter: bookingId, invoiceId, docId, or clientId' },
         { status: 400 }
       );
     }
@@ -85,9 +105,9 @@ export async function POST(req: NextRequest) {
     }
 
     console.log('Calling createInvoice with params:', { bookingId, clientId, flightCode, amount });
-    const id = await createInvoice(bookingId, clientId, flightCode, amount);
-    console.log('Invoice created successfully, id:', id);
-    return NextResponse.json({ id }, { status: 201 });
+    const invoiceId = await createInvoice(bookingId, clientId, flightCode, amount);
+    console.log('Invoice created successfully, id:', invoiceId);
+    return NextResponse.json({ id: invoiceId, invoiceId }, { status: 201 });
   } catch (error: any) {
     console.error('APIPOST /api/invoices error:', error);
     console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));

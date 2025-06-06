@@ -38,8 +38,28 @@ describe('BookingForm', () => {
 
   // Default mocks for context
   const defaultAuth = {
-    user: { uid: 'test-user' },
-    userRole: 'passenger',
+    user: {
+      uid: 'test-user',
+      userCode: 'TEST001',
+      role: 'passenger' as const,
+      email: 'test@example.com',
+      emailVerified: true,
+      isAnonymous: false,
+      metadata: { creationTime: undefined, lastSignInTime: undefined },
+      providerData: [],
+      refreshToken: '',
+      tenantId: null,
+      delete: jest.fn(),
+      getIdToken: jest.fn(),
+      getIdTokenResult: jest.fn(),
+      reload: jest.fn(),
+      toJSON: jest.fn(),
+      displayName: null,
+      phoneNumber: null,
+      photoURL: null,
+      providerId: 'firebase',
+    },
+    userRole: 'passenger' as const,
     loading: false,
     error: null,
     logout: jest.fn(),
@@ -95,7 +115,30 @@ describe('BookingForm', () => {
   });
 
   it('shows operator dialog and triggers register flow', async () => {
-    const { mockModal } = renderWithProviders({ user: { uid: 'u' }, userRole: 'operator' });
+    const { mockModal } = renderWithProviders({
+      user: {
+        uid: 'u',
+        userCode: 'OP001',
+        role: 'operator' as const,
+        email: 'op@example.com',
+        emailVerified: true,
+        isAnonymous: false,
+        metadata: { creationTime: undefined, lastSignInTime: undefined },
+        providerData: [],
+        refreshToken: '',
+        tenantId: null,
+        delete: jest.fn(),
+        getIdToken: jest.fn(),
+        getIdTokenResult: jest.fn(),
+        reload: jest.fn(),
+        toJSON: jest.fn(),
+        displayName: null,
+        phoneNumber: null,
+        photoURL: null,
+        providerId: 'firebase',
+      },
+      userRole: 'operator' as const,
+    });
     const form = screen.getByTestId('booking-form');
     // For this specific test, we expect submission even if not all fields are valid because user is an operator
     fireEvent.submit(form);
@@ -104,4 +147,4 @@ describe('BookingForm', () => {
     fireEvent.click(registerBtn);
     expect(mockModal.openRegisterModal).toHaveBeenCalledWith('passenger');
   });
-}); 
+});

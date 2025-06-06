@@ -103,105 +103,132 @@ export const registerUser = async (
       status: 'incomplete',
       isProfileComplete: false,
       hasAircraft: false,
-      dormantDate: null
+      dormantDate: null,
     };
 
     // Save user data to Firestore
     await setDoc(doc(db, 'users', userCode), userData);
 
-    // Log registration event using the new type-safe logging utility
-    await logAuthEvent(
-      EventType.REGISTER,
-      {
-        userId: user.uid,
-        userCode,
-        userRole: role,
-        description: `New user ${userCode} registered successfully`,
-        severity: EventSeverity.INFO,
-        data: {
-          email,
-          firstName,
-          lastName,
-          role,
-          company: company || null
-        }
-      }
-    );
-
-    // Send verification email
+    // Set custom claims for Firebase Auth (required for Firestore rules)
     try {
-      await fetch('/api/auth/verify-email', {
+      const response = await fetch('/api/auth/set-claims', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          uid: user.uid,
+          role,
+          userCode,
+        }),
       });
 
-      // Log successful verification email with type-safe logging
-      await logAuthEvent(
-        EventType.VERIFICATION_EMAIL_SENT,
-        {
+      if (!response.ok) {
+        console.error('Failed to set custom claims:', await response.text());
+        // Continue with registration even if claims setting fails
+      } else {
+        console.log(`Custom claims set successfully for user ${userCode}`);
+      }
+    } catch (error) {
+      console.error('Error setting custom claims:', error);
+      // Continue with registration even if claims setting fails
+    }
+
+    // Log registration event using the new type-safe logging utility
+    await logAuthEvent(EventType.REGISTER, {
+      userId: user.uid,
+      userCode,
+      userRole: role,
+      description: `New user ${userCode} registered successfully`,
+      severity: EventSeverity.INFO,
+      data: {
+        email,
+        firstName,
+        lastName,
+        role,
+        company: company || null,
+      },
+    });
+
+    // Send verification email
+    if (process.env.NODE_ENV === 'production' || process.env.ENABLE_DEV_EMAILS === 'true') {
+      try {
+        await fetch('/api/auth/verify-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        });
+
+        // Log successful verification email with type-safe logging
+        await logAuthEvent(EventType.VERIFICATION_EMAIL_SENT, {
           userId: user.uid,
           userCode,
           userRole: role,
           description: `Verification email sent to ${email}`,
           severity: EventSeverity.INFO,
-          data: { email }
-        }
-      );
-    } catch (error: unknown) {
-      // Log failed verification email with type-safe logging
-      await logAuthEvent(
-        EventType.VERIFICATION_EMAIL_FAILED,
-        {
+          data: { email },
+        });
+      } catch (error: unknown) {
+        // Log failed verification email with type-safe logging
+        await logAuthEvent(EventType.VERIFICATION_EMAIL_FAILED, {
           userId: user.uid,
           userCode,
           userRole: role,
           description: `Failed to send verification email to ${email}`,
           severity: EventSeverity.ERROR,
-          data: { email, errorMessage: error instanceof Error ? error.message : String(error) }
-        }
+          data: { email, errorMessage: error instanceof Error ? error.message : String(error) },
+        });
+      }
+    } else {
+      console.log(
+        'Development mode: Skipping verification email send (set ENABLE_DEV_EMAILS=true to enable)'
       );
     }
 
     // Send welcome email
-    try {
-      await sendWelcomeEmail(email, user.uid, userCode, firstName);
-    } catch (error: unknown) {
-      // Log the welcome email error but don't block registration
-      logSystemError(
-        `Failed to send welcome email to ${email}`,
-        error instanceof Error ? error : new Error(String(error)),
-        {
-          userId: user.uid,
-          userCode,
-          userRole: role,
-          data: { email, firstName }
-        }
+    if (process.env.NODE_ENV === 'production' || process.env.ENABLE_DEV_EMAILS === 'true') {
+      try {
+        await sendWelcomeEmail(email, user.uid, userCode, firstName);
+      } catch (error: unknown) {
+        // Log the welcome email error but don't block registration
+        logSystemError(
+          `Failed to send welcome email to ${email}`,
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            userId: user.uid,
+            userCode,
+            userRole: role,
+            data: { email, firstName },
+          }
+        );
+      }
+    } else {
+      console.log(
+        'Development mode: Skipping welcome email send (set ENABLE_DEV_EMAILS=true to enable)'
       );
     }
 
     // Send admin notification
-    try {
-      await sendAdminNotification(
-        email,
-        firstName,
-        lastName,
-        role,
-        userCode,
-        company
-      );
-    } catch (error: unknown) {
-      // Log the admin notification error but don't block registration
-      logSystemError(
-        `Failed to send admin notification for new user ${email}`,
-        error instanceof Error ? error : new Error(String(error)),
-        {
-          userId: user.uid,
-          userCode,
-          userRole: role
-        }
+    if (process.env.NODE_ENV === 'production' || process.env.ENABLE_DEV_EMAILS === 'true') {
+      try {
+        await sendAdminNotification(email, firstName, lastName, role, userCode, company);
+      } catch (error: unknown) {
+        // Log the admin notification error but don't block registration
+        logSystemError(
+          `Failed to send admin notification for new user ${email}`,
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            userId: user.uid,
+            userCode,
+            userRole: role,
+          }
+        );
+      }
+    } else {
+      console.log(
+        'Development mode: Skipping admin notification send (set ENABLE_DEV_EMAILS=true to enable)'
       );
     }
 
@@ -267,7 +294,7 @@ export const getUserByCode = async (userCode: string): Promise<UserData | null> 
   try {
     console.log('Fetching user by code:', userCode);
     const userDoc = await getDoc(doc(db, 'users', userCode));
-    
+
     if (!userDoc.exists()) {
       console.log('No user found with code:', userCode);
       return null;
@@ -301,12 +328,12 @@ export async function signInWithGoogle(): Promise<UserData> {
     // User doesn't exist, create a new profile
     const firstName = user.displayName?.split(' ')[0] || '';
     const lastName = user.displayName?.split(' ').slice(1).join(' ') || '';
-    
+
     // Generate user code
-    const userCode = await generateUserCode({ 
+    const userCode = await generateUserCode({
       role: 'passenger', // Default role for Google sign-in
       lastName,
-      company: undefined
+      company: undefined,
     });
 
     // Prepare user data
@@ -326,18 +353,49 @@ export async function signInWithGoogle(): Promise<UserData> {
       status: 'incomplete',
       isProfileComplete: false,
       hasAircraft: false,
-      dormantDate: null
+      dormantDate: null,
     };
 
     // Save user data to Firestore
     await setDoc(doc(db, 'users', userCode), userData);
 
-    // Send welcome email
+    // Set custom claims for Firebase Auth (required for Firestore rules)
     try {
-      await sendWelcomeEmail(user.email!, user.uid, userCode, firstName);
+      const response = await fetch('/api/auth/set-claims', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          uid: user.uid,
+          role: 'passenger',
+          userCode,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to set custom claims for Google user:', await response.text());
+        // Continue with sign-in even if claims setting fails
+      } else {
+        console.log(`Custom claims set successfully for Google user ${userCode}`);
+      }
     } catch (error) {
-      console.error('Error sending welcome email:', error);
-      // Don't block registration if email sending fails
+      console.error('Error setting custom claims for Google user:', error);
+      // Continue with sign-in even if claims setting fails
+    }
+
+    // Send welcome email
+    if (process.env.NODE_ENV === 'production' || process.env.ENABLE_DEV_EMAILS === 'true') {
+      try {
+        await sendWelcomeEmail(user.email!, user.uid, userCode, firstName);
+      } catch (error) {
+        console.error('Error sending welcome email:', error);
+        // Don't block registration if email sending fails
+      }
+    } else {
+      console.log(
+        'Development mode: Skipping welcome email send (set ENABLE_DEV_EMAILS=true to enable)'
+      );
     }
 
     return userData;
@@ -351,10 +409,7 @@ export async function signInWithGoogle(): Promise<UserData> {
   }
 }
 
-export async function changePassword(
-  currentPassword: string,
-  newPassword: string
-): Promise<void> {
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
   try {
     const user = auth.currentUser;
     if (!user || !user.email) {
@@ -378,4 +433,4 @@ export async function changePassword(
     }
     throw error;
   }
-} 
+}
