@@ -75,7 +75,6 @@ const mockQuoteRequest = {
   returnDate: null, // One-way flight
   flexibleDates: false,
   passengerCount: 4,
-  cabinClass: 'premium',
   specialRequirements: 'Need extra luggage space for golf equipment',
   createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
 };
@@ -216,8 +215,9 @@ export default function QuoteResponseForm({
               <Grid
                 size={{
                   xs: 12,
-                  md: 6
-                }}>
+                  md: 6,
+                }}
+              >
                 <Stack spacing={3}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
                     <FlightTakeoff color="primary" sx={{ mr: 1, mt: 0.5 }} />
@@ -260,11 +260,6 @@ export default function QuoteResponseForm({
                       <Typography variant="body1">
                         {quoteRequest.passengerCount} passengers
                       </Typography>
-                      <Typography variant="body2">
-                        {quoteRequest.cabinClass.charAt(0).toUpperCase() +
-                          quoteRequest.cabinClass.slice(1)}{' '}
-                        class
-                      </Typography>
                     </Box>
                   </Box>
                 </Stack>
@@ -273,8 +268,9 @@ export default function QuoteResponseForm({
               <Grid
                 size={{
                   xs: 12,
-                  md: 6
-                }}>
+                  md: 6,
+                }}
+              >
                 <Card variant="outlined" sx={{ height: '100%', bgcolor: 'background.paper' }}>
                   <CardContent>
                     <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
@@ -319,8 +315,9 @@ export default function QuoteResponseForm({
                 <Grid
                   size={{
                     xs: 12,
-                    md: 6
-                  }}>
+                    md: 6,
+                  }}
+                >
                   <FormControl fullWidth error={!!errors.aircraft}>
                     <InputLabel id="aircraft-label">Select Aircraft</InputLabel>
                     <Controller
@@ -359,8 +356,9 @@ export default function QuoteResponseForm({
                 <Grid
                   size={{
                     xs: 12,
-                    md: 6
-                  }}>
+                    md: 6,
+                  }}
+                >
                   <Controller
                     name="operatorQuoteNumber"
                     control={control}
@@ -386,8 +384,9 @@ export default function QuoteResponseForm({
                 <Grid
                   size={{
                     xs: 12,
-                    md: 4
-                  }}>
+                    md: 4,
+                  }}
+                >
                   <Controller
                     name="basePrice"
                     control={control}
@@ -435,8 +434,9 @@ export default function QuoteResponseForm({
                 <Grid
                   size={{
                     xs: 12,
-                    md: 4
-                  }}>
+                    md: 4,
+                  }}
+                >
                   <Controller
                     name="charterFee"
                     control={control}
@@ -464,8 +464,9 @@ export default function QuoteResponseForm({
                 <Grid
                   size={{
                     xs: 12,
-                    md: 4
-                  }}>
+                    md: 4,
+                  }}
+                >
                   <Controller
                     name="totalPrice"
                     control={control}
@@ -495,8 +496,9 @@ export default function QuoteResponseForm({
                 <Grid
                   size={{
                     xs: 12,
-                    md: 4
-                  }}>
+                    md: 4,
+                  }}
+                >
                   <Controller
                     name="availabilityStart"
                     control={control}
@@ -520,8 +522,9 @@ export default function QuoteResponseForm({
                 <Grid
                   size={{
                     xs: 12,
-                    md: 4
-                  }}>
+                    md: 4,
+                  }}
+                >
                   <Controller
                     name="availabilityEnd"
                     control={control}
@@ -545,8 +548,9 @@ export default function QuoteResponseForm({
                 <Grid
                   size={{
                     xs: 12,
-                    md: 4
-                  }}>
+                    md: 4,
+                  }}
+                >
                   <Controller
                     name="validUntil"
                     control={control}

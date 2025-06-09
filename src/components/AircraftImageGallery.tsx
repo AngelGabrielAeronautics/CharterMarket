@@ -16,7 +16,12 @@ interface AircraftImageGalleryProps {
   type: 'exterior' | 'interior' | 'layout' | 'cockpit';
 }
 
-export default function AircraftImageGallery({ aircraftId, images, onImagesUpdate, type }: AircraftImageGalleryProps) {
+export default function AircraftImageGallery({
+  aircraftId,
+  images,
+  onImagesUpdate,
+  type,
+}: AircraftImageGalleryProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -30,7 +35,7 @@ export default function AircraftImageGallery({ aircraftId, images, onImagesUpdat
     setError(null);
 
     try {
-      const uploadPromises = Array.from(files).map(file => {
+      const uploadPromises = Array.from(files).map((file) => {
         const isPrimary = images.length === 0;
         return uploadAircraftImage(aircraftId, file, type, isPrimary);
       });
@@ -61,7 +66,7 @@ export default function AircraftImageGallery({ aircraftId, images, onImagesUpdat
   const handleSetPrimary = async (image: AircraftImage) => {
     try {
       // Update all images to non-primary
-      const updatePromises = images.map(img => 
+      const updatePromises = images.map((img) =>
         uploadAircraftImage(aircraftId, new File([], img.url), img.type, img.id === image.id)
       );
       await Promise.all(updatePromises);
@@ -75,9 +80,13 @@ export default function AircraftImageGallery({ aircraftId, images, onImagesUpdat
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Typography variant="h6" fontWeight="medium">Aircraft Images</Typography>
+        <Typography variant="h6" fontWeight="medium">
+          Aircraft Images
+        </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <input
+            id="aircraft-image-upload"
+            name="aircraftImages"
             type="file"
             ref={fileInputRef}
             onChange={handleFileUpload}
@@ -85,10 +94,7 @@ export default function AircraftImageGallery({ aircraftId, images, onImagesUpdat
             multiple
             style={{ display: 'none' }}
           />
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-          >
+          <Button onClick={() => fileInputRef.current?.click()} disabled={uploading}>
             {uploading ? (
               <CircularProgress size={20} sx={{ color: 'white' }} />
             ) : (
@@ -101,7 +107,9 @@ export default function AircraftImageGallery({ aircraftId, images, onImagesUpdat
         </Box>
       </Box>
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
       )}
       <Grid container spacing={2}>
         {images.map((image) => (
@@ -110,8 +118,9 @@ export default function AircraftImageGallery({ aircraftId, images, onImagesUpdat
             size={{
               xs: 12,
               md: 6,
-              lg: 4
-            }}>
+              lg: 4,
+            }}
+          >
             <Box
               sx={{
                 position: 'relative',
@@ -123,11 +132,14 @@ export default function AircraftImageGallery({ aircraftId, images, onImagesUpdat
                 },
               }}
             >
-              <Box sx={{ position: 'relative', paddingTop: '56.25%' }}> {/* 16:9 aspect ratio */}
+              <Box sx={{ position: 'relative', paddingTop: '56.25%' }}>
+                {' '}
+                {/* 16:9 aspect ratio */}
                 <Image
                   src={image.url}
                   alt={`${image.type} view`}
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   style={{ objectFit: 'cover' }}
                 />
               </Box>
@@ -226,7 +238,9 @@ export default function AircraftImageGallery({ aircraftId, images, onImagesUpdat
             borderRadius: theme.shape.borderRadius,
           }}
         >
-          <ImageIcon style={{ height: 48, width: 48, color: theme.palette.text.disabled, margin: '0 auto' }} />
+          <ImageIcon
+            style={{ height: 48, width: 48, color: theme.palette.text.disabled, margin: '0 auto' }}
+          />
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             No images uploaded yet
           </Typography>
@@ -234,4 +248,4 @@ export default function AircraftImageGallery({ aircraftId, images, onImagesUpdat
       )}
     </Box>
   );
-} 
+}

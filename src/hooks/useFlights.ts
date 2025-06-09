@@ -261,20 +261,20 @@ export function useQuotes(requestId?: string) {
 /**
  * Hook to fetch submitted quotes for a specific operator.
  */
-export const useOperatorSubmittedQuotes = (operatorId?: string) => {
+export const useOperatorSubmittedQuotes = (operatorUserCode?: string) => {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchQuotes = useCallback(async () => {
-    if (!operatorId) {
+    if (!operatorUserCode) {
       setQuotes([]);
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      const operatorQuotes = await getOperatorSubmittedQuotes(operatorId);
+      const operatorQuotes = await getOperatorSubmittedQuotes(operatorUserCode);
       setQuotes(operatorQuotes);
       setError(null);
     } catch (err) {
@@ -284,7 +284,7 @@ export const useOperatorSubmittedQuotes = (operatorId?: string) => {
     } finally {
       setLoading(false);
     }
-  }, [operatorId]);
+  }, [operatorUserCode]);
 
   useEffect(() => {
     fetchQuotes();

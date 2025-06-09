@@ -1,13 +1,36 @@
 import { db, storage } from '@/lib/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDoc, getDocs, query, where, Timestamp, setDoc } from 'firebase/firestore';
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  Timestamp,
+  setDoc,
+  limit,
+} from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { Aircraft, AircraftFormData, AircraftAvailability, MaintenanceSchedule, AircraftImage, AircraftDocument } from '@/types/aircraft';
+import {
+  Aircraft,
+  AircraftFormData,
+  AircraftAvailability,
+  MaintenanceSchedule,
+  AircraftImage,
+  AircraftDocument,
+} from '@/types/aircraft';
 import { generateAircraftId } from '@/lib/serials';
 import { logEvent } from '@/utils/eventLogger';
 import { EventCategory, EventType, EventSeverity } from '@/types/event';
 
 // Check if registration already exists
-export const checkRegistrationExists = async (registration: string, operatorCode: string): Promise<boolean> => {
+export const checkRegistrationExists = async (
+  registration: string,
+  operatorCode: string
+): Promise<boolean> => {
   const q = query(
     collection(db, 'operators', operatorCode, 'aircraft'),
     where('registration', '==', registration.toUpperCase())
@@ -33,7 +56,7 @@ export const createAircraft = async (data: AircraftFormData, operatorCode: strin
       registration: data.registration.toUpperCase(),
       operatorCode,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
 
     const aircraftRef = doc(collection(db, 'operators', operatorCode, 'aircraft'));
@@ -67,7 +90,10 @@ export const createAircraft = async (data: AircraftFormData, operatorCode: strin
   }
 };
 
-export const updateAircraft = async (id: string, data: Partial<AircraftFormData>): Promise<void> => {
+export const updateAircraft = async (
+  id: string,
+  data: Partial<AircraftFormData>
+): Promise<void> => {
   try {
     const aircraftRef = doc(db, 'aircraft', id);
     await updateDoc(aircraftRef, {
@@ -84,7 +110,7 @@ export const getAircraft = async (id: string): Promise<Aircraft | null> => {
   try {
     const aircraftRef = doc(db, 'aircraft', id);
     const aircraftDoc = await getDoc(aircraftRef);
-    
+
     if (!aircraftDoc.exists()) {
       return null;
     }
@@ -100,12 +126,15 @@ export const getAircraft = async (id: string): Promise<Aircraft | null> => {
 };
 
 // Aircraft Availability Management
-export const createAvailabilityBlock = async (aircraftId: string, data: {
-  startDate: Date;
-  endDate: Date;
-  type: 'blocked' | 'maintenance' | 'charter';
-  notes?: string;
-}): Promise<string> => {
+export const createAvailabilityBlock = async (
+  aircraftId: string,
+  data: {
+    startDate: Date;
+    endDate: Date;
+    type: 'blocked' | 'maintenance' | 'charter';
+    notes?: string;
+  }
+): Promise<string> => {
   try {
     const blockRef = await addDoc(collection(db, 'aircraft', aircraftId, 'availability'), {
       ...data,
@@ -139,7 +168,7 @@ export const getAircraftAvailability = async (
     }
     const querySnapshot = await getDocs(q);
 
-    return querySnapshot.docs.map(doc => ({
+    return querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as AircraftAvailability[];
@@ -150,14 +179,17 @@ export const getAircraftAvailability = async (
 };
 
 // Maintenance Schedule Management
-export const createMaintenanceRecord = async (aircraftId: string, data: {
-  type: 'scheduled' | 'unscheduled' | 'inspection';
-  description: string;
-  startDate: Date;
-  endDate: Date;
-  technician: string;
-  notes?: string;
-}): Promise<string> => {
+export const createMaintenanceRecord = async (
+  aircraftId: string,
+  data: {
+    type: 'scheduled' | 'unscheduled' | 'inspection';
+    description: string;
+    startDate: Date;
+    endDate: Date;
+    technician: string;
+    notes?: string;
+  }
+): Promise<string> => {
   try {
     const maintenanceRef = await addDoc(collection(db, 'aircraft', aircraftId, 'maintenance'), {
       ...data,
@@ -174,12 +206,14 @@ export const createMaintenanceRecord = async (aircraftId: string, data: {
   }
 };
 
-export const getMaintenanceSchedule = async (aircraftId: string): Promise<MaintenanceSchedule[]> => {
+export const getMaintenanceSchedule = async (
+  aircraftId: string
+): Promise<MaintenanceSchedule[]> => {
   try {
     const maintenanceRef = collection(db, 'aircraft', aircraftId, 'maintenance');
     const querySnapshot = await getDocs(maintenanceRef);
-    
-    return querySnapshot.docs.map(doc => ({
+
+    return querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as MaintenanceSchedule[];
@@ -189,7 +223,11 @@ export const getMaintenanceSchedule = async (aircraftId: string): Promise<Mainte
   }
 };
 
-export const updateMaintenanceRecord = async (aircraftId: string, maintenanceId: string, data: Partial<MaintenanceSchedule>): Promise<void> => {
+export const updateMaintenanceRecord = async (
+  aircraftId: string,
+  maintenanceId: string,
+  data: Partial<MaintenanceSchedule>
+): Promise<void> => {
   try {
     const maintenanceRef = doc(db, 'aircraft', aircraftId, 'maintenance', maintenanceId);
     await updateDoc(maintenanceRef, {
@@ -203,7 +241,10 @@ export const updateMaintenanceRecord = async (aircraftId: string, maintenanceId:
 };
 
 // Document Management
-export const uploadAircraftDocument = async (aircraftId: string, file: File): Promise<AircraftDocument> => {
+export const uploadAircraftDocument = async (
+  aircraftId: string,
+  file: File
+): Promise<AircraftDocument> => {
   try {
     // Upload file to storage
     const fileRef = ref(storage, `aircraft/${aircraftId}/documents/${file.name}`);
@@ -237,8 +278,8 @@ export const getAircraftDocuments = async (aircraftId: string): Promise<Aircraft
   try {
     const documentsRef = collection(db, 'aircraft', aircraftId, 'documents');
     const querySnapshot = await getDocs(documentsRef);
-    
-    return querySnapshot.docs.map(doc => ({
+
+    return querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as AircraftDocument[];
@@ -248,7 +289,11 @@ export const getAircraftDocuments = async (aircraftId: string): Promise<Aircraft
   }
 };
 
-export const deleteAircraftDocument = async (aircraftId: string, documentId: string, fileName: string): Promise<void> => {
+export const deleteAircraftDocument = async (
+  aircraftId: string,
+  documentId: string,
+  fileName: string
+): Promise<void> => {
   try {
     // Delete file from storage
     const fileRef = ref(storage, `aircraft/${aircraftId}/documents/${fileName}`);
@@ -318,5 +363,72 @@ export const deleteAircraftImage = async (
   } catch (error) {
     console.error('Error deleting aircraft image:', error);
     throw new Error('Failed to delete aircraft image');
+  }
+};
+
+// Check if operator has any aircraft
+export const operatorHasAircraft = async (operatorCode: string): Promise<boolean> => {
+  try {
+    const q = query(collection(db, 'operators', operatorCode, 'aircraft'), limit(1));
+    const querySnapshot = await getDocs(q);
+    return !querySnapshot.empty;
+  } catch (error) {
+    console.error('Error checking if operator has aircraft:', error);
+    return false;
+  }
+};
+
+// Count aircraft for operator
+export const countOperatorAircraft = async (operatorCode: string): Promise<number> => {
+  try {
+    const q = query(collection(db, 'operators', operatorCode, 'aircraft'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.size;
+  } catch (error) {
+    console.error('Error counting operator aircraft:', error);
+    return 0;
+  }
+};
+
+// Delete aircraft function (was missing)
+export const deleteAircraft = async (aircraftId: string, operatorCode: string): Promise<void> => {
+  try {
+    if (!operatorCode) {
+      throw new Error('Operator code is required');
+    }
+
+    const aircraftRef = doc(db, 'operators', operatorCode, 'aircraft', aircraftId);
+
+    // Get aircraft data for logging
+    const aircraftDoc = await getDoc(aircraftRef);
+    if (!aircraftDoc.exists()) {
+      throw new Error('Aircraft not found');
+    }
+
+    const aircraftData = aircraftDoc.data();
+
+    // Delete the aircraft document
+    await deleteDoc(aircraftRef);
+
+    // Log the aircraft deletion event
+    await logEvent({
+      category: EventCategory.AIRCRAFT,
+      type: EventType.AIRCRAFT_DELETED,
+      severity: EventSeverity.INFO,
+      userId: aircraftId,
+      userCode: operatorCode,
+      userRole: 'operator',
+      description: `Aircraft ${aircraftData.registration} deleted`,
+      data: {
+        aircraftId,
+        registration: aircraftData.registration,
+        type: aircraftData.type,
+        make: aircraftData.make,
+        model: aircraftData.model,
+      },
+    });
+  } catch (error) {
+    console.error('Error deleting aircraft:', error);
+    throw error;
   }
 };

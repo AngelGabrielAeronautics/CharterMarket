@@ -29,7 +29,7 @@ export const createPayment = async (
   data: PaymentFormData
 ): Promise<string> => {
   try {
-    const paymentId = generatePaymentId();
+    const paymentId = generatePaymentId(invoiceId);
     const paymentData: Omit<Payment, 'id'> = {
       paymentId,
       bookingId,
@@ -214,10 +214,13 @@ export const getPaymentsForBooking = async (bookingId: string): Promise<Payment[
     );
 
     const snapshot = await getDocs(paymentsQuery);
-    return snapshot.docs.map((doc) => (({
-      id: doc.id,
-      ...doc.data()
-    }) as Payment));
+    return snapshot.docs.map(
+      (doc) =>
+        ({
+          id: doc.id,
+          ...doc.data(),
+        }) as Payment
+    );
   } catch (error) {
     console.error('Error fetching payments for booking:', error);
     throw new Error('Failed to fetch payments');
@@ -255,10 +258,13 @@ export const getPendingPayments = async (): Promise<Payment[]> => {
     );
 
     const snapshot = await getDocs(pendingQuery);
-    return snapshot.docs.map((doc) => (({
-      id: doc.id,
-      ...doc.data()
-    }) as Payment));
+    return snapshot.docs.map(
+      (doc) =>
+        ({
+          id: doc.id,
+          ...doc.data(),
+        }) as Payment
+    );
   } catch (error) {
     console.error('Error fetching pending payments:', error);
     throw new Error('Failed to fetch pending payments');
@@ -273,10 +279,13 @@ export const getAllPayments = async (): Promise<Payment[]> => {
     const paymentsCollection = collection(db, 'payments');
     const q = query(paymentsCollection, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => (({
-      id: doc.id,
-      ...doc.data()
-    }) as Payment));
+    return snapshot.docs.map(
+      (doc) =>
+        ({
+          id: doc.id,
+          ...doc.data(),
+        }) as Payment
+    );
   } catch (error) {
     console.error('Error fetching all payments:', error);
     throw new Error('Failed to fetch all payments');

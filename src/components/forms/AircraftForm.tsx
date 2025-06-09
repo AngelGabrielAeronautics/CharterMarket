@@ -21,10 +21,10 @@ declare global {
 
 const aircraftSchema = z.object({
   status: z.enum(['ACTIVE', 'MAINTENANCE', 'INACTIVE'] as const),
-  registration: z.string().min(1, "Registration is required").toUpperCase(),
+  registration: z.string().min(1, 'Registration is required').toUpperCase(),
   type: z.nativeEnum(AircraftType),
-  make: z.string().min(1, "Manufacturer is required"),
-  model: z.string().min(1, "Model is required"),
+  make: z.string().min(1, 'Manufacturer is required'),
+  model: z.string().min(1, 'Model is required'),
   year: z.number().min(1900).max(new Date().getFullYear()),
   baseAirport: z.string(),
   specifications: z.object({
@@ -55,7 +55,13 @@ interface AircraftFormProps {
   isSubmitting?: boolean;
 }
 
-export default function AircraftForm({ initialData, onSubmit, onClose, aircraftId, isSubmitting }: AircraftFormProps) {
+export default function AircraftForm({
+  initialData,
+  onSubmit,
+  onClose,
+  aircraftId,
+  isSubmitting,
+}: AircraftFormProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -84,7 +90,7 @@ export default function AircraftForm({ initialData, onSubmit, onClose, aircraftI
         hasHeatedCabin: false,
         hasAirConditioning: false,
         hasApu: false,
-      }
+      },
     },
   });
 
@@ -135,7 +141,7 @@ export default function AircraftForm({ initialData, onSubmit, onClose, aircraftI
       toast.error('Registration is required');
       return;
     }
-    
+
     setIsSaving(true);
     setError(null);
     try {
@@ -154,7 +160,9 @@ export default function AircraftForm({ initialData, onSubmit, onClose, aircraftI
 
   const handleClose = () => {
     if (isDirty) {
-      const shouldSave = window.confirm('You have unsaved changes. Would you like to save before closing?');
+      const shouldSave = window.confirm(
+        'You have unsaved changes. Would you like to save before closing?'
+      );
       if (shouldSave) {
         handleSave().then(() => {
           onClose?.();
@@ -177,12 +185,12 @@ export default function AircraftForm({ initialData, onSubmit, onClose, aircraftI
         <div className="grid grid-cols-1 gap-4">
           <Select
             label="Status"
-            {...register("status")}
+            {...register('status')}
             error={errors.status?.message}
             options={[
               { value: 'ACTIVE', label: 'Active' },
               { value: 'MAINTENANCE', label: 'Maintenance' },
-              { value: 'INACTIVE', label: 'Inactive' }
+              { value: 'INACTIVE', label: 'Inactive' },
             ]}
           />
         </div>
@@ -194,12 +202,12 @@ export default function AircraftForm({ initialData, onSubmit, onClose, aircraftI
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             label="Registration *"
-            {...register("registration")}
+            {...register('registration')}
             error={errors.registration?.message}
           />
           <Select
             label="Aircraft Type *"
-            {...register("type")}
+            {...register('type')}
             error={errors.type?.message}
             options={[
               { value: AircraftType.LIGHT_JET, label: 'Light Jet' },
@@ -208,28 +216,20 @@ export default function AircraftForm({ initialData, onSubmit, onClose, aircraftI
               { value: AircraftType.HEAVY_JET, label: 'Heavy Jet' },
               { value: AircraftType.ULTRA_LONG_RANGE_JET, label: 'Ultra Long Range Jet' },
               { value: AircraftType.TURBOPROP, label: 'Turboprop' },
-              { value: AircraftType.HELICOPTER, label: 'Helicopter' }
+              { value: AircraftType.HELICOPTER, label: 'Helicopter' },
             ]}
           />
-          <Input
-            label="Manufacturer *"
-            {...register("make")}
-            error={errors.make?.message}
-          />
-          <Input
-            label="Model *"
-            {...register("model")}
-            error={errors.model?.message}
-          />
+          <Input label="Manufacturer *" {...register('make')} error={errors.make?.message} />
+          <Input label="Model *" {...register('model')} error={errors.model?.message} />
           <Input
             label="Year *"
             type="number"
-            {...register("year", { valueAsNumber: true })}
+            {...register('year', { valueAsNumber: true })}
             error={errors.year?.message}
           />
           <Input
             label="Base Airport"
-            {...register("baseAirport")}
+            {...register('baseAirport')}
             error={errors.baseAirport?.message}
           />
         </div>
@@ -242,13 +242,13 @@ export default function AircraftForm({ initialData, onSubmit, onClose, aircraftI
           <Input
             label="Cockpit Crew *"
             type="number"
-            {...register("specifications.cockpitCrew", { valueAsNumber: true })}
+            {...register('specifications.cockpitCrew', { valueAsNumber: true })}
             error={errors.specifications?.cockpitCrew?.message}
           />
           <Input
             label="Cabin Crew"
             type="number"
-            {...register("specifications.cabinCrew", { valueAsNumber: true })}
+            {...register('specifications.cabinCrew', { valueAsNumber: true })}
             error={errors.specifications?.cabinCrew?.message}
           />
         </div>
@@ -261,25 +261,25 @@ export default function AircraftForm({ initialData, onSubmit, onClose, aircraftI
           <Input
             label="Maximum Passengers *"
             type="number"
-            {...register("specifications.maxPassengers", { valueAsNumber: true })}
+            {...register('specifications.maxPassengers', { valueAsNumber: true })}
             error={errors.specifications?.maxPassengers?.message}
           />
           <Input
             label="Maximum Baggage Weight (kg) *"
             type="number"
-            {...register("specifications.maxBaggageWeight", { valueAsNumber: true })}
+            {...register('specifications.maxBaggageWeight', { valueAsNumber: true })}
             error={errors.specifications?.maxBaggageWeight?.message}
           />
           <Input
             label="Last Interior Refurbishment"
             type="number"
-            {...register("specifications.lastInteriorRefurb", { valueAsNumber: true })}
+            {...register('specifications.lastInteriorRefurb', { valueAsNumber: true })}
             error={errors.specifications?.lastInteriorRefurb?.message}
           />
           <Input
             label="Last Exterior Refurbishment"
             type="number"
-            {...register("specifications.lastExteriorRefurb", { valueAsNumber: true })}
+            {...register('specifications.lastExteriorRefurb', { valueAsNumber: true })}
             error={errors.specifications?.lastExteriorRefurb?.message}
           />
         </div>
@@ -289,69 +289,71 @@ export default function AircraftForm({ initialData, onSubmit, onClose, aircraftI
       <div className="bg-gray-50 p-4 rounded-lg">
         <h3 className="text-lg font-medium mb-4">Amenities & Features</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <label className="flex items-center space-x-2">
+          <label htmlFor="isPressurized" className="flex items-center space-x-2">
             <input
+              id="isPressurized"
               type="checkbox"
-              {...register("specifications.isPressurized")}
+              {...register('specifications.isPressurized')}
               className="rounded border-gray-300"
             />
             <span>Pressurized Cabin</span>
           </label>
-          <label className="flex items-center space-x-2">
+          <label htmlFor="hasWc" className="flex items-center space-x-2">
             <input
+              id="hasWc"
               type="checkbox"
-              {...register("specifications.hasWc")}
+              {...register('specifications.hasWc')}
               className="rounded border-gray-300"
             />
             <span>Lavatory</span>
           </label>
-          <label className="flex items-center space-x-2">
+          <label htmlFor="isUnpavedRunwayCapable" className="flex items-center space-x-2">
             <input
+              id="isUnpavedRunwayCapable"
               type="checkbox"
-              {...register("specifications.isUnpavedRunwayCapable")}
+              {...register('specifications.isUnpavedRunwayCapable')}
               className="rounded border-gray-300"
             />
             <span>Unpaved Runway Capable</span>
           </label>
-          <label className="flex items-center space-x-2">
+          <label htmlFor="allowsPets" className="flex items-center space-x-2">
             <input
+              id="allowsPets"
               type="checkbox"
-              {...register("specifications.allowsPets")}
+              {...register('specifications.allowsPets')}
               className="rounded border-gray-300"
             />
             <span>Pets Allowed</span>
           </label>
-          <label className="flex items-center space-x-2">
+          <label htmlFor="hasHeatedCabin" className="flex items-center space-x-2">
             <input
+              id="hasHeatedCabin"
               type="checkbox"
-              {...register("specifications.hasHeatedCabin")}
+              {...register('specifications.hasHeatedCabin')}
               className="rounded border-gray-300"
             />
             <span>Heated Cabin</span>
           </label>
-          <label className="flex items-center space-x-2">
+          <label htmlFor="hasAirConditioning" className="flex items-center space-x-2">
             <input
+              id="hasAirConditioning"
               type="checkbox"
-              {...register("specifications.hasAirConditioning")}
+              {...register('specifications.hasAirConditioning')}
               className="rounded border-gray-300"
             />
             <span>Air Conditioning</span>
           </label>
-          <label className="flex items-center space-x-2">
+          <label htmlFor="hasApu" className="flex items-center space-x-2">
             <input
+              id="hasApu"
               type="checkbox"
-              {...register("specifications.hasApu")}
+              {...register('specifications.hasApu')}
               className="rounded border-gray-300"
             />
             <span>APU</span>
           </label>
           <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              disabled
-              checked={false}
-              className="rounded border-gray-300"
-            />
+            <input type="checkbox" disabled checked={false} className="rounded border-gray-300" />
             <span className="text-gray-500">Smoking (Not Allowed)</span>
           </label>
         </div>
@@ -362,7 +364,8 @@ export default function AircraftForm({ initialData, onSubmit, onClose, aircraftI
         <h3 className="text-lg font-medium mb-4">Description</h3>
         <div className="grid grid-cols-1 gap-4">
           <textarea
-            {...register("specifications.blurb")}
+            id="aircraft-blurb"
+            {...register('specifications.blurb')}
             className="w-full h-32 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             placeholder="Enter a brief description of the aircraft (max 500 characters)"
             maxLength={500}
@@ -416,16 +419,10 @@ export default function AircraftForm({ initialData, onSubmit, onClose, aircraftI
         </div>
       </div>
 
-      {error && (
-        <div className="text-red-500 text-sm">{error}</div>
-      )}
+      {error && <div className="text-red-500 text-sm">{error}</div>}
 
       <div className="flex justify-between space-x-4">
-        <Button
-          type="button"
-          variant="outlined"
-          onClick={handleClose}
-        >
+        <Button type="button" variant="outlined" onClick={handleClose}>
           Close
         </Button>
         <div className="flex space-x-4">
@@ -438,14 +435,11 @@ export default function AircraftForm({ initialData, onSubmit, onClose, aircraftI
           >
             {isSaving ? 'Saving...' : 'Save Progress'}
           </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-          >
+          <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Creating...' : aircraftId ? 'Update Aircraft' : 'Create Aircraft'}
           </Button>
         </div>
       </div>
     </form>
   );
-} 
+}

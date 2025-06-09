@@ -404,6 +404,7 @@ export default function AirportSelect({
               src={cityImageUrl}
               alt={`${selectedValue.city}, ${selectedValue.country}`}
               fill
+              sizes="(max-width: 768px) 100vw, 400px"
               style={{ objectFit: 'cover' }}
               loading="lazy"
             />

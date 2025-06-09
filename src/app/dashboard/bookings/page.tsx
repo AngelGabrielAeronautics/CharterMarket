@@ -82,7 +82,10 @@ export default function BookingsPage() {
                     Status: <strong>{b.status}</strong>
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Total: <strong>${b.totalPrice.toFixed(2)}</strong>
+                    Total:{' '}
+                    <strong>
+                      ${((b as any).totalPrice || b.payment?.totalAmount || 0).toFixed(2)}
+                    </strong>
                   </Typography>
                 </Box>
               </Box>

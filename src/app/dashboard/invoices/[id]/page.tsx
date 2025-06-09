@@ -13,6 +13,19 @@ export default function InvoiceDetailsPage() {
 
   const { invoice, loading, error } = useInvoiceDetail(invoiceId);
 
+  // helper
+  const toJsDate = (value: any): Date => {
+    if (!value) return new Date();
+    if (typeof value.toDate === 'function') return value.toDate();
+    if (typeof value.seconds === 'number' && typeof value.nanoseconds === 'number') {
+      return new Date(value.seconds * 1000 + value.nanoseconds / 1e6);
+    }
+    if (typeof value._seconds === 'number' && typeof value._nanoseconds === 'number') {
+      return new Date(value._seconds * 1000 + value._nanoseconds / 1e6);
+    }
+    return new Date(value);
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" sx={{ p: 4, height: '80vh' }}>
@@ -116,7 +129,7 @@ export default function InvoiceDetailsPage() {
           {/* @ts-ignore MUI Grid type inference issue with 'item' prop */}
           <Grid size={6}>
             <Typography sx={{ textAlign: 'right' }}>
-              {format(invoice.createdAt.toDate(), 'dd MMM yyyy')}
+              {format(toJsDate(invoice.createdAt), 'dd MMM yyyy')}
             </Typography>
           </Grid>
         </Grid>

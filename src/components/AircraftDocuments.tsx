@@ -89,16 +89,15 @@ export default function AircraftDocuments({ aircraftId }: AircraftDocumentsProps
         <h2 className="text-xl font-semibold">Aircraft Documents</h2>
         <div>
           <input
+            id="aircraft-document-upload"
+            name="aircraftDocuments"
             type="file"
             ref={fileInputRef}
             onChange={handleFileUpload}
             multiple
             className="hidden"
           />
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-          >
+          <Button onClick={() => fileInputRef.current?.click()} disabled={uploading}>
             {uploading ? (
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
             ) : (
@@ -130,16 +129,13 @@ export default function AircraftDocuments({ aircraftId }: AircraftDocumentsProps
               <div>
                 <h4 className="font-medium">{document.name}</h4>
                 <p className="text-sm text-gray-500">
-                  {formatFileSize(document.size)} • Uploaded {format(document.uploadedAt, 'MMM d, yyyy')}
+                  {formatFileSize(document.size)} • Uploaded{' '}
+                  {format(document.uploadedAt, 'MMM d, yyyy')}
                 </p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => handleDownload(document)}
-              >
+              <Button variant="outlined" size="small" onClick={() => handleDownload(document)}>
                 <Download className="h-4 w-4 mr-1" />
                 Download
               </Button>
@@ -164,4 +160,4 @@ export default function AircraftDocuments({ aircraftId }: AircraftDocumentsProps
       </div>
     </div>
   );
-} 
+}

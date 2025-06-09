@@ -54,6 +54,10 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
+        url: '/branding/favicon/Charter-favicon.svg',
+        type: 'image/svg+xml',
+      },
+      {
         url: '/branding/favicon/Charter-favicon-16x16.png',
         sizes: '16x16',
         type: 'image/png',
@@ -64,8 +68,19 @@ export const metadata: Metadata = {
         type: 'image/png',
       },
       {
-        url: '/branding/favicon/favicon.ico',
+        url: '/branding/favicon/Charter-favicon-48x48.png',
+        sizes: '48x48',
+        type: 'image/png',
+      },
+      {
+        url: '/branding/favicon/Charter-favicon-96x96.png',
+        sizes: '96x96',
+        type: 'image/png',
+      },
+      {
+        url: '/favicon.ico',
         sizes: 'any',
+        type: 'image/x-icon',
       },
     ],
     apple: [
@@ -75,10 +90,28 @@ export const metadata: Metadata = {
         type: 'image/png',
       },
     ],
+    other: [
+      {
+        rel: 'icon',
+        url: '/branding/favicon/Charter-favicon-192x192.png',
+        sizes: '192x192',
+        type: 'image/png',
+      },
+      {
+        rel: 'icon',
+        url: '/branding/favicon/Charter-favicon-512x512.png',
+        sizes: '512x512',
+        type: 'image/png',
+      },
+    ],
   },
   robots: {
     index: true,
     follow: true,
+  },
+  other: {
+    'msapplication-TileColor': '#1A2B3C',
+    'msapplication-TileImage': '/branding/favicon/Charter-favicon-96x96.png',
   },
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.chartermarket.app'),
 };
@@ -88,6 +121,7 @@ export const viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
+  themeColor: '#1A2B3C',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

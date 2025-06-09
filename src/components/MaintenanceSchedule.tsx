@@ -3,7 +3,13 @@
 import { useState, useEffect } from 'react';
 import { MaintenanceSchedule } from '@/types/aircraft';
 import { Button } from '@/components/ui/Button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/Dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/Dialog';
 import { Plus, Wrench, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/Calendar';
@@ -19,7 +25,9 @@ export default function MaintenanceScheduleComponent({ aircraftId }: Maintenance
   const [error, setError] = useState<string | null>(null);
   const [isAddingMaintenance, setIsAddingMaintenance] = useState(false);
   const [selectedDates, setSelectedDates] = useState<DateRange | undefined>(undefined);
-  const [maintenanceType, setMaintenanceType] = useState<'scheduled' | 'unscheduled' | 'inspection'>('scheduled');
+  const [maintenanceType, setMaintenanceType] = useState<
+    'scheduled' | 'unscheduled' | 'inspection'
+  >('scheduled');
   const [description, setDescription] = useState('');
   const [technician, setTechnician] = useState('');
   const [notes, setNotes] = useState('');
@@ -120,7 +128,9 @@ export default function MaintenanceScheduleComponent({ aircraftId }: Maintenance
                 </label>
                 <select
                   value={maintenanceType}
-                  onChange={(e) => setMaintenanceType(e.target.value as 'scheduled' | 'unscheduled' | 'inspection')}
+                  onChange={(e) =>
+                    setMaintenanceType(e.target.value as 'scheduled' | 'unscheduled' | 'inspection')
+                  }
                   className="w-full rounded-lg border border-gray-300 px-3 py-2"
                 >
                   <option value="scheduled">Scheduled Maintenance</option>
@@ -129,10 +139,15 @@ export default function MaintenanceScheduleComponent({ aircraftId }: Maintenance
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="maintenance-description"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Description
                 </label>
                 <input
+                  id="maintenance-description"
+                  name="description"
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -141,10 +156,15 @@ export default function MaintenanceScheduleComponent({ aircraftId }: Maintenance
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="maintenance-technician"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Technician
                 </label>
                 <input
+                  id="maintenance-technician"
+                  name="technician"
                   type="text"
                   value={technician}
                   onChange={(e) => setTechnician(e.target.value)}
@@ -153,9 +173,7 @@ export default function MaintenanceScheduleComponent({ aircraftId }: Maintenance
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Notes
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
@@ -165,9 +183,7 @@ export default function MaintenanceScheduleComponent({ aircraftId }: Maintenance
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date Range
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
                 <Calendar
                   mode="range"
                   selected={selectedDates}
@@ -204,17 +220,14 @@ export default function MaintenanceScheduleComponent({ aircraftId }: Maintenance
               <div>
                 <div className="flex items-center space-x-2">
                   <Wrench className="h-5 w-5" />
-                  <h4 className="font-medium">
-                    {maintenance.description}
-                  </h4>
+                  <h4 className="font-medium">{maintenance.description}</h4>
                 </div>
                 <p className="text-sm mt-1">
-                  {format(maintenance.startDate.toDate(), 'MMM d, yyyy')} - {format(maintenance.endDate.toDate(), 'MMM d, yyyy')}
+                  {format(maintenance.startDate.toDate(), 'MMM d, yyyy')} -{' '}
+                  {format(maintenance.endDate.toDate(), 'MMM d, yyyy')}
                 </p>
                 {maintenance.technician && (
-                  <p className="text-sm mt-1">
-                    Technician: {maintenance.technician}
-                  </p>
+                  <p className="text-sm mt-1">Technician: {maintenance.technician}</p>
                 )}
               </div>
               <div className="flex items-center space-x-2">
@@ -238,18 +251,14 @@ export default function MaintenanceScheduleComponent({ aircraftId }: Maintenance
                 )}
               </div>
             </div>
-            {maintenance.notes && (
-              <p className="mt-2 text-sm">{maintenance.notes}</p>
-            )}
+            {maintenance.notes && <p className="mt-2 text-sm">{maintenance.notes}</p>}
           </div>
         ))}
 
         {schedule.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            No maintenance records found
-          </div>
+          <div className="text-center py-12 text-gray-500">No maintenance records found</div>
         )}
       </div>
     </div>
   );
-} 
+}

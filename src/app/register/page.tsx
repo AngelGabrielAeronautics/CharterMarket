@@ -1,17 +1,21 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useModal } from '@/contexts/ModalContext';
 
 export default function RegisterPage() {
   const router = useRouter();
   const { openRegisterModal } = useModal();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
+    const redirect = searchParams.get('redirect');
+    if (redirect) {
+      sessionStorage.setItem('postAuthRedirect', redirect);
+    }
     openRegisterModal();
-    router.replace('/');
-  }, [openRegisterModal, router]);
+  }, [openRegisterModal, searchParams]);
 
   return null;
-} 
+}

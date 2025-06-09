@@ -61,7 +61,7 @@ export default function UpcomingFlights({ userCode }: UpcomingFlightsProps) {
 
   const upcomingBookings = processedBookings.filter(
     (booking) =>
-      booking.status !== 'cancelled' &&
+      !['cancelled', 'credited', 'refunded', 'archived'].includes(booking.status) &&
       (isFuture(booking.departureDateObj) || isToday(booking.departureDateObj))
   );
 
@@ -117,20 +117,32 @@ export default function UpcomingFlights({ userCode }: UpcomingFlightsProps) {
 
     return (
       <Stack spacing={2} sx={{ mt: 2 }}>
-        {displayedBookings.map((booking) => (
-          <FlightStatusCard
-            key={booking.id}
-            bookingId={booking.bookingId}
-            departureAirport={booking.routing.departureAirport}
-            arrivalAirport={booking.routing.arrivalAirport}
-            departureDate={booking.departureDateObj}
-            status={booking.status}
-            flightNumber={booking.flightNumber}
-            operatorName={booking.operatorName}
-            isPaid={booking.isPaid}
-            onClick={() => handleFlightCardClick(booking.id)}
-          />
-        ))}
+        {displayedBookings.map((booking) => {
+          // Support both legacy and new booking structures
+          const bookingAny = booking as any;
+          const flightNumber = bookingAny.flightNumber || booking.flightDetails?.flightNumber;
+          const operatorName = bookingAny.operatorName || booking.operator?.operatorName;
+          const isPaid =
+            bookingAny.isPaid !== undefined
+              ? bookingAny.isPaid
+              : booking.payment?.amountPending === 0 ||
+                booking.payment?.amountPaid >= booking.payment?.totalAmount;
+
+          return (
+            <FlightStatusCard
+              key={booking.id}
+              bookingId={booking.bookingId}
+              departureAirport={booking.routing.departureAirport}
+              arrivalAirport={booking.routing.arrivalAirport}
+              departureDate={booking.departureDateObj}
+              status={booking.status}
+              flightNumber={flightNumber}
+              operatorName={operatorName}
+              isPaid={isPaid}
+              onClick={() => handleFlightCardClick(booking.id)}
+            />
+          );
+        })}
       </Stack>
     );
   };

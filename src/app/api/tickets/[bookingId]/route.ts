@@ -1,30 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getBookingById } from '@/lib/booking';
-import { getPassengersForBooking } from '@/lib/passenger';
+import { getAdminDb } from '@/lib/firebase-admin';
+import type { Booking } from '@/types/booking';
+import type { Passenger } from '@/types/passenger';
 import { generateETicketNumber } from '@/lib/serials';
-import { getAirportByICAO } from '@/lib/airport';
-import { db } from '@/lib/firebase';
-import { Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 
 export async function GET(_req: NextRequest, context: any) {
   try {
-    const bookingId = context.params.bookingId as string;
+    const params = await context.params;
+    const bookingId = params.bookingId;
 
-    // Get booking data
-    const booking = await getBookingById(bookingId);
-    if (!booking) {
+    // Fetch booking via Admin SDK (bypass security rules)
+    const adminDb = getAdminDb();
+    if (!adminDb) {
+      return NextResponse.json({ error: 'Server database unavailable' }, { status: 500 });
+    }
+    const bookingRef = adminDb.collection('bookings').doc(bookingId);
+    const bookingSnap = await bookingRef.get();
+    if (!bookingSnap.exists) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
+    const booking = bookingSnap.data() as Booking;
 
-    const passengers = await getPassengersForBooking(bookingId);
+    // Fetch passengers via Admin SDK
+    const paxRef = adminDb.collection('passengers');
+    const paxSnap = await paxRef.where('bookingId', '==', bookingId).get();
+    const passengers = paxSnap.docs.map((d) => d.data() as Passenger);
     if (!passengers.length) {
       return NextResponse.json({ error: 'No passengers found for this booking' }, { status: 404 });
     }
 
-    // Resolve airport details
-    const depInfo = await getAirportByICAO(booking.routing.departureAirport);
-    const arrInfo = await getAirportByICAO(booking.routing.arrivalAirport);
+    // Fetch airport data via Admin SDK to bypass client security rules
+    const airportsColl = adminDb.collection('airports');
+    // Departure airport
+    const depSnapshot = await airportsColl
+      .where('icao', '==', booking.routing.departureAirport.toUpperCase())
+      .limit(1)
+      .get();
+    const depInfo = depSnapshot.docs.length ? (depSnapshot.docs[0].data() as any) : null;
+    // Arrival airport
+    const arrSnapshot = await airportsColl
+      .where('icao', '==', booking.routing.arrivalAirport.toUpperCase())
+      .limit(1)
+      .get();
+    const arrInfo = arrSnapshot.docs.length ? (arrSnapshot.docs[0].data() as any) : null;
 
     // Format departure date and time
     let departureDateTime = 'N/A';
@@ -119,8 +138,8 @@ export async function GET(_req: NextRequest, context: any) {
         
         <div class="flight-info">
           <h2>Flight Details</h2>
-          <p><strong>Operated by:</strong> ${booking.operatorName || 'N/A'}</p>
-          <p><strong>Flight Number:</strong> ${booking.flightNumber || 'N/A'}</p>
+          <p><strong>Operated by:</strong> ${(booking as any).operatorName || booking.operator?.operatorName || 'N/A'}</p>
+          <p><strong>Flight Number:</strong> ${(booking as any).flightNumber || booking.flightDetails?.flightNumber || 'N/A'}</p>
           <p>
             <strong>From:</strong> ${depInfo?.name || booking.routing.departureAirport} 
             (${depInfo?.iata || ''}/${booking.routing.departureAirport})<br/>
@@ -168,10 +187,7 @@ export async function GET(_req: NextRequest, context: any) {
   } catch (error: any) {
     console.error('Error generating e-ticket:', error);
     return NextResponse.json(
-      {
-        error: 'Failed to generate ticket',
-        details: error.message,
-      },
+      { error: 'Failed to generate ticket', details: error.message },
       { status: 500 }
     );
   }

@@ -16,6 +16,7 @@ import { Box, Container, IconButton, Tooltip } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
 import { markEmailVerified } from '@/lib/user';
+import { operatorHasAircraft } from '@/lib/aircraft';
 
 interface UserData {
   email: string;
@@ -26,7 +27,6 @@ interface UserData {
   firstName: string;
   status: UserStatus;
   isProfileComplete: boolean;
-  hasAircraft: boolean;
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -34,6 +34,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [loading, setLoading] = useState(true);
   const muiTheme = useMuiTheme();
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [operatorHasAircraftState, setOperatorHasAircraftState] = useState<boolean>(false);
+  const [aircraftCheckLoading, setAircraftCheckLoading] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSideNavMini, setIsSideNavMini] = useState(false);
   // Width of the sidebar drawer (to offset content when open on mobile)
@@ -93,7 +95,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           firstName: userDocData.firstName || firebaseUser.email!.split('@')[0],
           status: userDocData.status as UserStatus,
           isProfileComplete: userDocData.isProfileComplete || false,
-          hasAircraft: userDocData.hasAircraft || false,
         };
 
         setUserData(currentUserData);
@@ -141,6 +142,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         );
     }
   }, [userData]); // Rerun when userData changes, specifically userData.emailVerified
+
+  // Check if operator has aircraft when userData changes
+  useEffect(() => {
+    if (userData && userData.role === 'operator') {
+      setAircraftCheckLoading(true);
+      operatorHasAircraft(userData.userCode)
+        .then((hasAircraft) => {
+          setOperatorHasAircraftState(hasAircraft);
+        })
+        .catch((error) => {
+          console.error('Error checking if operator has aircraft:', error);
+          setOperatorHasAircraftState(false);
+        })
+        .finally(() => {
+          setAircraftCheckLoading(false);
+        });
+    }
+  }, [userData]);
 
   if (loading || !userData) {
     return <LoadingSpinner fullscreen />;
@@ -258,12 +277,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {userData && !userData.emailVerified && (
               <EmailVerificationBanner isVerified={userData.emailVerified} />
             )}
-            {userData && userData.role === 'operator' && (
+            {userData && userData.role === 'operator' && !aircraftCheckLoading && (
               <OperatorOnboardingBanner
                 profile={{
                   status: userData.status,
                   isProfileComplete: userData.isProfileComplete,
-                  hasAircraft: userData.hasAircraft,
+                  hasAircraft: operatorHasAircraftState,
                 }}
                 isEmailVerified={userData.emailVerified}
               />

@@ -238,17 +238,19 @@ export default function AdminCalendarPage() {
           </Tooltip>
 
           <Tooltip title="Refresh data">
-            <IconButton onClick={handleRefresh} disabled={isRefreshing}>
-              <RefreshIcon
-                sx={{
-                  animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
-                  '@keyframes spin': {
-                    '0%': { transform: 'rotate(0deg)' },
-                    '100%': { transform: 'rotate(360deg)' },
-                  },
-                }}
-              />
-            </IconButton>
+            <span>
+              <IconButton onClick={handleRefresh} disabled={isRefreshing}>
+                <RefreshIcon
+                  sx={{
+                    animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
+                    '@keyframes spin': {
+                      '0%': { transform: 'rotate(0deg)' },
+                      '100%': { transform: 'rotate(360deg)' },
+                    },
+                  }}
+                />
+              </IconButton>
+            </span>
           </Tooltip>
         </Box>
       </Box>
@@ -275,8 +277,9 @@ export default function AdminCalendarPage() {
               size={{
                 xs: 12,
                 sm: 6,
-                md: 3
-              }}>
+                md: 3,
+              }}
+            >
               <FormControl fullWidth size="small">
                 <InputLabel>Status</InputLabel>
                 <Select
@@ -297,8 +300,9 @@ export default function AdminCalendarPage() {
               size={{
                 xs: 12,
                 sm: 6,
-                md: 3
-              }}>
+                md: 3,
+              }}
+            >
               <FormControl fullWidth size="small">
                 <InputLabel>Operator</InputLabel>
                 <Select
@@ -321,8 +325,9 @@ export default function AdminCalendarPage() {
               size={{
                 xs: 12,
                 sm: 6,
-                md: 3
-              }}>
+                md: 3,
+              }}
+            >
               <FormControl fullWidth size="small">
                 <InputLabel>Date Range</InputLabel>
                 <Select
@@ -343,8 +348,9 @@ export default function AdminCalendarPage() {
               size={{
                 xs: 12,
                 sm: 6,
-                md: 3
-              }}>
+                md: 3,
+              }}
+            >
               <TextField
                 fullWidth
                 size="small"

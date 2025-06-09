@@ -73,7 +73,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 : null,
               status: raw.status,
               isProfileComplete: raw.isProfileComplete,
-              hasAircraft: raw.hasAircraft,
               dormantDate: raw.dormantDate ? (raw.dormantDate as Timestamp).toDate() : null,
             };
             setProfile(profileData);

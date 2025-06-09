@@ -1,14 +1,16 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { useClientQuoteRequests } from '@/hooks/useFlights';
-import { QuoteRequest } from '@/types/flight';
+import {
+  useClientQuoteRequests,
+  useOperatorQuoteRequests,
+  useOperatorSubmittedQuotes,
+} from '@/hooks/useFlights';
+import { QuoteRequest, Offer } from '@/types/flight';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
-import { PlusIcon, Loader2, ListIcon, GridIcon } from 'lucide-react';
-import SearchIconMui from '@mui/icons-material/Search';
-import FlightIconMui from '@mui/icons-material/Flight';
+import { PlusIcon, Loader2, ArrowRightIcon, RefreshCwIcon } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -32,94 +34,291 @@ import {
   IconButton,
   Tooltip,
   InputAdornment,
-  type GridProps,
+  Chip,
+  Paper,
+  Alert,
 } from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
+import SearchIconMui from '@mui/icons-material/Search';
+import FlightIconMui from '@mui/icons-material/Flight';
+import {
+  LocalOffer as LocalOfferIcon,
+  CheckCircle as CheckCircleIcon,
+  Pending as PendingIcon,
+  TrendingUp as TrendingUpIcon,
+  Assignment as AssignmentIcon,
+} from '@mui/icons-material';
 
-// Define the GridItem component props type for Material UI v7
-interface GridItemProps extends GridProps {
-  xs?: number | boolean;
-  sm?: number | boolean;
-  md?: number | boolean;
-  lg?: number | boolean;
-  children?: React.ReactNode;
-}
-
-// Create a custom GridItem component to work with Material UI v7
-const GridItem: React.FC<GridItemProps> = ({ children, ...props }) => (
-  <Grid component="div">
-    {children}
-  </Grid>
+// Dashboard Stats Card Component
+const StatsCard = ({
+  title,
+  value,
+  icon,
+  color,
+  description,
+}: {
+  title: string;
+  value: number;
+  icon: React.ReactNode;
+  color: 'primary' | 'secondary' | 'success' | 'warning' | 'info';
+  description?: string;
+}) => (
+  <Card sx={{ height: '100%' }}>
+    <CardContent>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box>
+          <Typography color="text.secondary" gutterBottom variant="h6">
+            {title}
+          </Typography>
+          <Typography variant="h4" component="div" color={`${color}.main`}>
+            {value}
+          </Typography>
+          {description && (
+            <Typography variant="body2" color="text.secondary">
+              {description}
+            </Typography>
+          )}
+        </Box>
+        <Box sx={{ color: `${color}.main` }}>{icon}</Box>
+      </Box>
+    </CardContent>
+  </Card>
 );
 
-export default function QuoteRequestsPage() {
+// Recent Items Table Component
+const RecentItemsTable = ({
+  title,
+  items,
+  type,
+  loading,
+  viewAllLink,
+}: {
+  title: string;
+  items: any[];
+  type: 'requests' | 'quotes';
+  loading: boolean;
+  viewAllLink: string;
+}) => (
+  <Card sx={{ height: '100%' }}>
+    <CardContent>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6" component="h2">
+          {title}
+        </Typography>
+        <Link href={viewAllLink}>
+          <Button size="small" variant="outlined" endIcon={<ArrowRightIcon className="h-4 w-4" />}>
+            View All
+          </Button>
+        </Link>
+      </Box>
+
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+          <CircularProgress size={24} />
+        </Box>
+      ) : items.length === 0 ? (
+        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', p: 3 }}>
+          No recent {type} found
+        </Typography>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {type === 'requests' ? (
+                <>
+                  <TableHead>Request Code</TableHead>
+                  <TableHead>Route</TableHead>
+                  <TableHead>Status</TableHead>
+                </>
+              ) : (
+                <>
+                  <TableHead>Quote ID</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Status</TableHead>
+                </>
+              )}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.slice(0, 5).map((item) => (
+              <TableRow key={item.id || item.offerId}>
+                {type === 'requests' ? (
+                  <>
+                    <TableCell>
+                      <Link
+                        href={`/dashboard/quotes/incoming/${item.id}`}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        {item.requestCode}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      {item.routing.departureAirport} → {item.routing.arrivalAirport}
+                    </TableCell>
+                    <TableCell>
+                      <Chip label={item.status} size="small" color={getStatusColor(item.status)} />
+                    </TableCell>
+                  </>
+                ) : (
+                  <>
+                    <TableCell>
+                      <Link
+                        href={`/dashboard/my-quotes`}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        {item.offerId || item.id}
+                      </Link>
+                    </TableCell>
+                    <TableCell>${item.price?.toFixed(2) || '0.00'}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={item.offerStatus || item.status}
+                        size="small"
+                        color={getQuoteStatusColor(item.offerStatus || item.status)}
+                      />
+                    </TableCell>
+                  </>
+                )}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </CardContent>
+  </Card>
+);
+
+// Status color helper functions
+const getStatusColor = (
+  status: string
+): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
+  switch (status) {
+    case 'submitted':
+    case 'pending':
+      return 'primary';
+    case 'under-operator-review':
+      return 'warning';
+    case 'under-offer':
+    case 'quoted':
+      return 'info';
+    case 'accepted':
+    case 'booked':
+      return 'success';
+    case 'cancelled':
+      return 'error';
+    default:
+      return 'default';
+  }
+};
+
+const getQuoteStatusColor = (
+  status: string
+): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
+  switch (status) {
+    case 'pending-client-acceptance':
+      return 'warning';
+    case 'accepted-by-client':
+      return 'success';
+    case 'rejected-by-client':
+      return 'error';
+    case 'awaiting-acknowledgement':
+      return 'info';
+    default:
+      return 'default';
+  }
+};
+
+export default function QuotesDashboardPage() {
   const { user } = useAuth();
-  const { requests, loading, error } = useClientQuoteRequests(user?.userCode);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showSearchModal, setShowSearchModal] = useState(false);
-  const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
-  const [searchTerm, setSearchTerm] = useState('');
+
+  // Handle different user types
+  const isOperator = user?.role === 'operator';
+  const isClient = user?.role === 'passenger' || user?.role === 'agent';
+
+  // Operator data
+  const {
+    requests: incomingRequests,
+    loading: requestsLoading,
+    error: requestsError,
+    refreshRequests,
+  } = useOperatorQuoteRequests(isOperator ? user?.userCode : undefined);
+
+  const {
+    quotes: submittedQuotes,
+    loading: quotesLoading,
+    error: quotesError,
+  } = useOperatorSubmittedQuotes(isOperator ? user?.userCode : undefined);
+
+  // Client data
+  const {
+    requests: clientRequests,
+    loading: clientRequestsLoading,
+    error: clientRequestsError,
+  } = useClientQuoteRequests(isClient ? user?.userCode : undefined);
 
   useEffect(() => {
     if (searchParams.get('submitted') === 'true') {
       setShowSearchModal(true);
-      // Remove the query param so modal doesn't show on refresh/navigation
       router.replace('/dashboard/quotes', { scroll: false });
       const timer = setTimeout(() => {
         setShowSearchModal(false);
-      }, 5000); // Close modal after 5 seconds
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [searchParams, router]);
 
-  const filteredRequests = useMemo(() => {
-    if (!searchTerm) return requests;
-    return requests.filter(
-      (req) =>
-        req.requestCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        req.routing.departureAirport.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        req.routing.arrivalAirport.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [requests, searchTerm]);
+  // Calculate stats for operators
+  const operatorStats = useMemo(() => {
+    if (!isOperator) return null;
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
-      </div>
-    );
-  }
+    const newRequestsCount = incomingRequests.filter(
+      (r) => r.status === 'submitted' || r.status === 'pending'
+    ).length;
 
-  if (error) {
-    return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-        {error}
-      </div>
-    );
-  }
+    const pendingQuotesCount = submittedQuotes.filter(
+      (q) => q.offerStatus === 'pending-client-acceptance'
+    ).length;
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return 'bg-gray-100 text-gray-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'quoted':
-        return 'bg-blue-100 text-blue-800';
-      case 'accepted':
-        return 'bg-green-100 text-green-800';
-      case 'confirmed':
-        return 'bg-purple-100 text-purple-800';
-      case 'completed':
-        return 'bg-gray-100 text-gray-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+    const acceptedQuotesCount = submittedQuotes.filter(
+      (q) => q.offerStatus === 'accepted-by-client'
+    ).length;
+
+    return {
+      newRequests: newRequestsCount,
+      totalRequests: incomingRequests.length,
+      pendingQuotes: pendingQuotesCount,
+      acceptedQuotes: acceptedQuotesCount,
+      totalQuotes: submittedQuotes.length,
+    };
+  }, [isOperator, incomingRequests, submittedQuotes]);
+
+  // Calculate stats for clients
+  const clientStats = useMemo(() => {
+    if (!isClient) return null;
+
+    const activeRequestsCount = clientRequests.filter(
+      (r) => !['cancelled', 'completed'].includes(r.status)
+    ).length;
+
+    const pendingRequestsCount = clientRequests.filter(
+      (r) => r.status === 'submitted' || r.status === 'pending'
+    ).length;
+
+    const quotedRequestsCount = clientRequests.filter(
+      (r) => r.status === 'under-offer' || r.status === 'quoted'
+    ).length;
+
+    return {
+      totalRequests: clientRequests.length,
+      activeRequests: activeRequestsCount,
+      pendingRequests: pendingRequestsCount,
+      quotedRequests: quotedRequestsCount,
+    };
+  }, [isClient, clientRequests]);
 
   const renderSearchModal = () => (
     <Dialog
@@ -159,42 +358,126 @@ export default function QuoteRequestsPage() {
     </Dialog>
   );
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">My quote requests</h1>
-        <div className="flex items-center space-x-2">
-          <MuiTextField
-            variant="outlined"
-            size="small"
-            placeholder="Search requests..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIconMui />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ width: '250px' }}
-          />
-          <Tooltip title="List View">
-            <IconButton
-              onClick={() => setViewMode('list')}
-              color={viewMode === 'list' ? 'primary' : 'default'}
-            >
-              <ListIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Card View">
-            <IconButton
-              onClick={() => setViewMode('card')}
-              color={viewMode === 'card' ? 'primary' : 'default'}
-            >
-              <GridIcon />
-            </IconButton>
-          </Tooltip>
+  // Show loading state
+  if (isOperator && (requestsLoading || quotesLoading)) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
+      </div>
+    );
+  }
+
+  if (isClient && clientRequestsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
+      </div>
+    );
+  }
+
+  // Operator Dashboard View
+  if (isOperator) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold">Quotes Dashboard</h1>
+            <p className="text-gray-600 mt-2">Manage your incoming requests and submitted quotes</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Tooltip title="Refresh Data">
+              <IconButton onClick={refreshRequests} color="primary">
+                <RefreshCwIcon className="h-5 w-5" />
+              </IconButton>
+            </Tooltip>
+          </div>
+        </div>
+
+        {/* Error Alerts */}
+        {requestsError && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {requestsError}
+          </Alert>
+        )}
+        {quotesError && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {quotesError}
+          </Alert>
+        )}
+
+        {/* Stats Cards */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatsCard
+              title="New Requests"
+              value={operatorStats?.newRequests || 0}
+              icon={<PendingIcon sx={{ fontSize: 40 }} />}
+              color="warning"
+              description="Awaiting your response"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatsCard
+              title="Total Requests"
+              value={operatorStats?.totalRequests || 0}
+              icon={<AssignmentIcon sx={{ fontSize: 40 }} />}
+              color="primary"
+              description="All incoming requests"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatsCard
+              title="Pending Quotes"
+              value={operatorStats?.pendingQuotes || 0}
+              icon={<LocalOfferIcon sx={{ fontSize: 40 }} />}
+              color="info"
+              description="Awaiting client response"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatsCard
+              title="Accepted Quotes"
+              value={operatorStats?.acceptedQuotes || 0}
+              icon={<CheckCircleIcon sx={{ fontSize: 40 }} />}
+              color="success"
+              description="Successfully booked"
+            />
+          </Grid>
+        </Grid>
+
+        {/* Recent Activity */}
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, lg: 6 }}>
+            <RecentItemsTable
+              title="Recent Incoming Requests"
+              items={incomingRequests}
+              type="requests"
+              loading={requestsLoading}
+              viewAllLink="/dashboard/quotes/incoming"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, lg: 6 }}>
+            <RecentItemsTable
+              title="Recent Submitted Quotes"
+              items={submittedQuotes}
+              type="quotes"
+              loading={quotesLoading}
+              viewAllLink="/dashboard/my-quotes"
+            />
+          </Grid>
+        </Grid>
+
+        {renderSearchModal()}
+      </div>
+    );
+  }
+
+  // Client Dashboard View (passengers/agents)
+  if (isClient) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">My Quote Requests</h1>
           <Link href="/dashboard/quotes/request">
             <Button className="flex items-center space-x-2">
               <PlusIcon className="h-5 w-5" />
@@ -202,108 +485,70 @@ export default function QuoteRequestsPage() {
             </Button>
           </Link>
         </div>
-      </div>
 
-      {viewMode === 'list' ? (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Request Code</TableHead>
-                <TableHead>Route</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Passengers</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredRequests.map((request) => (
-                <TableRow key={request.id}>
-                  <TableCell>{request.requestCode}</TableCell>
-                  <TableCell>
-                    {request.routing.departureAirport} → {request.routing.arrivalAirport}
-                  </TableCell>
-                  <TableCell>
-                    {format(request.routing.departureDate.toDate(), 'dd MMM yyyy')}
-                  </TableCell>
-                  <TableCell>{request.passengerCount}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(request.status)}`}
-                    >
-                      {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <Link
-                      href={`/dashboard/quotes/${request.id}`}
-                      className="text-indigo-600 hover:text-indigo-900"
-                    >
-                      View Details
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredRequests.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center">
-                    {searchTerm
-                      ? `No requests found for "${searchTerm}"`
-                      : 'No quote requests found.'}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      ) : (
-        <Grid container spacing={3}>
-          {filteredRequests.map((request) => (
-            <GridItem xs={12} sm={6} md={4} key={request.id}>
-              <Card className="h-full flex flex-col">
-                <CardContent className="flex-grow">
-                  <Typography variant="h6" gutterBottom>
-                    {request.requestCode}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {request.routing.departureAirport} → {request.routing.arrivalAirport}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Date: {format(request.routing.departureDate.toDate(), 'dd MMM yyyy')}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Passengers: {request.passengerCount}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Status:{' '}
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(request.status)}`}
-                    >
-                      {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                    </span>
-                  </Typography>
-                </CardContent>
-                <CardActions>
-                  <Link href={`/dashboard/quotes/${request.id}`} passHref>
-                    <Button size="small" variant="text">
-                      View Details
-                    </Button>
-                  </Link>
-                </CardActions>
-              </Card>
-            </GridItem>
-          ))}
-          {filteredRequests.length === 0 && (
-            <GridItem xs={12}>
-              <Typography variant="body1" align="center" sx={{ mt: 4 }}>
-                {searchTerm ? `No requests found for "${searchTerm}"` : 'No quote requests found.'}
-              </Typography>
-            </GridItem>
-          )}
+        {clientRequestsError && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {clientRequestsError}
+          </Alert>
+        )}
+
+        {/* Client Stats */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatsCard
+              title="Total Requests"
+              value={clientStats?.totalRequests || 0}
+              icon={<AssignmentIcon sx={{ fontSize: 40 }} />}
+              color="primary"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatsCard
+              title="Active Requests"
+              value={clientStats?.activeRequests || 0}
+              icon={<TrendingUpIcon sx={{ fontSize: 40 }} />}
+              color="info"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatsCard
+              title="Pending"
+              value={clientStats?.pendingRequests || 0}
+              icon={<PendingIcon sx={{ fontSize: 40 }} />}
+              color="warning"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatsCard
+              title="With Quotes"
+              value={clientStats?.quotedRequests || 0}
+              icon={<LocalOfferIcon sx={{ fontSize: 40 }} />}
+              color="success"
+            />
+          </Grid>
         </Grid>
-      )}
-      {renderSearchModal()}
+
+        {/* Recent Client Requests */}
+        <RecentItemsTable
+          title="Recent Quote Requests"
+          items={clientRequests}
+          type="requests"
+          loading={clientRequestsLoading}
+          viewAllLink="/dashboard/quotes/request"
+        />
+
+        {renderSearchModal()}
+      </div>
+    );
+  }
+
+  // Fallback for other user types
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold mb-4">Quotes Dashboard</h1>
+        <p className="text-gray-600">Please log in to view your quotes dashboard.</p>
+      </div>
     </div>
   );
 }

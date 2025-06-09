@@ -20,7 +20,7 @@ export const createPaymentServer = async (
       throw new Error('Firebase Admin Database not available');
     }
 
-    const paymentId = generatePaymentId();
+    const paymentId = generatePaymentId(invoiceId);
     const paymentData = {
       paymentId,
       bookingId,
@@ -153,6 +153,7 @@ export const processPaymentServer = async (
       throw new Error('Payment record not found');
     }
 
+    // Construct a Payment object from snapshot data
     const payment = { id: paymentSnap.id, ...paymentSnap.data() } as Payment;
 
     // Update payment status
@@ -179,5 +180,73 @@ export const processPaymentServer = async (
   } catch (error) {
     console.error('Error processing payment (server):', error);
     throw new Error('Failed to process payment');
+  }
+};
+
+/**
+ * Get all payments (server-side, admin function)
+ */
+export const getAllPaymentsServer = async (): Promise<Payment[]> => {
+  try {
+    const adminDb = getAdminDb();
+    if (!adminDb) {
+      throw new Error('Firebase Admin Database not available');
+    }
+    const allQuery = adminDb.collection('payments').orderBy('createdAt', 'desc');
+    const snapshot = await allQuery.get();
+    return snapshot.docs.map(
+      (doc) =>
+        ({
+          id: doc.id,
+          ...doc.data(),
+        }) as Payment
+    );
+  } catch (error) {
+    console.error('Error fetching all payments (server):', error);
+    throw new Error('Failed to fetch all payments');
+  }
+};
+
+/**
+ * Mark operator as paid (server-side, admin function)
+ */
+export const markOperatorAsPaidServer = async (
+  paymentId: string,
+  adminUserCode: string,
+  notes?: string
+): Promise<void> => {
+  try {
+    const adminDb = getAdminDb();
+    if (!adminDb) {
+      throw new Error('Firebase Admin Database not available');
+    }
+
+    const paymentRef = adminDb.collection('payments').doc(paymentId);
+    const paymentSnap = await paymentRef.get();
+
+    if (!paymentSnap.exists) {
+      throw new Error('Payment record not found to mark operator as paid.');
+    }
+
+    // We know the document exists, so assert data is not undefined
+    const paymentData = paymentSnap.data()!;
+
+    // Ensure the payment is completed before marking operator paid
+    if (paymentData.status !== 'completed' && paymentData.status !== 'paid') {
+      throw new Error(
+        `Cannot mark operator as paid for a payment that is not completed. Current status: ${paymentData.status}`
+      );
+    }
+
+    await paymentRef.update({
+      operatorPaid: true,
+      operatorPaidDate: Timestamp.now(),
+      operatorPaymentNotes: notes || 'Operator paid by admin.',
+      operatorPaidBy: adminUserCode,
+      updatedAt: Timestamp.now(),
+    });
+  } catch (error) {
+    console.error('Error marking operator as paid (server):', error);
+    throw new Error('Failed to mark operator as paid');
   }
 };

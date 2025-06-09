@@ -183,9 +183,18 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
         userType === 'agent' || userType === 'operator' ? company.trim() : undefined
       );
 
-      // Registration successful - redirect to dashboard
-      router.push('/dashboard');
+      // Registration successful
+      const redirect = sessionStorage.getItem('postAuthRedirect');
+
+      // Close modal first, then redirect
       closeRegisterModal();
+
+      if (redirect) {
+        sessionStorage.removeItem('postAuthRedirect');
+        router.push(redirect);
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err) {
       console.error('Registration error:', err);
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
@@ -315,6 +324,7 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                 src={currentImageSrc}
                 alt={`${userType || 'Charter'} illustration`}
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 style={{ objectFit: 'cover' }}
                 priority
               />

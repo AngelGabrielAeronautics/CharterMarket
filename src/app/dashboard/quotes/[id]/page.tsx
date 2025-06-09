@@ -12,8 +12,8 @@ import Image from 'next/image';
 import { Box, Grid, Typography, CircularProgress, Paper, Container } from '@mui/material';
 import { acceptOperatorQuote } from '@/lib/quote';
 import { createNotification } from '@/lib/notification';
-import { createBooking } from '@/lib/booking';
-import { createInvoice } from '@/lib/invoice';
+import { createComprehensiveBooking, linkInvoiceToBooking } from '@/lib/booking';
+import { createComprehensiveInvoice } from '@/lib/invoice';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/Button';
 import toast from 'react-hot-toast';
@@ -132,7 +132,7 @@ export default function RequestDetailsPage() {
       if (
         !updatedRequest ||
         !updatedRequest.acceptedOfferId ||
-        !updatedRequest.acceptedOperatorId
+        !updatedRequest.acceptedOperatorUserCode
       ) {
         throw new Error(
           'Failed to retrieve updated quote request details after acceptance, or accepted offer details are missing.'
@@ -146,7 +146,7 @@ export default function RequestDetailsPage() {
         throw new Error('Could not find details of the accepted offer in the updated request.');
       }
 
-      console.log('Creating booking with data:', {
+      console.log('Creating comprehensive booking with data:', {
         updatedRequest: {
           id: updatedRequest.id,
           requestCode: updatedRequest.requestCode,
@@ -154,27 +154,40 @@ export default function RequestDetailsPage() {
         },
         acceptedOfferDetails: {
           offerId: acceptedOfferDetails.offerId,
-          operatorId: acceptedOfferDetails.operatorId,
+          operatorUserCode: acceptedOfferDetails.operatorUserCode,
           price: acceptedOfferDetails.price,
           totalPrice: acceptedOfferDetails.totalPrice,
         },
       });
 
-      const bookingDocId = await createBooking(updatedRequest, acceptedOfferDetails);
-      console.log('Booking created successfully with ID:', bookingDocId);
+      console.log('Creating comprehensive booking first...');
+      const bookingDocId = await createComprehensiveBooking(updatedRequest, acceptedOfferDetails);
+      console.log('Comprehensive booking created successfully with ID:', bookingDocId);
 
-      console.log('Creating invoice...');
-      await createInvoice(
-        bookingDocId,
+      console.log('Creating comprehensive invoice...');
+      const invoiceId = await createComprehensiveInvoice(
+        bookingDocId, // ✅ Now we have a valid booking ID!
         updatedRequest.clientUserCode,
-        updatedRequest.requestCode,
-        Number(acceptedOfferDetails.totalPrice)
+        acceptedOfferDetails.operatorUserCode,
+        acceptedOfferDetails.offerId,
+        Number(acceptedOfferDetails.totalPrice),
+        {
+          requestId: updatedRequest.id,
+          description: `Flight service: ${updatedRequest.routing.departureAirport} → ${updatedRequest.routing.arrivalAirport}`,
+          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+          clientNotes: `Flight request ${updatedRequest.requestCode}`,
+        }
       );
-      console.log('Invoice created successfully');
+      console.log('Comprehensive invoice created successfully with ID:', invoiceId);
+
+      // Link the invoice to the booking
+      console.log('Linking invoice to booking...');
+      await linkInvoiceToBooking(bookingDocId, invoiceId);
+      console.log('Invoice linked to booking successfully');
 
       console.log('Creating notification...');
       await createNotification(
-        acceptedOfferDetails.operatorId,
+        acceptedOfferDetails.operatorUserCode,
         'QUOTE_ACCEPTED',
         'Quote Accepted',
         `Your quote ${acceptedOfferDetails.offerId} for request ${updatedRequest.requestCode} has been accepted.`,
@@ -426,7 +439,7 @@ export default function RequestDetailsPage() {
                         Status: <strong>{offer.offerStatus}</strong>
                       </Typography>
                       <Typography variant="caption" color="textSecondary">
-                        Operator: {offer.operatorId}
+                        Operator: {offer.operatorUserCode}
                       </Typography>
                       <br />
                       <Typography variant="caption" color="textSecondary">

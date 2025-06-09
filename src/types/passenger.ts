@@ -1,4 +1,8 @@
-import { Timestamp } from 'firebase/firestore';
+import type { Timestamp as ClientTimestamp } from 'firebase/firestore';
+import type { Timestamp as AdminTimestamp } from 'firebase-admin/firestore';
+
+// Allow Firestore timestamp from client or admin SDK
+export type Timestamp = ClientTimestamp | AdminTimestamp;
 
 export interface Passenger {
   id: string; // Document ID

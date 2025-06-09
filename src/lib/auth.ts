@@ -45,7 +45,6 @@ export interface UserData {
   profileIncompleteDate: Date | null;
   status: UserStatus;
   isProfileComplete: boolean;
-  hasAircraft: boolean;
   dormantDate: Date | null;
 }
 
@@ -102,7 +101,6 @@ export const registerUser = async (
       profileIncompleteDate: new Date(),
       status: 'incomplete',
       isProfileComplete: false,
-      hasAircraft: false,
       dormantDate: null,
     };
 
@@ -352,7 +350,6 @@ export async function signInWithGoogle(): Promise<UserData> {
       profileIncompleteDate: new Date(),
       status: 'incomplete',
       isProfileComplete: false,
-      hasAircraft: false,
       dormantDate: null,
     };
 

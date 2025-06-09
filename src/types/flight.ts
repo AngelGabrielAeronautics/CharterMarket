@@ -1,7 +1,20 @@
 import { Timestamp } from 'firebase/firestore';
 
 export type TripType = 'oneWay' | 'return' | 'multiCity';
-export type FlightStatus = 'pending' | 'quoted' | 'booked' | 'cancelled' | 'expired' | 'draft';
+export type FlightStatus =
+  // New quote request statuses
+  | 'submitted' // Initial status when quote request is created
+  | 'under-operator-review' // When any operator has viewed the request
+  | 'under-offer' // When any operator has submitted an offer
+  | 'accepted' // When user accepts an offer
+  // Legacy statuses (for backward compatibility)
+  | 'pending'
+  | 'quoted'
+  | 'booked'
+  | 'cancelled'
+  | 'expired'
+  | 'draft';
+
 export type CabinClass = 'standard' | 'premium' | 'vip';
 
 export interface FlightRouting {
@@ -32,7 +45,7 @@ export type OfferStatus =
 
 export interface Offer {
   offerId: string; // Unique ID for this specific offer (e.g., QT-OPERATORCODE-YYYYMMDD-XXXX)
-  operatorId: string; // UserCode of the operator making the offer
+  operatorUserCode: string; // UserCode of the operator making the offer
   clientUserCode?: string; // UserCode of the originating client (for reference and permissions)
   price: number;
   commission: number;
@@ -51,18 +64,17 @@ export interface QuoteRequest {
   departureAirportName?: string; // Full name of the departure airport
   arrivalAirportName?: string; // Full name of the arrival airport
   passengerCount: number;
-  cabinClass: CabinClass;
   specialRequirements?: string;
   twinEngineMin?: boolean;
   status: FlightStatus; // Overall status of the QuoteRequest
   createdAt: Timestamp;
   updatedAt: Timestamp;
-  expiresAt: Timestamp; // Request expires after 24 hours if no quotes received
+  // Note: expiresAt removed - quotes expire, not quote requests
 
   offers?: Offer[]; // Array of offers from operators
-  operatorIdsWhoHaveQuoted?: string[]; // Helper array to easily find requests an operator has quoted on
+  operatorUserCodesWhoHaveQuoted?: string[]; // Helper array to easily find requests an operator has quoted on
   acceptedOfferId?: string; // The offerId of the offer that was accepted by the client
-  acceptedOperatorId?: string; // The operatorId corresponding to the acceptedOfferId
+  acceptedOperatorUserCode?: string; // The operatorUserCode corresponding to the acceptedOfferId
 }
 
 export interface QuoteRequestFormData {
@@ -73,7 +85,6 @@ export interface QuoteRequestFormData {
   returnDate?: Date;
   flexibleDates: boolean;
   passengerCount: number;
-  cabinClass: CabinClass;
   specialRequirements?: string;
   twinEngineMin?: boolean;
   multiCityRoutes?: MultiCityRoute[]; // For multi-city trips

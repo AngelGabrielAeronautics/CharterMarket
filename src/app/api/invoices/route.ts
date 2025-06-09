@@ -8,6 +8,7 @@ import {
   getInvoiceByInvoiceId,
   getInvoicesByClientId,
 } from '@/lib/invoice';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,12 +21,28 @@ export async function GET(req: NextRequest) {
     let data;
 
     if (invoiceId) {
-      console.log(`Retrieving invoice by invoiceId: ${invoiceId}`);
-      // Try custom invoice ID first, then fallback methods
-      data = await getInvoiceByInvoiceId(invoiceId);
-      if (!data) {
-        return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+      console.log(`Retrieving invoice by invoiceId (Admin SDK): ${invoiceId}`);
+      const adminDb = getAdminDb();
+      if (!adminDb) {
+        return NextResponse.json({ error: 'Server database unavailable' }, { status: 500 });
       }
+
+      // Direct document ID attempt
+      let docSnap = await adminDb.collection('invoices').doc(invoiceId).get();
+      if (!docSnap.exists) {
+        // Fallback search by invoiceId field (legacy)
+        const qSnap = await adminDb
+          .collection('invoices')
+          .where('invoiceId', '==', invoiceId)
+          .limit(1)
+          .get();
+        if (qSnap.empty) {
+          return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+        }
+        docSnap = qSnap.docs[0];
+      }
+
+      data = { id: docSnap.id, ...docSnap.data() };
     } else if (docId) {
       console.log(`Retrieving invoice by document ID: ${docId}`);
       // Legacy support for document IDs
@@ -34,40 +51,33 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
       }
     } else if (bookingId) {
-      console.log(`Retrieving invoices for booking: ${bookingId}`);
-      // Temporarily use debug function to isolate composite index issues
-      try {
-        data = await getInvoicesForBookingDebug(bookingId);
-      } catch (debugError) {
-        console.error('Debug function failed, trying regular function:', debugError);
-        // If debug function fails, fall back to regular function
-        try {
-          data = await getInvoicesForBooking(bookingId);
-        } catch (err) {
-          console.error(`Error retrieving invoices for booking ${bookingId}:`, err);
-          return NextResponse.json(
-            {
-              error: err instanceof Error ? err.message : 'Failed to fetch invoices',
-              details: err instanceof Error ? err.stack : undefined,
-            },
-            { status: 500 }
-          );
-        }
+      console.log(`Retrieving invoices for booking (Admin SDK): ${bookingId}`);
+      const adminDb = getAdminDb();
+      if (!adminDb) {
+        return NextResponse.json({ error: 'Server database unavailable' }, { status: 500 });
       }
+
+      const snapshot = await adminDb
+        .collection('invoices')
+        .where('bookingId', '==', bookingId)
+        .orderBy('createdAt', 'desc')
+        .get();
+
+      data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       console.log(`Found ${data.length} invoices for booking ${bookingId}`);
     } else if (clientId) {
-      try {
-        data = await getInvoicesByClientId(clientId);
-      } catch (err) {
-        console.error(`Error retrieving invoices for client ${clientId}:`, err);
-        return NextResponse.json(
-          {
-            error: err instanceof Error ? err.message : 'Failed to fetch client invoices',
-            details: err instanceof Error ? err.stack : undefined,
-          },
-          { status: 500 }
-        );
+      const adminDb = getAdminDb();
+      if (!adminDb) {
+        return NextResponse.json({ error: 'Server database unavailable' }, { status: 500 });
       }
+
+      const snapshot = await adminDb
+        .collection('invoices')
+        .where('clientId', '==', clientId)
+        .orderBy('createdAt', 'desc')
+        .get();
+
+      data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     } else {
       return NextResponse.json(
         { error: 'Missing required parameter: bookingId, invoiceId, docId, or clientId' },

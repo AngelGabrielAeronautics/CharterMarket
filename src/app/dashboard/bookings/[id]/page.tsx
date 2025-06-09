@@ -115,8 +115,10 @@ export default function BookingDetailsPage() {
   };
 
   const handleSubmitRating = async () => {
-    if (!userRating || !user?.userCode || !bookingDocId || !booking?.operatorId) return;
-    await createRating(bookingDocId, booking.operatorId, user.userCode, userRating, comments);
+    // Support both legacy and new booking structures
+    const operatorId = (booking as any)?.operatorId || booking?.operator?.operatorUserCode;
+    if (!userRating || !user?.userCode || !bookingDocId || !operatorId) return;
+    await createRating(bookingDocId, operatorId, user.userCode, userRating, comments);
   };
 
   if (loadingBooking) return <div className="p-8 text-center">Loading booking...</div>;
@@ -124,18 +126,28 @@ export default function BookingDetailsPage() {
   if (!booking) return null;
 
   // Determine if the booking is in a state where passenger details can be edited
-  const canEditPassengers = ['pending', 'confirmed'].includes(booking.status);
+  const canEditPassengers = [
+    'pending-payment',
+    'deposit-paid',
+    'confirmed',
+    'client-ready',
+  ].includes(booking.status);
 
   // Get the booking progress step
   const getBookingStep = () => {
     switch (booking.status) {
-      case 'pending':
+      case 'pending-payment':
+      case 'deposit-paid':
         return 0;
       case 'confirmed':
+      case 'client-ready':
+      case 'flight-ready':
         return 1;
-      case 'completed':
+      case 'archived':
         return 2;
       case 'cancelled':
+      case 'credited':
+      case 'refunded':
         return -1;
       default:
         return 0;
@@ -182,11 +194,11 @@ export default function BookingDetailsPage() {
             <Typography
               variant="h6"
               color={
-                booking.status === 'confirmed'
+                ['confirmed', 'client-ready', 'flight-ready'].includes(booking.status)
                   ? 'success.main'
-                  : booking.status === 'cancelled'
+                  : ['cancelled', 'credited', 'refunded'].includes(booking.status)
                     ? 'error.main'
-                    : booking.status === 'completed'
+                    : booking.status === 'archived'
                       ? 'info.main'
                       : 'warning.main'
               }
@@ -201,10 +213,12 @@ export default function BookingDetailsPage() {
             </Typography>
             <Box sx={{ mt: 2 }}>
               <Typography variant="body1">
-                <strong>Price:</strong> ${booking.price.toFixed(2)}
+                <strong>Price:</strong> $
+                {((booking as any).price || booking.payment?.subtotal || 0).toFixed(2)}
               </Typography>
               <Typography variant="body1">
-                <strong>Total:</strong> ${booking.totalPrice.toFixed(2)}
+                <strong>Total:</strong> $
+                {((booking as any).totalPrice || booking.payment?.totalAmount || 0).toFixed(2)}
               </Typography>
             </Box>
           </Box>
@@ -298,15 +312,16 @@ export default function BookingDetailsPage() {
                           >
                             View
                           </Button>
-                          {booking.status === 'pending' && !hasPendingPayment && (
-                            <Button
-                              variant="contained"
-                              color="primary"
-                              onClick={() => openPaymentDialog(inv)}
-                            >
-                              Pay Now
-                            </Button>
-                          )}
+                          {['pending-payment', 'deposit-paid'].includes(booking.status) &&
+                            !hasPendingPayment && (
+                              <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={() => openPaymentDialog(inv)}
+                              >
+                                Pay Now
+                              </Button>
+                            )}
                         </Box>
                       </Box>
 
@@ -438,22 +453,24 @@ export default function BookingDetailsPage() {
           Back to Bookings
         </Button>
 
-        {(booking.status === 'confirmed' || booking.status === 'completed') && (
+        {['confirmed', 'client-ready', 'flight-ready', 'archived'].includes(booking.status) && (
           <Button variant="contained" color="primary" onClick={handleDownloadTicket}>
             Download Ticket
           </Button>
         )}
 
-        {booking.status === 'pending' && !hasPendingPayment && invoices.length > 0 && (
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => openPaymentDialog(invoices[0])}
-            startIcon={<AttachMoney />}
-          >
-            Make Payment
-          </Button>
-        )}
+        {['pending-payment', 'deposit-paid'].includes(booking.status) &&
+          !hasPendingPayment &&
+          invoices.length > 0 && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => openPaymentDialog(invoices[0])}
+              startIcon={<AttachMoney />}
+            >
+              Make Payment
+            </Button>
+          )}
 
         {hasPendingPayment && (
           <Button variant="contained" color="warning" disabled startIcon={<AccessTime />}>

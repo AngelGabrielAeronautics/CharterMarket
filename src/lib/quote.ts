@@ -57,11 +57,11 @@ import { Offer, OfferStatus, QuoteRequest, FlightStatus } from '@/types/flight';
  */
 export const createQuote = async (
   requestId: string,
-  operatorId: string,
+  operatorUserCode: string,
   data: QuoteFormData
 ): Promise<string> => {
   const quoteRequestRef = doc(db, 'quoteRequests', requestId);
-  const offerId = generateQuoteId(operatorId, requestId);
+  const offerId = generateQuoteId(operatorUserCode, requestId);
   const quoteRef = doc(db, 'quotes', offerId);
 
   const commission = parseFloat((data.price * 0.03).toFixed(2));
@@ -79,17 +79,35 @@ export const createQuote = async (
 
       const quoteRequestData = quoteRequestSnap.data() as QuoteRequest;
 
-      if (quoteRequestData.status !== 'pending' && quoteRequestData.status !== 'quoted') {
-        console.warn(
-          `Attempting to submit an offer to a QuoteRequest (${requestId}) that is not in 'pending' or 'quoted' state (current: ${quoteRequestData.status}).`
+      // Updated status check for new flow
+      const allowedStatuses = [
+        'submitted',
+        'under-operator-review',
+        'under-offer',
+        'pending',
+        'quoted',
+      ];
+      if (!allowedStatuses.includes(quoteRequestData.status)) {
+        throw new Error(
+          `Cannot submit offer: Request status is '${quoteRequestData.status}'. ` +
+            `Offers can only be submitted when status is: ${allowedStatuses.join(', ')}.`
         );
       }
 
-      if (quoteRequestData.offers?.some((o) => o.operatorId === operatorId)) {
-        console.warn(
-          `Operator ${operatorId} has already submitted an offer for QuoteRequest ${requestId}.`
-        );
-        throw new Error(`Operator ${operatorId} has already submitted an offer for this request.`);
+      // Check if request is already accepted by another operator
+      if (quoteRequestData.status === 'accepted' || quoteRequestData.status === 'booked') {
+        throw new Error(`This request has already been accepted by another operator.`);
+      }
+
+      // More robust duplicate offer check
+      const existingOperatorCodes = quoteRequestData.operatorUserCodesWhoHaveQuoted || [];
+      if (existingOperatorCodes.includes(operatorUserCode)) {
+        throw new Error(`You have already submitted an offer for this request.`);
+      }
+
+      // Also check the offers array for additional safety
+      if (quoteRequestData.offers?.some((o) => o.operatorUserCode === operatorUserCode)) {
+        throw new Error(`You have already submitted an offer for this request.`);
       }
 
       // Extract clientUserCode from the quote request
@@ -98,8 +116,7 @@ export const createQuote = async (
       // Full quote document for the quotes collection
       finalQuoteData = {
         offerId,
-        operatorId,
-        operatorUserCode: operatorId, // For Firestore rules
+        operatorUserCode,
         clientUserCode, // Include the originating client's userCode
         requestId,
         price: data.price,
@@ -124,7 +141,7 @@ export const createQuote = async (
       // Simplified offer object for embedded reference in quoteRequest
       finalEmbeddedOffer = {
         offerId,
-        operatorId,
+        operatorUserCode,
         clientUserCode, // Include in embedded offer for consistency
         price: data.price,
         commission,
@@ -137,11 +154,11 @@ export const createQuote = async (
       // 1. Create the standalone quote document
       transaction.set(quoteRef, finalQuoteData);
 
-      // 2. Add embedded reference to the quoteRequest
+      // 2. Add embedded reference to the quoteRequest and update tracking
       transaction.update(quoteRequestRef, {
         offers: arrayUnion(finalEmbeddedOffer),
-        operatorIdsWhoHaveQuoted: arrayUnion(operatorId),
-        status: 'quoted' as FlightStatus,
+        operatorUserCodesWhoHaveQuoted: arrayUnion(operatorUserCode),
+        status: 'under-offer' as FlightStatus,
         updatedAt: Timestamp.now(),
       });
     });
@@ -244,11 +261,17 @@ export const acceptOperatorQuote = async (
       }
       const quoteRequestData = quoteRequestSnap.data() as QuoteRequest;
 
-      if (quoteRequestData.status === 'booked' || quoteRequestData.status === 'cancelled') {
-        throw new Error(`QuoteRequest ${requestId} has already been booked or is cancelled.`);
+      if (
+        quoteRequestData.status === 'booked' ||
+        quoteRequestData.status === 'accepted' ||
+        quoteRequestData.status === 'cancelled'
+      ) {
+        throw new Error(
+          `QuoteRequest ${requestId} has already been booked/accepted or is cancelled.`
+        );
       }
 
-      let acceptedOperatorId: string | undefined = undefined;
+      let acceptedOperatorUserCode: string | undefined = undefined;
       let offerFoundAndPending = false;
 
       const updatedOffers = quoteRequestData.offers?.map((offer) => {
@@ -258,7 +281,7 @@ export const acceptOperatorQuote = async (
               `Offer ${acceptedOfferId} is not in 'pending-client-acceptance' state (current: ${offer.offerStatus}).`
             );
           }
-          acceptedOperatorId = offer.operatorId;
+          acceptedOperatorUserCode = offer.operatorUserCode;
           offerFoundAndPending = true;
           return {
             ...offer,
@@ -274,15 +297,17 @@ export const acceptOperatorQuote = async (
           `Offer with ID ${acceptedOfferId} not found or not in a state to be accepted in QuoteRequest ${requestId}.`
         );
       }
-      if (!acceptedOperatorId) {
-        throw new Error(`Could not determine operatorId for accepted offer ${acceptedOfferId}.`);
+      if (!acceptedOperatorUserCode) {
+        throw new Error(
+          `Could not determine operatorUserCode for accepted offer ${acceptedOfferId}.`
+        );
       }
 
       transaction.update(quoteRequestRef, {
         offers: updatedOffers,
-        status: 'booked' as FlightStatus,
+        status: 'accepted' as FlightStatus,
         acceptedOfferId: acceptedOfferId,
-        acceptedOperatorId: acceptedOperatorId,
+        acceptedOperatorUserCode: acceptedOperatorUserCode,
         updatedAt: Timestamp.now(),
       });
     });
@@ -301,15 +326,15 @@ export const acceptOperatorQuote = async (
  * Fetches all quotes submitted by a specific operator.
  * This will now query QuoteRequests and filter offers internally.
  */
-export const getOperatorSubmittedQuotes = async (operatorId: string): Promise<Offer[]> => {
-  if (!operatorId) {
-    console.warn('Operator ID is required to fetch submitted offers.');
+export const getOperatorSubmittedQuotes = async (operatorUserCode: string): Promise<Offer[]> => {
+  if (!operatorUserCode) {
+    console.warn('Operator user code is required to fetch submitted offers.');
     return [];
   }
   try {
     const q = query(
       collection(db, 'quoteRequests'),
-      where('operatorIdsWhoHaveQuoted', 'array-contains', operatorId)
+      where('operatorUserCodesWhoHaveQuoted', 'array-contains', operatorUserCode)
     );
     const snapshot = await getDocs(q);
 
@@ -317,7 +342,7 @@ export const getOperatorSubmittedQuotes = async (operatorId: string): Promise<Of
     snapshot.docs.forEach((doc) => {
       const quoteRequestData = doc.data() as QuoteRequest;
       quoteRequestData.offers?.forEach((offer) => {
-        if (offer.operatorId === operatorId) {
+        if (offer.operatorUserCode === operatorUserCode) {
           allMatchingOffers.push({ ...offer, requestId: doc.id });
         }
       });
@@ -327,7 +352,7 @@ export const getOperatorSubmittedQuotes = async (operatorId: string): Promise<Of
 
     return allMatchingOffers;
   } catch (error) {
-    console.error(`Error fetching submitted offers for operator ${operatorId}:`, error);
+    console.error(`Error fetching submitted offers for operator ${operatorUserCode}:`, error);
     throw new Error('Failed to fetch submitted offers');
   }
 };
@@ -358,15 +383,15 @@ export const getQuoteById = async (quoteId: string) => {
  * Get all quotes from the quotes collection (with optional filtering)
  */
 export const getAllQuotes = async (filters?: {
-  operatorId?: string;
+  operatorUserCode?: string;
   requestId?: string;
   status?: OfferStatus;
 }) => {
   try {
     let q = query(collection(db, 'quotes'), orderBy('createdAt', 'desc'));
 
-    if (filters?.operatorId) {
-      q = query(q, where('operatorId', '==', filters.operatorId));
+    if (filters?.operatorUserCode) {
+      q = query(q, where('operatorUserCode', '==', filters.operatorUserCode));
     }
 
     if (filters?.requestId) {
@@ -446,11 +471,11 @@ export const updateQuoteStatusHybrid = async (
  * Get all quotes for a specific operator from the standalone quotes collection
  * This provides more detailed quote information than the embedded approach
  */
-export const getOperatorQuotesDetailed = async (operatorId: string) => {
+export const getOperatorQuotesDetailed = async (operatorUserCode: string) => {
   try {
-    return await getAllQuotes({ operatorId });
+    return await getAllQuotes({ operatorUserCode });
   } catch (error) {
-    console.error(`Error fetching detailed quotes for operator ${operatorId}:`, error);
+    console.error(`Error fetching detailed quotes for operator ${operatorUserCode}:`, error);
     throw new Error('Failed to fetch operator quotes');
   }
 };

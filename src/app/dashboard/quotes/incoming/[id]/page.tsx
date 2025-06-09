@@ -3,7 +3,7 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getQuoteRequest, updateQuoteRequest } from '@/lib/flight';
+import { getQuoteRequest, updateQuoteRequest, markQuoteRequestAsViewed } from '@/lib/flight';
 import { createQuote } from '@/lib/quote';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
@@ -59,6 +59,17 @@ export default function OperatorQuoteSubmissionPage() {
 
         if (!req) {
           setError('Quote request not found.');
+        } else {
+          // Mark the request as viewed by operator if it's still in submitted status
+          if (req.status === 'submitted' && user?.userCode) {
+            try {
+              await markQuoteRequestAsViewed(requestId);
+              console.log('Quote request marked as under operator review');
+            } catch (viewError) {
+              console.warn('Failed to mark quote request as viewed:', viewError);
+              // Don't block the UI for this error
+            }
+          }
         }
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -70,7 +81,7 @@ export default function OperatorQuoteSubmissionPage() {
       }
     };
     fetchData();
-  }, [requestId]);
+  }, [requestId, user?.userCode]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -87,7 +98,7 @@ export default function OperatorQuoteSubmissionPage() {
     setError(null);
 
     try {
-      const existingOffer = request.offers?.find((o) => o.operatorId === user.userCode);
+      const existingOffer = request.offers?.find((o) => o.operatorUserCode === user.userCode);
       if (existingOffer) {
         toast.error('You have already submitted an offer for this request.');
         setError(
@@ -182,7 +193,11 @@ export default function OperatorQuoteSubmissionPage() {
 
   // Create the quote submission form
   const createQuoteForm = () => {
-    if (request.status !== 'pending' && request.status !== 'quoted') {
+    if (
+      !['submitted', 'under-operator-review', 'pending', 'quoted', 'under-offer'].includes(
+        request.status
+      )
+    ) {
       return null;
     }
 

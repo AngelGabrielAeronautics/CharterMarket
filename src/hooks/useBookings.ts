@@ -7,9 +7,29 @@ import {
   mockGetOperatorBookings,
   mockGetBookingById,
 } from '@/mocks/api/bookings';
+import { auth } from '@/lib/firebase';
 
 // Check if we're in development environment
 const isDev = process.env.NODE_ENV === 'development';
+
+// Helper function to get auth headers
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const user = auth.currentUser;
+  if (user) {
+    try {
+      const token = await user.getIdToken();
+      return {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+    } catch (error) {
+      console.error('Error getting auth token:', error);
+    }
+  }
+  return {
+    'Content-Type': 'application/json',
+  };
+}
 
 /**
  * Hook to fetch bookings for a client
@@ -29,7 +49,10 @@ export function useClientBookings(clientId?: string) {
       setLoading(true);
       try {
         // Always fetch real API for client bookings
-        const res = await fetch(`/api/bookings?clientId=${clientId}`);
+        const headers = await getAuthHeaders();
+        const res = await fetch(`/api/bookings?clientId=${clientId}`, {
+          headers,
+        });
         if (!res.ok) {
           const errorText = await res.text();
           throw new Error(errorText || `API error ${res.status}`);
@@ -69,7 +92,10 @@ export function useOperatorBookings(operatorCode?: string) {
           const data = await mockGetOperatorBookings(operatorCode);
           setBookings(data);
         } else {
-          const res = await fetch(`/api/bookings?operatorId=${operatorCode}`);
+          const headers = await getAuthHeaders();
+          const res = await fetch(`/api/bookings?operatorUserCode=${operatorCode}`, {
+            headers,
+          });
           if (!res.ok) {
             // Try to parse JSON error response
             const text = await res.text();
@@ -114,7 +140,10 @@ export function useBookingDetail(bookingId?: string, userCode?: string, userRole
       setError(null);
       try {
         // Fetch booking detail from API
-        const res = await fetch(`/api/bookings?bookingId=${bookingId}`);
+        const headers = await getAuthHeaders();
+        const res = await fetch(`/api/bookings?bookingId=${bookingId}`, {
+          headers,
+        });
         if (!res.ok) {
           let errorMsg = 'Failed to load booking';
           try {
@@ -127,11 +156,15 @@ export function useBookingDetail(bookingId?: string, userCode?: string, userRole
         }
         const b: Booking = await res.json();
 
+        // Support both legacy and new booking structures
+        const bookingAny = b as any;
+        const operatorUserCode = bookingAny.operatorUserCode || b.operator?.operatorUserCode;
+
         if (
           userRole === 'admin' ||
           userRole === 'superAdmin' ||
           b.clientId === userCode ||
-          b.operatorId === userCode
+          operatorUserCode === userCode
         ) {
           setBooking(b);
         } else {
@@ -169,7 +202,10 @@ export function useInvoices(bookingId?: string) {
       setLoading(true);
       try {
         console.log('Fetching invoices for bookingId:', bookingId);
-        const res = await fetch(`/api/invoices?bookingId=${bookingId}`);
+        const headers = await getAuthHeaders();
+        const res = await fetch(`/api/invoices?bookingId=${bookingId}`, {
+          headers,
+        });
 
         // Don't update state if component is unmounted
         if (!isMounted) return;
@@ -243,7 +279,10 @@ export function useInvoiceDetail(invoiceId?: string) {
       setLoading(true);
       setError(null); // Clear previous errors
       try {
-        const res = await fetch(`/api/invoices?invoiceId=${invoiceId}`);
+        const headers = await getAuthHeaders();
+        const res = await fetch(`/api/invoices?invoiceId=${invoiceId}`, {
+          headers,
+        });
         if (!res.ok) {
           const errorText = await res.text();
           console.error('API Error fetching invoice:', errorText, 'Status:', res.status);
@@ -288,7 +327,10 @@ export function useClientInvoices(clientId?: string) {
       setError(null);
       try {
         // This API endpoint will need to be updated to support querying invoices by clientId
-        const res = await fetch(`/api/invoices?clientId=${clientId}`);
+        const headers = await getAuthHeaders();
+        const res = await fetch(`/api/invoices?clientId=${clientId}`, {
+          headers,
+        });
         if (!res.ok) {
           const errorText = await res.text();
           console.error('API Error fetching client invoices:', errorText, 'Status:', res.status);

@@ -131,7 +131,13 @@ const LoginModal = () => {
       await signInWithEmailAndPassword(auth, email, password);
       toast.success('Logged in successfully!');
       closeLoginModal();
-      router.push('/dashboard');
+      const redirect = sessionStorage.getItem('postAuthRedirect');
+      if (redirect) {
+        sessionStorage.removeItem('postAuthRedirect');
+        router.push(redirect);
+      } else {
+        router.push('/dashboard');
+      }
     } catch (error: any) {
       setIsLoading(false);
 
@@ -190,7 +196,13 @@ const LoginModal = () => {
       await signInWithPopup(auth, provider);
       toast.success('Logged in successfully!');
       closeLoginModal();
-      router.push('/dashboard');
+      const redirect = sessionStorage.getItem('postAuthRedirect');
+      if (redirect) {
+        sessionStorage.removeItem('postAuthRedirect');
+        router.push(redirect);
+      } else {
+        router.push('/dashboard');
+      }
     } catch (error: any) {
       setIsGoogleLoading(false);
       if (error.code === 'auth/popup-closed-by-user') {
@@ -317,6 +329,7 @@ const LoginModal = () => {
             src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&q=80"
             alt="Login Background"
             fill
+            sizes="(max-width: 768px) 100vw, 50vw"
             style={{ objectFit: 'cover' }}
             priority
           />

@@ -8,24 +8,59 @@ import {
   getBookingByDocId,
   getBookingByBookingId,
 } from '@/lib/booking';
+import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin';
 
 export async function GET(req: NextRequest) {
   try {
+    // Verify authentication for protected API
+    const authHeader = req.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split('Bearer ')[1];
+        const adminAuth = getAdminAuth();
+        await adminAuth.verifyIdToken(token);
+        console.log('API call authenticated successfully');
+      } catch (authError) {
+        console.error('Authentication failed:', authError);
+        return NextResponse.json({ error: 'Invalid authentication token' }, { status: 401 });
+      }
+    } else {
+      console.log('No authorization header provided, proceeding without auth verification');
+    }
+
     const url = new URL(req.url);
     const clientId = url.searchParams.get('clientId');
-    const operatorId = url.searchParams.get('operatorId');
+    const operatorUserCode =
+      url.searchParams.get('operatorUserCode') || url.searchParams.get('operatorId'); // Support both for backward compatibility
     const bookingId = url.searchParams.get('bookingId');
     const docId = url.searchParams.get('docId'); // For legacy document ID support
 
     let data;
 
     if (bookingId) {
-      console.log(`Retrieving booking by bookingId: ${bookingId}`);
-      // Try custom booking ID first, then fallback methods
-      data = await getBookingByBookingId(bookingId);
-      if (!data) {
-        return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+      console.log(`Retrieving booking by bookingId (server-side Admin SDK): ${bookingId}`);
+      const adminDb = getAdminDb();
+      if (!adminDb) {
+        return NextResponse.json({ error: 'Server database unavailable' }, { status: 500 });
       }
+
+      // Try direct document ID first
+      let docSnap = await adminDb.collection('bookings').doc(bookingId).get();
+
+      if (!docSnap.exists) {
+        // Fallback: query by bookingId field (legacy)
+        const qSnap = await adminDb
+          .collection('bookings')
+          .where('bookingId', '==', bookingId)
+          .limit(1)
+          .get();
+        if (qSnap.empty) {
+          return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+        }
+        docSnap = qSnap.docs[0];
+      }
+
+      data = { id: docSnap.id, ...docSnap.data() };
     } else if (docId) {
       console.log(`Retrieving booking by document ID: ${docId}`);
       // Legacy support for document IDs
@@ -34,21 +69,28 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
       }
     } else if (clientId) {
-      console.log(`Retrieving bookings for client: ${clientId}`);
-      // Temporarily use debug function to isolate composite index issues
-      try {
-        data = await getClientBookingsDebug(clientId);
-      } catch (debugError) {
-        console.error('Debug function failed, trying regular function:', debugError);
-        // If debug function fails, fall back to regular function
-        data = await getClientBookings(clientId);
+      console.log(`Retrieving bookings for client (server-side with Admin SDK): ${clientId}`);
+
+      // Use Firebase Admin SDK on the server to bypass security-rule auth issues
+      const adminDb = getAdminDb();
+      if (!adminDb) {
+        console.error('Firebase Admin DB not available');
+        return NextResponse.json({ error: 'Server database unavailable' }, { status: 500 });
       }
-    } else if (operatorId) {
-      console.log(`Retrieving bookings for operator: ${operatorId}`);
-      data = await getOperatorBookings(operatorId);
+
+      const snapshot = await adminDb
+        .collection('bookings')
+        .where('clientId', '==', clientId)
+        .orderBy('createdAt', 'desc')
+        .get();
+
+      data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    } else if (operatorUserCode) {
+      console.log(`Retrieving bookings for operator: ${operatorUserCode}`);
+      data = await getOperatorBookings(operatorUserCode);
     } else {
       return NextResponse.json(
-        { error: 'Missing required parameter: clientId, operatorId, bookingId, or docId' },
+        { error: 'Missing required parameter: clientId, operatorUserCode, bookingId, or docId' },
         { status: 400 }
       );
     }

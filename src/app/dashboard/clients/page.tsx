@@ -191,9 +191,11 @@ export default function ClientsPage() {
               label={`${clients.filter((c) => c.clientType === 'corporate').length} Corporate`}
             />
             <Tooltip title="Refresh">
-              <IconButton onClick={refreshClients} disabled={loading}>
-                <RefreshIcon />
-              </IconButton>
+              <span>
+                <IconButton onClick={refreshClients} disabled={loading}>
+                  <RefreshIcon />
+                </IconButton>
+              </span>
             </Tooltip>
           </Stack>
         </Box>

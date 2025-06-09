@@ -51,7 +51,7 @@ export default function MySubmittedOffersPage() {
       }
       case 'operator': {
         q = query(
-          collection(db, 'offers'),
+          collection(db, 'quotes'),
           where('operatorUserCode', '==', user.userCode),
           orderBy('createdAt', 'desc')
         );
@@ -59,7 +59,7 @@ export default function MySubmittedOffersPage() {
       }
       case 'admin':
       case 'superAdmin': {
-        q = query(collection(db, 'offers'), orderBy('createdAt', 'desc'));
+        q = query(collection(db, 'quotes'), orderBy('createdAt', 'desc'));
         break;
       }
       default: {
@@ -79,7 +79,7 @@ export default function MySubmittedOffersPage() {
             const data = doc.data() as any;
             return {
               offerId: doc.id,
-              operatorId: data.operatorUserCode || data.operatorId,
+              operatorUserCode: data.operatorUserCode || data.operatorId, // Backward compatibility fallback
               price: data.price,
               commission: data.commission,
               totalPrice: data.totalPrice,

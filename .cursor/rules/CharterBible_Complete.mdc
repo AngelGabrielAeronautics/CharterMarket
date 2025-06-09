@@ -158,3 +158,36 @@ Ensure comparisons like val === true are necessary; if val is boolean, you can s
 - @https://mui.com/material-ui/migration/upgrade-to-v7/ 
 - @https://mui.com/material-ui/migration/upgrade-to-grid-v2/ 
 - @https://mui.com/material-ui/migration/pickers-migration/ 
+
+The platform we are building together is a private jet charter marketplace called Charter. Think of it like Airbnb for private jet flights. 
+
+Charter acts as the intermediary that connects clients to aircraft operators and aircraft operators to clients. A client is a passenger, agent or broker. An operator is an air operator certificate holder. For the operator, Charter effectively acts as an aviation broker. For the passenger, agent/broker Charter effectively acts as a marketplace that makes it easy and convenient for them to find and manage private flights for themselves or their clients. 
+
+The core benefit for the operator is to access a large client base at effectively no cost to them and without needing to do any marketing.
+
+The core benefit for the purchaser is that they access a wide selection of operators and receive multiple quotes with just one request.
+
+Charter takes a small commission 3% added to the operators quote for this service.
+
+
+Here is the basic flow of operations for the average flight booking:
+
+(1a) An operator signs up to charter (1b) and offers up their available fleet of aircraft through their Charter backend.
+
+(2a) A passenger, Agent / Broker, will use Charter to request the specific flight that they are looking for. Routing, date, number of pax, one way or return. (2b) The buyer signs up to action their request.
+
+(3a) The operator receives the flight request via the Charter platform (3b) and submits a price / quote. (3c) The Charter commission of 3% is added to the quote. (3d) The quote is issued to the client via the charter platform.
+
+(4a) The client receives the operator's quote via the platform. (4b)The client accepts the quote. (4c) The system alerts the operator that a quote has been accepted. (4d) The client is required to upload all passenger information. (4e)The client records all passenger information in the Charter backend. 
+
+(5a) The operator receives the accepted quote via the platform (5b) and acknowledges the client's acceptance. (5c) At this point, the flight is created in the system but is provisional pending payment.
+
+(6a) The Charter platform creates a proforma invoice on behalf of the operator and issues it to Charter. (6b) The Charter platform issues an invoice to the client via the platform.
+
+(7a) The client makes a manual transfer payment. (7b) Charter admin manually checks for the payment in the bank account (7c) and admin manually marks the flight as paid. (7d) The flight is now active in the system. (7e) E-tickets are issued to the client, one for each passenger on the flight.
+
+(8a) Charter admin makes a manual bank payment to the operator. (8b) Admin, mark the invoice as paid. (8c) The operator is notified of the payment.
+
+(9a) After the flight date, the flight is marked as complete on the platform. (9b) The client is asked to rate the service of the operator. (9c) The ratings are recorded in the platform.
+
+This concludes a flight in its most basic form.

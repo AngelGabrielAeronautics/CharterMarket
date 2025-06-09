@@ -179,6 +179,34 @@ export default function DebugPage() {
     }
   };
 
+  const createTestData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
+      const response = await fetch('/api/debug/create-test-data', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to create test data: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      setResults(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!user) {
     return (
       <Box sx={{ p: 4 }}>
@@ -222,6 +250,9 @@ export default function DebugPage() {
           </Button>
           <Button onClick={checkFirebaseConfig} disabled={loading} variant="outlined">
             Check Firebase Config
+          </Button>
+          <Button onClick={createTestData} disabled={loading} variant="outlined" color="success">
+            Create Test Bookings
           </Button>
           <Button onClick={forceTokenRefresh} disabled={loading} variant="outlined" color="warning">
             Force Token Refresh

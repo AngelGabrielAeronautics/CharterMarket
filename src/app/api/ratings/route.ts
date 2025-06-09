@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRating, getRatingForBooking } from '@/lib/rating';
+import { createRating } from '@/lib/rating';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 export async function GET(req: NextRequest) {
   try {
@@ -8,7 +9,19 @@ export async function GET(req: NextRequest) {
     if (!bookingId) {
       return NextResponse.json({ error: 'Missing bookingId parameter' }, { status: 400 });
     }
-    const rating = await getRatingForBooking(bookingId);
+    const adminDb = getAdminDb();
+    if (!adminDb) {
+      return NextResponse.json({ error: 'Server database unavailable' }, { status: 500 });
+    }
+
+    const snapshot = await adminDb
+      .collection('ratings')
+      .where('bookingId', '==', bookingId)
+      .limit(1)
+      .get();
+
+    const rating = snapshot.empty ? null : { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+
     return NextResponse.json(rating);
   } catch (error: any) {
     console.error('APIGET /api/ratings error:', error);

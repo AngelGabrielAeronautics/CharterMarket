@@ -4,6 +4,7 @@ import {
   getPaymentsForBookingServer,
   getPaymentByIdServer,
   getPendingPaymentsServer,
+  getAllPaymentsServer,
 } from '@/lib/payment-server';
 import type { PaymentFormData } from '@/types/payment';
 
@@ -28,11 +29,8 @@ export async function GET(req: NextRequest) {
       // Admin-only endpoint to fetch pending payments
       data = await getPendingPaymentsServer();
     } else if (fetchAll === 'true') {
-      // Admin: Fetch all payments - TODO: implement getAllPaymentsServer
-      return NextResponse.json(
-        { error: 'getAllPayments not implemented for server-side yet' },
-        { status: 501 }
-      );
+      // Admin-only endpoint to fetch all payments
+      data = await getAllPaymentsServer();
     } else {
       return NextResponse.json(
         {

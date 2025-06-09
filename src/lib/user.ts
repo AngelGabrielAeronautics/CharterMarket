@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { UserStatus } from '@/types/user';
 import type { OnboardingFormData } from '@/types/user';
+import { operatorHasAircraft } from './aircraft';
 
 export async function updateUserStatus(userId: string, status: UserStatus) {
   try {
@@ -33,10 +34,14 @@ export async function checkRegistrationCompletion(userCode: string) {
     }
 
     const userData = userDoc.data();
+
+    // Check if operator has aircraft using real-time query instead of cached field
+    const hasAircraft = userData.role === 'operator' ? await operatorHasAircraft(userCode) : true; // Non-operators don't need aircraft
+
     const isComplete =
       userData.emailVerified &&
       userData.isProfileComplete &&
-      (userData.role !== 'operator' || userData.hasAircraft);
+      (userData.role !== 'operator' || hasAircraft);
 
     if (isComplete && userData.status === 'incomplete') {
       // Update user status to active when all steps are completed
@@ -65,21 +70,6 @@ export async function markProfileComplete(userCode: string) {
     await checkRegistrationCompletion(userCode);
   } catch (error) {
     console.error('Error marking profile complete:', error);
-    throw error;
-  }
-}
-
-export async function markAircraftAdded(userCode: string) {
-  try {
-    await updateDoc(doc(db, 'users', userCode), {
-      hasAircraft: true,
-      updatedAt: new Date(),
-    });
-
-    // Check if this completes the registration
-    await checkRegistrationCompletion(userCode);
-  } catch (error) {
-    console.error('Error marking aircraft added:', error);
     throw error;
   }
 }

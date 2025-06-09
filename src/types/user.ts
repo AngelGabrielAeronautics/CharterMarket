@@ -18,7 +18,6 @@ export interface UserProfile {
   profileIncompleteDate: Date | null;
   status: UserStatus;
   isProfileComplete: boolean;
-  hasAircraft?: boolean; // Only relevant for operators
   dormantDate: Date | null;
 }
 
@@ -39,4 +38,4 @@ export interface OnboardingFormData {
   role: UserRole;
   userCode: string;
   company: string | null;
-} 
+}

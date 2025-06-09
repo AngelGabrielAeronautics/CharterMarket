@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createPassenger, getPassengersForBooking } from '@/lib/passenger';
+import { createPassengerServer } from '@/lib/passenger-server';
+import { getAdminDb } from '@/lib/firebase-admin';
 import type { PassengerFormData } from '@/types/passenger';
 
 export async function GET(req: NextRequest) {
@@ -11,7 +12,17 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Missing bookingId parameter' }, { status: 400 });
     }
 
-    const passengers = await getPassengersForBooking(bookingId);
+    const adminDb = getAdminDb();
+    if (!adminDb) {
+      return NextResponse.json({ error: 'Server database unavailable' }, { status: 500 });
+    }
+
+    const snapshot = await adminDb
+      .collection('passengers')
+      .where('bookingId', '==', bookingId)
+      .get();
+
+    const passengers = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     return NextResponse.json(passengers);
   } catch (error: any) {
     console.error('APIGET /api/passengers error:', error);
@@ -84,7 +95,7 @@ export async function POST(req: NextRequest) {
       emergencyContactPhone,
     };
 
-    const id = await createPassenger(bookingId, userCode, passengerData);
+    const id = await createPassengerServer(bookingId, userCode, passengerData);
     return NextResponse.json({ id }, { status: 201 });
   } catch (error: any) {
     console.error('APIPOST /api/passengers error:', error);

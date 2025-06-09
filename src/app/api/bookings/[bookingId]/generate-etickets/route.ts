@@ -92,11 +92,19 @@ export async function POST(req: Request, context: any) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    console.log(`Booking ${bookingId} found. Status: ${booking.status}, Paid: ${booking.isPaid}`);
+    // Check payment status - support both legacy and new booking structures
+    const bookingAny = booking as any;
+    const isPaid =
+      bookingAny.isPaid !== undefined
+        ? bookingAny.isPaid // Legacy structure
+        : booking.payment?.amountPending === 0 ||
+          booking.payment?.amountPaid >= booking.payment?.totalAmount; // New structure
 
-    if (booking.status !== 'confirmed' || !booking.isPaid) {
+    console.log(`Booking ${bookingId} found. Status: ${booking.status}, Paid: ${isPaid}`);
+
+    if (booking.status !== 'confirmed' || !isPaid) {
       console.warn(
-        `Booking ${bookingId} not ready for e-ticket generation. Status: ${booking.status}, Paid: ${booking.isPaid}`
+        `Booking ${bookingId} not ready for e-ticket generation. Status: ${booking.status}, Paid: ${isPaid}`
       );
       return NextResponse.json(
         { error: 'Booking not paid or not confirmed yet for e-ticket generation.' },
@@ -175,6 +183,17 @@ export async function POST(req: Request, context: any) {
           generatedAt: Timestamp.now(),
         });
         console.log(`E-ticket record stored in Firestore with ID: ${eticketDocRef.id}`);
+
+        // Also store a copy in a top-level 'etickets' collection for global querying
+        await addDoc(collection(db, 'etickets'), {
+          bookingId: booking.id,
+          passengerId: passenger.id,
+          passengerCode: passenger.passengerId,
+          eTicketNumber,
+          storagePath,
+          downloadURL,
+          generatedAt: Timestamp.now(),
+        });
 
         generatedTicketsInfo.push({
           passengerId: passenger.id,

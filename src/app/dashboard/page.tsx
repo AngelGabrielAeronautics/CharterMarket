@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserData } from '@/hooks/useUserData';
-import { useOperatorQuoteRequests } from '@/hooks/useFlights';
+import { useOperatorQuoteRequests, useClientQuoteRequests } from '@/hooks/useFlights';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import {
   Box,
@@ -313,9 +313,15 @@ export default function DashboardPage() {
     indexUrl,
     useFallback,
   } = useOperatorQuoteRequests(userData?.userCode);
+  const {
+    requests: clientQuoteRequests,
+    loading: clientRequestsLoading,
+    error: clientRequestsError,
+  } = useClientQuoteRequests(userData?.userCode);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [flights, setFlights] = useState<CalendarFlight[]>([]);
   const [calendarLoading, setCalendarLoading] = useState(true);
+  const [calendarExpanded, setCalendarExpanded] = useState(false);
 
   const pendingRequests = quoteRequests?.filter((req) => req.status === 'pending') || [];
 
@@ -383,7 +389,9 @@ export default function DashboardPage() {
         >
           <Alert severity="error" sx={{ mb: 2 }}>
             Failed to load user data:{' '}
-            {typeof dataError === 'string' ? dataError : (dataError as Error)?.message || 'Unknown error'}
+            {typeof dataError === 'string'
+              ? dataError
+              : (dataError as Error)?.message || 'Unknown error'}
           </Alert>
           <Typography variant="body1">
             Please try refreshing the page. If the problem persists, contact support.
@@ -426,26 +434,48 @@ export default function DashboardPage() {
           <UpcomingFlights userCode={userData?.userCode || ''} />
         </div>
 
+        <div className="w-full px-3 mb-4">
+          <Paper sx={{ p: 3, borderRadius: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              My Quote Requests
+            </Typography>
+            {clientRequestsLoading ? (
+              <CircularProgress size={24} />
+            ) : clientRequestsError ? (
+              <Alert severity="error">{clientRequestsError}</Alert>
+            ) : clientQuoteRequests.length === 0 ? (
+              <Typography>No quote requests found.</Typography>
+            ) : (
+              <Stack spacing={2}>
+                {clientQuoteRequests.map((req) => (
+                  <Card key={req.id}>
+                    <CardContent>
+                      <Typography variant="subtitle1">Request #{req.id}</Typography>
+                      <Typography variant="body2">Status: {req.status}</Typography>
+                    </CardContent>
+                    <CardActions>
+                      <Button component={Link} href={`/dashboard/quotes/${req.id}`}>
+                        View Details
+                      </Button>
+                    </CardActions>
+                  </Card>
+                ))}
+              </Stack>
+            )}
+            <Box sx={{ mt: 2 }}>
+              <Button component={Link} href="/dashboard/quotes" variant="outlined">
+                View All Quote Requests
+              </Button>
+            </Box>
+          </Paper>
+        </div>
+
         <div className="w-full md:w-1/3 px-3 mb-4">
           <PassengerQuickActions />
         </div>
 
         <div className="w-full md:w-1/2 px-3 mb-4">
-          <WeatherWidget
-            departureAirport=""
-            arrivalAirport=""
-            departureDate={new Date()}
-          />
-        </div>
-
-        <div className="w-full md:w-1/2 px-3 mb-4">
-          {userRole && (
-            <DashboardCalendar
-              flights={flights || []}
-              title="Flight Calendar"
-              userRole={userRole}
-            />
-          )}
+          <WeatherWidget departureAirport="" arrivalAirport="" departureDate={new Date()} />
         </div>
       </div>
     );
@@ -477,16 +507,43 @@ export default function DashboardPage() {
             <Typography variant="body1">Looking for a private jet? Request a quote now!</Typography>
           </Alert>
         </div>
-        
+
         <div className="w-full md:w-2/3 px-3 mb-4">
           <Paper sx={{ p: 3, borderRadius: 2 }}>
             <Typography variant="h6" gutterBottom>
               Client Requests
             </Typography>
-            {/* Agent dashboard content */}
+            {clientRequestsLoading ? (
+              <CircularProgress size={24} />
+            ) : clientRequestsError ? (
+              <Alert severity="error">{clientRequestsError}</Alert>
+            ) : clientQuoteRequests.length === 0 ? (
+              <Typography>No quote requests found.</Typography>
+            ) : (
+              <Stack spacing={2}>
+                {clientQuoteRequests.map((req) => (
+                  <Card key={req.id}>
+                    <CardContent>
+                      <Typography variant="subtitle1">Request #{req.id}</Typography>
+                      <Typography variant="body2">Status: {req.status}</Typography>
+                    </CardContent>
+                    <CardActions>
+                      <Button component={Link} href={`/dashboard/quotes/${req.id}`}>
+                        View Details
+                      </Button>
+                    </CardActions>
+                  </Card>
+                ))}
+              </Stack>
+            )}
+            <Box sx={{ mt: 2 }}>
+              <Button component={Link} href="/dashboard/quotes" variant="outlined">
+                View All Quote Requests
+              </Button>
+            </Box>
           </Paper>
         </div>
-        
+
         <div className="w-full md:w-1/3 px-3 mb-4">
           <PassengerQuickActions />
         </div>
@@ -518,10 +575,12 @@ export default function DashboardPage() {
               </Button>
             }
           >
-            <Typography variant="body1">You have new quote requests waiting for your response.</Typography>
+            <Typography variant="body1">
+              You have new quote requests waiting for your response.
+            </Typography>
           </Alert>
         </div>
-        
+
         <div className="w-full md:w-1/2 px-3 mb-4">
           <Paper sx={{ p: 3, borderRadius: 2 }}>
             <Typography variant="h6" gutterBottom>
@@ -530,7 +589,7 @@ export default function DashboardPage() {
             {/* Operator upcoming flights */}
           </Paper>
         </div>
-        
+
         <div className="w-full md:w-1/2 px-3 mb-4">
           <Paper sx={{ p: 3, borderRadius: 2 }}>
             <Typography variant="h6" gutterBottom>
@@ -576,12 +635,7 @@ export default function DashboardPage() {
           action={
             indexUrl ? (
               <Link href={indexUrl} target="_blank" rel="noopener noreferrer" passHref>
-                <Button
-                  component="a"
-                  color="inherit"
-                  size="small"
-                  startIcon={<OpenInNewIcon />}
-                >
+                <Button component="a" color="inherit" size="small" startIcon={<OpenInNewIcon />}>
                   Create Index
                 </Button>
               </Link>
@@ -632,11 +686,7 @@ export default function DashboardPage() {
                       </Stack>
                     </CardContent>
                     <CardActions sx={{ px: 2, pb: 2 }}>
-                      <Button 
-                        href={action.href} 
-                        variant="outlined" 
-                        fullWidth
-                      >
+                      <Button href={action.href} variant="outlined" fullWidth>
                         Get Started
                       </Button>
                     </CardActions>
@@ -672,7 +722,17 @@ export default function DashboardPage() {
               My Flight Calendar
             </Typography>
             <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
-              <DashboardCalendar flights={flights} userRole={userRole!} />
+              <Box sx={{ height: calendarExpanded ? 'auto' : 200, overflow: 'hidden' }}>
+                <DashboardCalendar flights={flights} userRole={userRole!} />
+              </Box>
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => setCalendarExpanded((prev) => !prev)}
+                sx={{ mt: 1 }}
+              >
+                {calendarExpanded ? 'Show Condensed Calendar' : 'Show Full Calendar'}
+              </Button>
             </Paper>
           </Box>
         )}
@@ -684,10 +744,7 @@ export default function DashboardPage() {
       {/* Example of WeatherWidget for passengers/agents, can be expanded */}
       {(userData.role === 'passenger' || userData.role === 'agent') && (
         <Box sx={{ mt: 4 }}>
-          <WeatherWidget 
-            departureAirport="" 
-            arrivalAirport="" 
-          />
+          <WeatherWidget departureAirport="" arrivalAirport="" />
         </Box>
       )}
     </Box>
