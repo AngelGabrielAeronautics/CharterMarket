@@ -14,6 +14,7 @@ import { Plus, Wrench, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/Calendar';
 import { DateRange } from 'react-day-picker';
+import LoadingSpinner from './LoadingSpinner';
 
 interface MaintenanceScheduleProps {
   aircraftId: string;
@@ -101,7 +102,7 @@ export default function MaintenanceScheduleComponent({ aircraftId }: Maintenance
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <LoadingSpinner size={32} fullscreen={false} />
       </div>
     );
   }

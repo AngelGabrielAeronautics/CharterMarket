@@ -11,11 +11,12 @@ export const getCityImageUrl = async (city: string, country: string): Promise<st
     return DEFAULT_FALLBACK_IMAGE_URL;
   }
 
-  const query = encodeURIComponent(`${city} ${country} cityscape`);
-  const url = `https://api.unsplash.com/search/photos?query=${query}&per_page=1&orientation=landscape`;
+  // First attempt: Search with just the city
+  let query = encodeURIComponent(`${city} cityscape`);
+  let url = `https://api.unsplash.com/search/photos?query=${query}&per_page=1&orientation=landscape`;
 
   try {
-    const response = await fetch(url, {
+    let response = await fetch(url, {
       headers: {
         Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}`,
         'Accept-Version': 'v1',
@@ -23,30 +24,51 @@ export const getCityImageUrl = async (city: string, country: string): Promise<st
     });
 
     if (!response.ok) {
-      console.error(`Unsplash API error: ${response.status} ${response.statusText}`);
+      console.error(`Unsplash API error (city query): ${response.status} ${response.statusText}`);
+      // Don't return yet, try the fallback query
+    }
+
+    let data = await response.json();
+
+    if (data.results && data.results.length > 0 && data.results[0].urls.regular) {
+      return data.results[0].urls.regular;
+    }
+
+    // Second attempt: Search with city and country if the first attempt fails
+    console.warn(`No Unsplash image for "${city}", trying with country "${country}"...`);
+    query = encodeURIComponent(`${city} ${country} cityscape`);
+    url = `https://api.unsplash.com/search/photos?query=${query}&per_page=1&orientation=landscape`;
+
+    response = await fetch(url, {
+      headers: {
+        Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}`,
+        'Accept-Version': 'v1',
+      },
+    });
+
+    if (!response.ok) {
+      console.error(
+        `Unsplash API error (city+country query): ${response.status} ${response.statusText}`
+      );
       const errorData = await response.json();
       console.error('Unsplash error details:', errorData);
-      return DEFAULT_FALLBACK_IMAGE_URL; // Fallback on API error
+      return DEFAULT_FALLBACK_IMAGE_URL;
     }
 
-    const data = await response.json();
+    data = await response.json();
 
-    if (
-      data.results &&
-      data.results.length > 0 &&
-      data.results[0].urls &&
-      data.results[0].urls.regular
-    ) {
-      return data.results[0].urls.regular; // Use 'regular' size, or 'small' if preferred
-    } else {
-      console.warn(
-        `No Unsplash image found for query: ${city}, ${country}. Returning default fallback.`
-      );
-      return DEFAULT_FALLBACK_IMAGE_URL; // Fallback if no results
+    if (data.results && data.results.length > 0 && data.results[0].urls.regular) {
+      return data.results[0].urls.regular;
     }
+
+    // Final fallback
+    console.warn(
+      `No Unsplash image found for query: ${city}, ${country}. Returning default fallback.`
+    );
+    return DEFAULT_FALLBACK_IMAGE_URL;
   } catch (error) {
     console.error('Error fetching city image from Unsplash:', error);
-    return DEFAULT_FALLBACK_IMAGE_URL; // Fallback on network or other errors
+    return DEFAULT_FALLBACK_IMAGE_URL;
   }
 };
 

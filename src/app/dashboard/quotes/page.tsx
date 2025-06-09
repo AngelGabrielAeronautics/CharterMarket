@@ -10,7 +10,7 @@ import { QuoteRequest, Offer } from '@/types/flight';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
-import { PlusIcon, Loader2, ArrowRightIcon, RefreshCwIcon } from 'lucide-react';
+import { PlusIcon, ArrowRightIcon, RefreshCwIcon } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -49,6 +49,7 @@ import {
   TrendingUp as TrendingUpIcon,
   Assignment as AssignmentIcon,
 } from '@mui/icons-material';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 // Dashboard Stats Card Component
 const StatsCard = ({
@@ -93,12 +94,14 @@ const RecentItemsTable = ({
   type,
   loading,
   viewAllLink,
+  isOperator,
 }: {
   title: string;
   items: any[];
   type: 'requests' | 'quotes';
   loading: boolean;
   viewAllLink: string;
+  isOperator: boolean;
 }) => (
   <Card sx={{ height: '100%' }}>
     <CardContent>
@@ -147,7 +150,11 @@ const RecentItemsTable = ({
                   <>
                     <TableCell>
                       <Link
-                        href={`/dashboard/quotes/incoming/${item.id}`}
+                        href={
+                          isOperator
+                            ? `/dashboard/quotes/incoming/${item.id}`
+                            : `/dashboard/quotes/${item.id}`
+                        }
                         className="text-blue-600 hover:text-blue-800"
                       >
                         {item.requestCode}
@@ -362,7 +369,7 @@ export default function QuotesDashboardPage() {
   if (isOperator && (requestsLoading || quotesLoading)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
+        <LoadingSpinner size={32} fullscreen={false} />
       </div>
     );
   }
@@ -370,7 +377,7 @@ export default function QuotesDashboardPage() {
   if (isClient && clientRequestsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
+        <LoadingSpinner size={32} fullscreen={false} />
       </div>
     );
   }
@@ -454,6 +461,7 @@ export default function QuotesDashboardPage() {
               type="requests"
               loading={requestsLoading}
               viewAllLink="/dashboard/quotes/incoming"
+              isOperator={true}
             />
           </Grid>
           <Grid size={{ xs: 12, lg: 6 }}>
@@ -463,6 +471,7 @@ export default function QuotesDashboardPage() {
               type="quotes"
               loading={quotesLoading}
               viewAllLink="/dashboard/my-quotes"
+              isOperator={true}
             />
           </Grid>
         </Grid>
@@ -535,6 +544,7 @@ export default function QuotesDashboardPage() {
           type="requests"
           loading={clientRequestsLoading}
           viewAllLink="/dashboard/quotes/request"
+          isOperator={false}
         />
 
         {renderSearchModal()}

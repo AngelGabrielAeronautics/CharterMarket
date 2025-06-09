@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Booking } from '@/types/booking';
 import { Invoice } from '@/types/invoice';
 import {
@@ -38,6 +38,11 @@ export function useClientBookings(clientId?: string) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastRefresh, setLastRefresh] = useState(Date.now());
+
+  const refreshBookings = useCallback(() => {
+    setLastRefresh(Date.now());
+  }, []);
 
   useEffect(() => {
     if (!clientId) {
@@ -66,9 +71,9 @@ export function useClientBookings(clientId?: string) {
         setLoading(false);
       }
     })();
-  }, [clientId]);
+  }, [clientId, lastRefresh]);
 
-  return { bookings, loading, error };
+  return { bookings, loading, error, refreshBookings };
 }
 
 /**
@@ -78,6 +83,11 @@ export function useOperatorBookings(operatorCode?: string) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastRefresh, setLastRefresh] = useState(Date.now());
+
+  const refreshBookings = useCallback(() => {
+    setLastRefresh(Date.now());
+  }, []);
 
   useEffect(() => {
     if (!operatorCode) {
@@ -117,9 +127,9 @@ export function useOperatorBookings(operatorCode?: string) {
         setLoading(false);
       }
     })();
-  }, [operatorCode]);
+  }, [operatorCode, lastRefresh]);
 
-  return { bookings, loading, error };
+  return { bookings, loading, error, refreshBookings };
 }
 
 /**
@@ -354,4 +364,39 @@ export function useClientInvoices(clientId?: string) {
   }, [clientId]);
 
   return { invoices, loading, error };
+}
+
+/**
+ * A generalized hook to fetch bookings based on user role.
+ * It uses useClientBookings for passengers/agents and useOperatorBookings for operators.
+ */
+export function useBookings(userCode?: string, userRole?: string) {
+  const isOperator = userRole === 'operator';
+  const isClient = userRole === 'passenger' || userRole === 'agent';
+
+  const {
+    bookings: clientBookings,
+    loading: clientLoading,
+    error: clientError,
+    refreshBookings: refreshClientBookings,
+  } = useClientBookings(isClient ? userCode : undefined);
+
+  const {
+    bookings: operatorBookings,
+    loading: operatorLoading,
+    error: operatorError,
+    refreshBookings: refreshOperatorBookings,
+  } = useOperatorBookings(isOperator ? userCode : undefined);
+
+  // Combine results based on user role
+  const bookings = isOperator ? operatorBookings : clientBookings;
+  const loading = isOperator ? operatorLoading : clientLoading;
+  const error = isOperator ? operatorError : clientError;
+  const refreshBookings = isOperator ? refreshOperatorBookings : refreshClientBookings;
+
+  // The refresh function would ideally be unified as well.
+  // For now, we are not returning a refresh function.
+  // A potential implementation would be to return the specific refresh function based on role.
+
+  return { bookings, loading, error, refreshBookings };
 }

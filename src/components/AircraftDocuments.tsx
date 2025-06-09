@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { FileText, Upload, Download, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import LoadingSpinner from './LoadingSpinner';
 
 interface AircraftDocument {
   id: string;
@@ -99,7 +100,7 @@ export default function AircraftDocuments({ aircraftId }: AircraftDocumentsProps
           />
           <Button onClick={() => fileInputRef.current?.click()} disabled={uploading}>
             {uploading ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+              <LoadingSpinner size={20} fullscreen={false} />
             ) : (
               <>
                 <Upload className="h-5 w-5 mr-2" />

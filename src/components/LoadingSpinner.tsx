@@ -1,7 +1,6 @@
 'use client';
 
-import Image from 'next/image';
-import { Box } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 import clsx from 'clsx';
 
 interface LoadingSpinnerProps {
@@ -15,50 +14,38 @@ export default function LoadingSpinner({
   className = '',
   fullscreen = true,
 }: LoadingSpinnerProps) {
-  return (
-    <Box
-      sx={
-        fullscreen
-          ? {
-              position: 'fixed',
-              inset: 0,
-              zIndex: 1300,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(11, 55, 70, 0.8)',
-              backdropFilter: 'blur(4px)',
-            }
-          : {
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }
-      }
-      className={clsx(className)}
-    >
+  const spinner = <CircularProgress size={size} sx={{ color: 'var(--charter-gold)' }} />;
+
+  if (fullscreen) {
+    return (
       <Box
         sx={{
-          animation: 'spin 2s linear infinite',
-          '@keyframes spin': {
-            '0%': {
-              transform: 'rotate(0deg)',
-            },
-            '100%': {
-              transform: 'rotate(360deg)',
-            },
-          },
+          position: 'fixed',
+          inset: 0,
+          zIndex: 1300,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'rgba(11, 55, 70, 0.8)',
+          backdropFilter: 'blur(4px)',
         }}
+        className={clsx(className)}
       >
-        <Image
-          src="/loaders/Loader.svg"
-          alt="Loading..."
-          width={size}
-          height={size}
-          priority
-          style={{ color: 'var(--charter-gold)' }}
-        />
+        {spinner}
       </Box>
+    );
+  }
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+      className={clsx(className)}
+    >
+      {spinner}
     </Box>
   );
 }

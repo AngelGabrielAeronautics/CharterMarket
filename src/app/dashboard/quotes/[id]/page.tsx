@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
@@ -9,7 +9,20 @@ import { Airport } from '@/types/airport';
 import { getAirportByICAO } from '@/lib/airport';
 import { getCityImageUrlWithFallback } from '@/lib/cityImages';
 import Image from 'next/image';
-import { Box, Grid, Typography, CircularProgress, Paper, Container } from '@mui/material';
+import {
+  Box,
+  Grid,
+  Typography,
+  CircularProgress,
+  Paper,
+  Container,
+  ToggleButtonGroup,
+  ToggleButton,
+} from '@mui/material';
+import {
+  ArrowUpward as ArrowUpwardIcon,
+  ArrowDownward as ArrowDownwardIcon,
+} from '@mui/icons-material';
 import { acceptOperatorQuote } from '@/lib/quote';
 import { createNotification } from '@/lib/notification';
 import { createComprehensiveBooking, linkInvoiceToBooking } from '@/lib/booking';
@@ -36,6 +49,7 @@ export default function RequestDetailsPage() {
   const [departureCityImageUrl, setDepartureCityImageUrl] = useState<string | null>(null);
   const [arrivalCityImageUrl, setArrivalCityImageUrl] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState<boolean>(true);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -226,6 +240,14 @@ export default function RequestDetailsPage() {
     }
   };
 
+  const sortedOffers = useMemo(() => {
+    if (!request?.offers) return [];
+    const offersCopy = [...request.offers];
+    return offersCopy.sort((a, b) =>
+      sortOrder === 'asc' ? a.totalPrice - b.totalPrice : b.totalPrice - a.totalPrice
+    );
+  }, [request?.offers, sortOrder]);
+
   if (loading) return <div className="p-8 text-center">Loading request details...</div>;
   if (error && !request) return <div className="p-8 text-center text-red-600">{error}</div>;
   if (!request) return <div className="p-8 text-center text-red-600">Request not found.</div>;
@@ -260,13 +282,14 @@ export default function RequestDetailsPage() {
           Request {request.requestCode}
         </Typography>
 
-        <div className="flex flex-wrap -mx-2 mb-3 items-center">
-          <div className="w-full sm:w-5/12 px-2 mb-4 sm:mb-0">
+        <Grid container spacing={2} sx={{ mb: 3, alignItems: 'center' }}>
+          {/* Departure Image */}
+          <Grid size={{ xs: 12, md: 6 }}>
             {imageLoading ? (
               <Box
                 sx={{
                   width: '100%',
-                  height: '300px',
+                  height: '200px',
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
@@ -276,8 +299,8 @@ export default function RequestDetailsPage() {
               >
                 <CircularProgress />
               </Box>
-            ) : (
-              departureCityImageUrl && (
+            ) : departureCityImageUrl ? (
+              <Box sx={{ position: 'relative' }}>
                 <Box
                   component="img"
                   src={departureCityImageUrl}
@@ -285,28 +308,35 @@ export default function RequestDetailsPage() {
                   sx={{
                     width: '100%',
                     height: 'auto',
-                    maxHeight: '300px',
+                    maxHeight: '200px',
                     objectFit: 'cover',
                     borderRadius: 2,
                   }}
                 />
-              )
-            )}
-          </div>
-          <div className="w-full sm:w-7/12 px-2">
-            <Typography variant="h5" component="h2" gutterBottom sx={{ mt: { xs: 2, sm: 0 } }}>
-              {departureAirportDetails?.city}, {departureAirportDetails?.country}
-            </Typography>
-          </div>
-        </div>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    position: 'absolute',
+                    bottom: 8,
+                    left: 8,
+                    color: 'white',
+                    textShadow: '1px 1px 3px rgba(0,0,0,0.7)',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  {departureAirportDetails?.city}, {departureAirportDetails?.country}
+                </Typography>
+              </Box>
+            ) : null}
+          </Grid>
 
-        <div className="flex flex-wrap -mx-2 mb-3 items-center">
-          <div className="w-full sm:w-5/12 px-2 mb-4 sm:mb-0">
+          {/* Arrival Image */}
+          <Grid size={{ xs: 12, md: 6 }}>
             {imageLoading ? (
               <Box
                 sx={{
                   width: '100%',
-                  height: '300px',
+                  height: '200px',
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
@@ -316,8 +346,8 @@ export default function RequestDetailsPage() {
               >
                 <CircularProgress />
               </Box>
-            ) : (
-              arrivalCityImageUrl && (
+            ) : arrivalCityImageUrl ? (
+              <Box sx={{ position: 'relative' }}>
                 <Box
                   component="img"
                   src={arrivalCityImageUrl}
@@ -325,20 +355,28 @@ export default function RequestDetailsPage() {
                   sx={{
                     width: '100%',
                     height: 'auto',
-                    maxHeight: '300px',
+                    maxHeight: '200px',
                     objectFit: 'cover',
                     borderRadius: 2,
                   }}
                 />
-              )
-            )}
-          </div>
-          <div className="w-full sm:w-7/12 px-2">
-            <Typography variant="h5" component="h2" gutterBottom sx={{ mt: { xs: 2, sm: 0 } }}>
-              {arrivalAirportDetails?.city}, {arrivalAirportDetails?.country}
-            </Typography>
-          </div>
-        </div>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    position: 'absolute',
+                    bottom: 8,
+                    left: 8,
+                    color: 'white',
+                    textShadow: '1px 1px 3px rgba(0,0,0,0.7)',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  {arrivalAirportDetails?.city}, {arrivalAirportDetails?.country}
+                </Typography>
+              </Box>
+            ) : null}
+          </Grid>
+        </Grid>
 
         <Box sx={{ mb: 3, pl: 1 }}>
           <Typography variant="body1">
@@ -404,19 +442,38 @@ export default function RequestDetailsPage() {
         )}
 
         <Box>
-          <Typography
-            variant="h5"
-            component="h2"
-            gutterBottom
-            sx={{ fontWeight: 'semibold', mt: 4, mb: 2 }}
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
           >
-            Available Offers
-          </Typography>
-          {!request.offers || request.offers.length === 0 ? (
+            <Typography variant="h5" component="h2" sx={{ fontWeight: 'semibold' }}>
+              Available Offers
+            </Typography>
+            <ToggleButtonGroup
+              value={sortOrder}
+              exclusive
+              onChange={(event, newOrder) => {
+                if (newOrder) {
+                  setSortOrder(newOrder);
+                }
+              }}
+              aria-label="Sort by price"
+              size="small"
+            >
+              <ToggleButton value="asc" aria-label="Sort by price ascending">
+                <ArrowUpwardIcon fontSize="small" sx={{ mr: 0.5 }} />
+                Low-High
+              </ToggleButton>
+              <ToggleButton value="desc" aria-label="Sort by price descending">
+                <ArrowDownwardIcon fontSize="small" sx={{ mr: 0.5 }} />
+                High-Low
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
+          {!sortedOffers || sortedOffers.length === 0 ? (
             <Typography color="textSecondary">No offers available yet.</Typography>
           ) : (
             <div className="flex flex-wrap -mx-2">
-              {request.offers.map((offer) => (
+              {sortedOffers.map((offer) => (
                 <div className="w-full px-2 mb-4" key={offer.offerId}>
                   <Paper
                     variant="outlined"

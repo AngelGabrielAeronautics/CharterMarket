@@ -72,10 +72,19 @@ const isEmailDomainSimilar = (domain1: string, domain2: string): boolean => {
   return differences > 0 && differences <= 2;
 };
 
-const LoginModal = () => {
+interface LoginModalProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
   const { isLoginModalOpen, closeLoginModal, openRegisterModal } = useModal();
   const router = useRouter();
   const emailInputRef = useRef<HTMLInputElement>(null);
+
+  // Use props if provided, otherwise fall back to context
+  const modalIsOpen = isOpen !== undefined ? isOpen : isLoginModalOpen;
+  const handleClose = onClose || closeLoginModal;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -130,7 +139,7 @@ const LoginModal = () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast.success('Logged in successfully!');
-      closeLoginModal();
+      handleClose();
       const redirect = sessionStorage.getItem('postAuthRedirect');
       if (redirect) {
         sessionStorage.removeItem('postAuthRedirect');
@@ -195,7 +204,7 @@ const LoginModal = () => {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       toast.success('Logged in successfully!');
-      closeLoginModal();
+      handleClose();
       const redirect = sessionStorage.getItem('postAuthRedirect');
       if (redirect) {
         sessionStorage.removeItem('postAuthRedirect');
@@ -216,7 +225,7 @@ const LoginModal = () => {
   };
 
   const onToggle = () => {
-    closeLoginModal();
+    handleClose();
     openRegisterModal();
   };
 
@@ -255,7 +264,7 @@ const LoginModal = () => {
                   variant="text"
                   size="small"
                   onClick={() => {
-                    closeLoginModal();
+                    handleClose();
                     router.push('/forgot-password');
                   }}
                   sx={{ textTransform: 'none', p: 0, minWidth: 'auto' }}
@@ -287,8 +296,8 @@ const LoginModal = () => {
 
   return (
     <Dialog
-      open={isLoginModalOpen}
-      onClose={closeLoginModal}
+      open={modalIsOpen}
+      onClose={handleClose}
       maxWidth="xl"
       fullWidth
       BackdropProps={{
@@ -400,7 +409,7 @@ const LoginModal = () => {
           {/* Header */}
           <Box sx={{ position: 'relative' }}>
             <IconButton
-              onClick={closeLoginModal}
+              onClick={handleClose}
               sx={{ position: 'absolute', right: 16, top: 8, color: 'text.secondary' }}
             >
               <CloseIcon />
@@ -482,7 +491,7 @@ const LoginModal = () => {
                 variant="text"
                 size="small"
                 onClick={() => {
-                  closeLoginModal();
+                  handleClose();
                   router.push('/forgot-password');
                 }}
                 sx={{ textTransform: 'none' }}
@@ -493,7 +502,7 @@ const LoginModal = () => {
                 variant="text"
                 size="small"
                 onClick={() => {
-                  closeLoginModal();
+                  handleClose();
                   router.push('/forgot-username');
                 }}
                 sx={{ textTransform: 'none' }}

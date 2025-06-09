@@ -7,12 +7,15 @@ import { addAircraftAvailability, getAircraftAvailability } from '@/lib/aircraft
 import { AircraftAvailability } from '@/types/aircraft';
 import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
+import LoadingSpinner from './LoadingSpinner';
 
 interface AircraftAvailabilityCalendarProps {
   aircraftId: string;
 }
 
-export default function AircraftAvailabilityCalendar({ aircraftId }: AircraftAvailabilityCalendarProps) {
+export default function AircraftAvailabilityCalendar({
+  aircraftId,
+}: AircraftAvailabilityCalendarProps) {
   const [date, setDate] = useState<DateRange | undefined>();
   const [availabilities, setAvailabilities] = useState<AircraftAvailability[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +28,7 @@ export default function AircraftAvailabilityCalendar({ aircraftId }: AircraftAva
         startDate.setMonth(startDate.getMonth() - 1); // Get availability for the past month
         const endDate = new Date();
         endDate.setMonth(endDate.getMonth() + 6); // Get availability for the next 6 months
-        
+
         const fetchedAvailabilities = await getAircraftAvailability(aircraftId, startDate, endDate);
         setAvailabilities(fetchedAvailabilities);
       } catch (err) {
@@ -54,7 +57,7 @@ export default function AircraftAvailabilityCalendar({ aircraftId }: AircraftAva
       startDate.setMonth(startDate.getMonth() - 1);
       const endDate = new Date();
       endDate.setMonth(endDate.getMonth() + 6);
-      
+
       const updatedAvailabilities = await getAircraftAvailability(aircraftId, startDate, endDate);
       setAvailabilities(updatedAvailabilities);
       setDate(undefined);
@@ -64,7 +67,7 @@ export default function AircraftAvailabilityCalendar({ aircraftId }: AircraftAva
     }
   };
 
-  const disabledDays = availabilities.map(availability => ({
+  const disabledDays = availabilities.map((availability) => ({
     from: availability.startDate.toDate(),
     to: availability.endDate.toDate(),
   }));
@@ -82,7 +85,7 @@ export default function AircraftAvailabilityCalendar({ aircraftId }: AircraftAva
 
       {loading ? (
         <div className="flex items-center justify-center p-4">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900" />
+          <LoadingSpinner size={24} fullscreen={false} />
         </div>
       ) : error ? (
         <div className="text-red-500">{error}</div>
@@ -113,13 +116,11 @@ export default function AircraftAvailabilityCalendar({ aircraftId }: AircraftAva
                   <p className="text-sm text-gray-500">{availability.notes}</p>
                 )}
               </div>
-              <div className="text-sm text-gray-500">
-                {availability.type}
-              </div>
+              <div className="text-sm text-gray-500">{availability.type}</div>
             </div>
           ))}
         </div>
       </div>
     </div>
   );
-} 
+}

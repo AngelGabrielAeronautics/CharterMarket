@@ -98,6 +98,12 @@ const navigation: NavItem[] = [
     roles: ['passenger', 'operator', 'agent', 'admin', 'superAdmin'],
   },
   {
+    name: 'Flights',
+    href: '/dashboard/flights',
+    icon: <FlightIcon />,
+    roles: ['passenger', 'operator', 'agent', 'admin', 'superAdmin'],
+  },
+  {
     name: 'Invoices',
     href: '/dashboard/invoices',
     icon: <ReceiptIcon />,
@@ -190,12 +196,6 @@ const navigation: NavItem[] = [
       {
         name: 'Responsive Test',
         href: '/responsive-test',
-        icon: <ViewQuiltIcon />,
-        roles: ['superAdmin'],
-      },
-      {
-        name: 'Admin Calendar',
-        href: '/admin/calendar',
         icon: <ViewQuiltIcon />,
         roles: ['superAdmin'],
       },
@@ -751,7 +751,7 @@ export default function SideNav({
         <Box sx={{ px: mini ? 0 : 1, mb: mini ? 0.5 : 2 }}>
           {mini ? (
             // Mini Mode: Icons above Switch toggle
-            (<Box
+            <Box
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -846,10 +846,10 @@ export default function SideNav({
                   p: 0,
                 }}
               />
-            </Box>)
+            </Box>
           ) : (
             // Expanded Mode: Custom "DARK" - Switch - "LIGHT" toggle
-            (<Box
+            <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -883,7 +883,7 @@ export default function SideNav({
               >
                 Light
               </Typography>
-            </Box>)
+            </Box>
           )}
         </Box>
       </Box>
@@ -902,7 +902,7 @@ export default function SideNav({
         '& .MuiDrawer-paper': {
           width: drawerWidth,
           boxSizing: 'border-box',
-          borderRadius: `${theme.shape.borderRadius * 2}px`,
+          borderRadius: theme.shape.borderRadius,
           overflow: 'hidden',
           boxShadow: 'none',
           border: 'none',
@@ -933,7 +933,7 @@ export default function SideNav({
         overflowX: 'hidden',
         position: 'relative',
         '& > div': {
-          borderRadius: `${theme.shape.borderRadius * 2}px`,
+          borderRadius: `${Number(theme.shape.borderRadius) * 2}px`,
           overflow: 'visible',
           height: '100%',
           display: 'flex',

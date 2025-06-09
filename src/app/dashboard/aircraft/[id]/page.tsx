@@ -10,6 +10,7 @@ import AircraftDetails from '@/components/AircraftDetails';
 import AircraftAvailability from '@/components/AircraftAvailability';
 import MaintenanceSchedule from '@/components/MaintenanceSchedule';
 import AircraftDocuments from '@/components/AircraftDocuments';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function AircraftPage() {
   const { id } = useParams();
@@ -37,7 +38,7 @@ export default function AircraftPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        <LoadingSpinner size={48} fullscreen={false} />
       </div>
     );
   }
@@ -58,9 +59,7 @@ export default function AircraftPage() {
         <h1 className="text-3xl font-bold">
           {aircraft.make} {aircraft.model}
         </h1>
-        <p className="text-gray-500 mt-2">
-          Registration: {aircraft.registration}
-        </p>
+        <p className="text-gray-500 mt-2">Registration: {aircraft.registration}</p>
       </div>
 
       <Tabs defaultValue="details" className="space-y-6">
@@ -109,4 +108,4 @@ export default function AircraftPage() {
       </Tabs>
     </div>
   );
-} 
+}

@@ -182,11 +182,81 @@ export function generateETicketNumber(bookingId: string, _passengerId?: string):
 }
 
 /**
+ * Generates a flight group ID (base flight ID without leg suffix)
+ * Format: FLT-{operatorUserCode}-{6 random alphanumeric}
+ * Example: FLT-OP-OPER-WS1LW12L0A
+ */
+export function generateFlightGroupId(operatorUserCode: string): string {
+  const random = generateRandomString(6);
+  return `FLT-${operatorUserCode}-${random}`;
+}
+
+/**
+ * Generates a complete flight number with leg suffix
+ * Format: FLT-{operatorUserCode}-{6 random alphanumeric}-{leg number}
+ * Example: FLT-OP-OPER-WS1LW12L0A-1, FLT-OP-OPER-WS1LW12L0A-2
+ */
+export function generateFlightNumber(flightGroupId: string, legNumber: number): string {
+  return `${flightGroupId}-${legNumber}`;
+}
+
+/**
  * Generates a flight ID grouping for multiple bookings
  * Format: FLT-{operatorUserCode}-{YYYYMMDD}-{4 random alphanumeric}
+ * @deprecated Use generateFlightGroupId instead for new flight numbering system
  */
 export function generateFlightId(operatorUserCode: string): string {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const random = generateRandomString(4);
   return `FLT-${operatorUserCode}-${dateStr}-${random}`;
+}
+
+/**
+ * Parses a flight number to extract components
+ * @param flightNumber Complete flight number (e.g., FLT-OP-OPER-WS1LW12L0A-1)
+ * @returns Object with flightGroupId, operatorUserCode, identifier, and legNumber
+ */
+export function parseFlightNumber(flightNumber: string): {
+  flightGroupId: string;
+  operatorUserCode: string;
+  identifier: string;
+  legNumber: number;
+} | null {
+  const regex = /^FLT-([A-Z0-9-]+)-([A-Z0-9]{6})-(\d+)$/;
+  const match = flightNumber.match(regex);
+
+  if (!match) {
+    return null;
+  }
+
+  const [, operatorUserCode, identifier, legNumberStr] = match;
+  const flightGroupId = `FLT-${operatorUserCode}-${identifier}`;
+  const legNumber = parseInt(legNumberStr, 10);
+
+  return {
+    flightGroupId,
+    operatorUserCode,
+    identifier,
+    legNumber,
+  };
+}
+
+/**
+ * Validates a flight number format
+ * @param flightNumber The flight number to validate
+ * @returns boolean indicating if the flight number is valid
+ */
+export function isValidFlightNumber(flightNumber: string): boolean {
+  const regex = /^FLT-[A-Z0-9-]+-[A-Z0-9]{6}-\d+$/;
+  return regex.test(flightNumber);
+}
+
+/**
+ * Validates a flight group ID format
+ * @param flightGroupId The flight group ID to validate
+ * @returns boolean indicating if the flight group ID is valid
+ */
+export function isValidFlightGroupId(flightGroupId: string): boolean {
+  const regex = /^FLT-[A-Z0-9-]+-[A-Z0-9]{6}$/;
+  return regex.test(flightGroupId);
 }

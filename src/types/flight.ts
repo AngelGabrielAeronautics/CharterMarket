@@ -93,3 +93,90 @@ export interface QuoteRequestFormData {
 // For backward compatibility
 export type FlightRequest = QuoteRequest;
 export type FlightRequestFormData = QuoteRequestFormData;
+
+// New flight leg system
+export type FlightLegType = 'passenger' | 'empty';
+export type FlightLegStatus =
+  | 'scheduled'
+  | 'available'
+  | 'booked'
+  | 'in-progress'
+  | 'completed'
+  | 'cancelled';
+
+export interface FlightLeg {
+  legNumber: number; // 1, 2, 3, etc.
+  flightNumber: string; // Full flight number including leg: FLT-OP-OPER-WS1L-W12L0A-1
+  legType: FlightLegType; // 'passenger' (booked leg) or 'empty' (return/positioning leg)
+  status: FlightLegStatus;
+
+  // Route information
+  departureAirport: string; // ICAO code
+  arrivalAirport: string; // ICAO code
+  departureAirportName?: string;
+  arrivalAirportName?: string;
+  scheduledDepartureTime: Timestamp;
+  scheduledArrivalTime: Timestamp;
+  estimatedDepartureTime?: Timestamp;
+  estimatedArrivalTime?: Timestamp;
+  actualDepartureTime?: Timestamp;
+  actualArrivalTime?: Timestamp;
+
+  // Booking information (only for passenger legs)
+  bookingIds?: string[]; // Multiple bookings can share a leg
+  availableSeats?: number; // For empty legs that could take passengers
+  maxSeats: number; // Total seats available on aircraft
+
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface Flight {
+  id: string; // Firestore document ID
+  flightGroupId: string; // Base flight ID without leg suffix: FLT-OP-OPER-WS1L-W12L0A
+  operatorUserCode: string;
+  aircraftId: string;
+
+  // All legs associated with this flight
+  legs: FlightLeg[];
+
+  // Flight metadata
+  status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled';
+  totalLegs: number;
+
+  // Original booking information
+  primaryBookingId?: string; // The booking that initiated this flight
+  originalQuoteRequestId?: string;
+
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// Helper interface for flight creation
+export interface CreateFlightData {
+  operatorUserCode: string;
+  aircraftId: string;
+  primaryBookingId: string;
+  originalQuoteRequestId: string;
+
+  // Primary leg (the booked passenger leg)
+  primaryLeg: {
+    departureAirport: string;
+    arrivalAirport: string;
+    departureAirportName?: string;
+    arrivalAirportName?: string;
+    scheduledDepartureTime: Timestamp;
+    scheduledArrivalTime: Timestamp;
+    maxSeats: number;
+    bookingIds: string[];
+  };
+
+  // Optional return/positioning leg (empty leg)
+  returnLeg?: {
+    departureAirport: string; // Same as primaryLeg.arrivalAirport
+    arrivalAirport: string; // Same as primaryLeg.departureAirport or different destination
+    scheduledDepartureTime: Timestamp;
+    scheduledArrivalTime: Timestamp;
+    maxSeats: number;
+  };
+}

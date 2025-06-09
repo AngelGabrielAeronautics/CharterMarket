@@ -238,246 +238,265 @@ export default function BookingDetailsPage() {
             </Step>
           </Stepper>
         </Box>
-      </Paper>
 
-      <Box sx={{ mb: 4 }}>
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
-        >
-          <Tab label="Passenger Manifest" id="tab-0" />
-          <Tab label="Invoices & Payments" id="tab-1" />
-          <Tab label="Feedback" id="tab-2" />
-        </Tabs>
+        <Divider sx={{ my: 4 }} />
 
-        {activeTab === 0 && bookingDocId && (
-          <Box>
-            <PassengerManifest
-              bookingId={bookingDocId}
-              userCode={user?.userCode || ''}
-              passengerCount={booking.passengerCount}
-              readOnly={!canEditPassengers}
-            />
-          </Box>
-        )}
+        {/* Tabs and Tab Content */}
+        <Box sx={{ mb: 4 }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
+          >
+            <Tab label="Passenger Manifest" id="tab-0" />
+            <Tab label="Invoices & Payments" id="tab-1" />
+            <Tab label="Feedback" id="tab-2" />
+          </Tabs>
 
-        {activeTab === 1 && (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Invoices & Payments
-            </Typography>
-
-            {loadingInvoices ? (
-              <Typography>Loading invoices...</Typography>
-            ) : invoicesError ? (
-              <Paper sx={{ p: 3, textAlign: 'center' }} variant="outlined">
-                <Typography color="error">Unable to load invoices: {invoicesError}</Typography>
-                <Button variant="outlined" onClick={() => window.location.reload()} sx={{ mt: 2 }}>
-                  Retry
-                </Button>
-              </Paper>
-            ) : invoices.length === 0 ? (
-              <Paper sx={{ p: 3, textAlign: 'center' }} variant="outlined">
-                <Typography color="text.secondary">No invoices found.</Typography>
-              </Paper>
-            ) : (
-              <Paper variant="outlined">
-                {invoices.map((inv, index) => (
-                  <Box key={inv.id}>
-                    {index > 0 && <Divider />}
-                    <Box sx={{ p: 2 }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          mb: 1,
-                        }}
-                      >
-                        <Box>
-                          <Typography variant="subtitle2">Invoice {inv.invoiceId}</Typography>
-                          <Typography variant="body2">
-                            Issued: {format(toJsDate(inv.createdAt), 'dd MMM yyyy')}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Typography variant="body1" fontWeight="medium" sx={{ mr: 2 }}>
-                            ${inv.amount.toFixed(2)}
-                          </Typography>
-                          <Button
-                            variant="outlined"
-                            onClick={() => router.push(`/dashboard/invoices/${inv.id}`)}
-                            sx={{ mr: 1 }}
-                          >
-                            View
-                          </Button>
-                          {['pending-payment', 'deposit-paid'].includes(booking.status) &&
-                            !hasPendingPayment && (
-                              <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={() => openPaymentDialog(inv)}
-                              >
-                                Pay Now
-                              </Button>
-                            )}
-                        </Box>
-                      </Box>
-
-                      {/* Show related payments for this invoice */}
-                      {!loadingPayments &&
-                        payments &&
-                        payments.filter((p) => p.invoiceId === inv.id).length > 0 && (
-                          <Box sx={{ mt: 2, ml: 2 }}>
-                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                              Payment History
-                            </Typography>
-                            {payments
-                              .filter((p) => p.invoiceId === inv.id)
-                              .map((payment) => (
-                                <Box
-                                  key={payment.id}
-                                  sx={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    p: 1,
-                                    borderLeft: '2px solid',
-                                    borderColor:
-                                      payment.status === 'completed'
-                                        ? 'success.main'
-                                        : payment.status === 'failed'
-                                          ? 'error.main'
-                                          : payment.status === 'pending'
-                                            ? 'warning.main'
-                                            : 'info.main',
-                                    pl: 2,
-                                    bgcolor: 'background.default',
-                                  }}
-                                >
-                                  <Box>
-                                    <Typography variant="body2">
-                                      {payment.paymentId} - {payment.paymentMethod}
-                                    </Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                      {payment.paymentDate
-                                        ? format(toJsDate(payment.paymentDate), 'dd MMM yyyy')
-                                        : format(toJsDate(payment.createdAt), 'dd MMM yyyy')}
-                                    </Typography>
-                                  </Box>
-                                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <Typography variant="body2" sx={{ mr: 1 }}>
-                                      ${payment.amount.toFixed(2)}
-                                    </Typography>
-                                    <Chip
-                                      size="small"
-                                      label={
-                                        payment.status.charAt(0).toUpperCase() +
-                                        payment.status.slice(1)
-                                      }
-                                      color={
-                                        payment.status === 'completed'
-                                          ? 'success'
-                                          : payment.status === 'failed'
-                                            ? 'error'
-                                            : payment.status === 'pending'
-                                              ? 'warning'
-                                              : 'info'
-                                      }
-                                    />
-                                  </Box>
-                                </Box>
-                              ))}
-                          </Box>
-                        )}
-                    </Box>
-                  </Box>
-                ))}
-              </Paper>
-            )}
-          </Box>
-        )}
-
-        {activeTab === 2 && (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              User Feedback
-            </Typography>
-            {loadingRating ? (
-              <Typography>Loading feedback...</Typography>
-            ) : rating ? (
-              <Box>
-                <Typography>Thank you for your feedback!</Typography>
-                <Rating value={rating.rating} readOnly />
-                {rating.comments && <Typography sx={{ mt: 1 }}>{rating.comments}</Typography>}
-              </Box>
-            ) : (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxWidth: 400 }}>
-                {createError && <Typography color="error">{createError}</Typography>}
-                <Rating
-                  name="userRating"
-                  value={userRating}
-                  onChange={(_, newValue) => setUserRating(newValue || 0)}
-                />
-                <TextField
-                  label="Comments (optional)"
-                  multiline
-                  rows={3}
-                  value={comments}
-                  onChange={(e) => setComments(e.target.value)}
-                />
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleSubmitRating}
-                    disabled={creatingRating || userRating === 0 || createSuccess}
-                  >
-                    {creatingRating
-                      ? 'Submitting...'
-                      : createSuccess
-                        ? 'Submitted'
-                        : 'Submit Feedback'}
-                  </Button>
-                  {createSuccess && <Typography color="success.main">Feedback sent!</Typography>}
-                </Box>
-              </Box>
-            )}
-          </Box>
-        )}
-      </Box>
-
-      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-        <Button variant="outlined" onClick={() => router.push('/dashboard/bookings')}>
-          Back to Bookings
-        </Button>
-
-        {['confirmed', 'client-ready', 'flight-ready', 'archived'].includes(booking.status) && (
-          <Button variant="contained" color="primary" onClick={handleDownloadTicket}>
-            Download Ticket
-          </Button>
-        )}
-
-        {['pending-payment', 'deposit-paid'].includes(booking.status) &&
-          !hasPendingPayment &&
-          invoices.length > 0 && (
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => openPaymentDialog(invoices[0])}
-              startIcon={<AttachMoney />}
-            >
-              Make Payment
-            </Button>
+          {activeTab === 0 && bookingDocId && (
+            <Box>
+              <PassengerManifest
+                bookingId={bookingDocId}
+                userCode={user?.userCode || ''}
+                passengerCount={booking.passengerCount}
+                readOnly={!canEditPassengers}
+              />
+            </Box>
           )}
 
-        {hasPendingPayment && (
-          <Button variant="contained" color="warning" disabled startIcon={<AccessTime />}>
-            Payment Pending Verification
+          {activeTab === 1 && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Invoices & Payments
+              </Typography>
+
+              {loadingInvoices ? (
+                <Typography>Loading invoices...</Typography>
+              ) : invoicesError ? (
+                <Paper sx={{ p: 3, textAlign: 'center' }} variant="outlined">
+                  <Typography color="error">Unable to load invoices: {invoicesError}</Typography>
+                  <Button
+                    variant="outlined"
+                    onClick={() => window.location.reload()}
+                    sx={{ mt: 2 }}
+                  >
+                    Retry
+                  </Button>
+                </Paper>
+              ) : invoices.length === 0 ? (
+                <Paper sx={{ p: 3, textAlign: 'center' }} variant="outlined">
+                  <Typography color="text.secondary">No invoices found.</Typography>
+                </Paper>
+              ) : (
+                <Paper variant="outlined">
+                  {invoices.map((inv, index) => (
+                    <Box key={inv.id}>
+                      {index > 0 && <Divider />}
+                      <Box sx={{ p: 2 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            mb: 1,
+                          }}
+                        >
+                          <Box>
+                            <Typography variant="subtitle2">Invoice {inv.invoiceId}</Typography>
+                            <Typography variant="body2">
+                              Issued: {format(toJsDate(inv.createdAt), 'dd MMM yyyy')}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Typography variant="body1" fontWeight="medium" sx={{ mr: 2 }}>
+                              ${inv.amount.toFixed(2)}
+                            </Typography>
+                            <Button
+                              variant="outlined"
+                              onClick={() => router.push(`/dashboard/invoices/${inv.id}`)}
+                              sx={{ mr: 1 }}
+                            >
+                              View
+                            </Button>
+                            {['pending-payment', 'deposit-paid'].includes(booking.status) &&
+                              !hasPendingPayment && (
+                                <Button
+                                  variant="contained"
+                                  color="primary"
+                                  onClick={() => openPaymentDialog(inv)}
+                                >
+                                  Pay Now
+                                </Button>
+                              )}
+                          </Box>
+                        </Box>
+
+                        {/* Show related payments for this invoice */}
+                        {!loadingPayments &&
+                          payments &&
+                          payments.filter((p) => p.invoiceId === inv.id).length > 0 && (
+                            <Box sx={{ mt: 2, ml: 2 }}>
+                              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                Payment History
+                              </Typography>
+                              {payments
+                                .filter((p) => p.invoiceId === inv.id)
+                                .map((payment) => (
+                                  <Box
+                                    key={payment.id}
+                                    sx={{
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center',
+                                      p: 1,
+                                      borderLeft: '2px solid',
+                                      borderColor:
+                                        payment.status === 'completed'
+                                          ? 'success.main'
+                                          : payment.status === 'failed'
+                                            ? 'error.main'
+                                            : payment.status === 'pending'
+                                              ? 'warning.main'
+                                              : 'info.main',
+                                      pl: 2,
+                                      bgcolor: 'background.default',
+                                    }}
+                                  >
+                                    <Box>
+                                      <Typography variant="body2">
+                                        {payment.paymentId} - {payment.paymentMethod}
+                                      </Typography>
+                                      <Typography variant="caption" color="text.secondary">
+                                        {payment.paymentDate
+                                          ? format(toJsDate(payment.paymentDate), 'dd MMM yyyy')
+                                          : format(toJsDate(payment.createdAt), 'dd MMM yyyy')}
+                                      </Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                      <Typography variant="body2" sx={{ mr: 1 }}>
+                                        ${payment.amount.toFixed(2)}
+                                      </Typography>
+                                      <Chip
+                                        size="small"
+                                        label={
+                                          payment.status.charAt(0).toUpperCase() +
+                                          payment.status.slice(1)
+                                        }
+                                        color={
+                                          payment.status === 'completed'
+                                            ? 'success'
+                                            : payment.status === 'failed'
+                                              ? 'error'
+                                              : payment.status === 'pending'
+                                                ? 'warning'
+                                                : 'info'
+                                        }
+                                      />
+                                    </Box>
+                                  </Box>
+                                ))}
+                            </Box>
+                          )}
+                      </Box>
+                    </Box>
+                  ))}
+                </Paper>
+              )}
+            </Box>
+          )}
+
+          {activeTab === 2 && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                User Feedback
+              </Typography>
+              {loadingRating ? (
+                <Typography>Loading feedback...</Typography>
+              ) : rating ? (
+                <Box>
+                  <Typography>Thank you for your feedback!</Typography>
+                  <Rating value={rating.rating} readOnly />
+                  {rating.comments && <Typography sx={{ mt: 1 }}>{rating.comments}</Typography>}
+                </Box>
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxWidth: 400 }}>
+                  {createError && <Typography color="error">{createError}</Typography>}
+                  <Rating
+                    name="userRating"
+                    value={userRating}
+                    onChange={(_, newValue) => setUserRating(newValue || 0)}
+                  />
+                  <TextField
+                    label="Comments (optional)"
+                    multiline
+                    rows={3}
+                    value={comments}
+                    onChange={(e) => setComments(e.target.value)}
+                  />
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleSubmitRating}
+                      disabled={creatingRating || userRating === 0 || createSuccess}
+                    >
+                      {creatingRating
+                        ? 'Submitting...'
+                        : createSuccess
+                          ? 'Submitted'
+                          : 'Submit Feedback'}
+                    </Button>
+                    {createSuccess && <Typography color="success.main">Feedback sent!</Typography>}
+                  </Box>
+                </Box>
+              )}
+            </Box>
+          )}
+        </Box>
+
+        {/* Action Buttons */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            mt: 4,
+            pt: 2,
+            borderTop: 1,
+            borderColor: 'divider',
+          }}
+        >
+          <Button variant="outlined" onClick={() => router.push('/dashboard/bookings')}>
+            Back to Bookings
           </Button>
-        )}
-      </Box>
+
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            {['confirmed', 'client-ready', 'flight-ready', 'archived'].includes(booking.status) && (
+              <Button variant="contained" color="primary" onClick={handleDownloadTicket}>
+                Download Ticket
+              </Button>
+            )}
+
+            {['pending-payment', 'deposit-paid'].includes(booking.status) &&
+              !hasPendingPayment &&
+              invoices.length > 0 && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => openPaymentDialog(invoices[0])}
+                  startIcon={<AttachMoney />}
+                >
+                  Make Payment
+                </Button>
+              )}
+
+            {hasPendingPayment && (
+              <Button variant="contained" color="warning" disabled startIcon={<AccessTime />}>
+                Payment Pending Verification
+              </Button>
+            )}
+          </Box>
+        </Box>
+      </Paper>
 
       {/* Payment Dialog */}
       <Dialog open={isPaymentDialogOpen} onClose={closePaymentDialog} maxWidth="md" fullWidth>
