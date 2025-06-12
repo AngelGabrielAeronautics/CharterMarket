@@ -53,7 +53,6 @@ export function useClientBookings(clientId?: string) {
     (async () => {
       setLoading(true);
       try {
-        // Always fetch real API for client bookings
         const headers = await getAuthHeaders();
         const res = await fetch(`/api/bookings?clientId=${clientId}`, {
           headers,
@@ -97,29 +96,23 @@ export function useOperatorBookings(operatorCode?: string) {
     (async () => {
       setLoading(true);
       try {
-        // Use mock API in development
-        if (isDev) {
-          const data = await mockGetOperatorBookings(operatorCode);
-          setBookings(data);
-        } else {
-          const headers = await getAuthHeaders();
-          const res = await fetch(`/api/bookings?operatorUserCode=${operatorCode}`, {
-            headers,
-          });
-          if (!res.ok) {
-            // Try to parse JSON error response
-            const text = await res.text();
-            let msg = text;
-            try {
-              msg = JSON.parse(text).error || text;
-            } catch (e) {
-              /* ignore parsing error, msg remains text */
-            }
-            throw new Error(msg);
+        const headers = await getAuthHeaders();
+        const res = await fetch(`/api/bookings?operatorUserCode=${operatorCode}`, {
+          headers,
+        });
+        if (!res.ok) {
+          // Try to parse JSON error response
+          const text = await res.text();
+          let msg = text;
+          try {
+            msg = JSON.parse(text).error || text;
+          } catch (e) {
+            /* ignore parsing error, msg remains text */
           }
-          const data: Booking[] = await res.json();
-          setBookings(data);
+          throw new Error(msg);
         }
+        const data: Booking[] = await res.json();
+        setBookings(data);
       } catch (err: any) {
         console.error('Error in useOperatorBookings:', err);
         setError(err.message || 'Failed to fetch operator bookings');

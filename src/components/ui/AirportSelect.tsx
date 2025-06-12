@@ -279,8 +279,9 @@ export default function AirportSelect({
                 ? `${error}${showUndocumented ? ' — Undocumented airfields can be added manually' : ''}`
                 : showUndocumented
                   ? 'Undocumented airfields can be added manually'
-                  : ' '
+                  : undefined
             }
+            FormHelperTextProps={{ sx: { m: 0, mt: 0 } }}
             InputLabelProps={{
               shrink: true,
             }}

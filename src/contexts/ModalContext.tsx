@@ -60,8 +60,8 @@ export function ModalProvider({ children }: { children: ReactNode }) {
           defaultUserType={defaultUserType}
         />
       )}
-      {/* Always mount LoginModal so internal state persists; control visibility via isOpen */}
-      <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
+      {/* Mount LoginModal only when open to avoid focus/aria-hidden issues */}
+      {isLoginModalOpen && <LoginModal isOpen={true} onClose={closeLoginModal} />}
     </ModalContext.Provider>
   );
 }

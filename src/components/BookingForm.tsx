@@ -694,7 +694,15 @@ export default function BookingForm() {
     setFormState(initialFormState);
   };
 
-  // Add useEffect to auto-submit pending draft when user logs in
+  // Show the rest of the form only when the primary fields are complete
+  const baseFieldsComplete = Boolean(
+    formState.legs[0]?.from &&
+      formState.legs[0]?.to &&
+      formState.legs[0]?.departureDate &&
+      (formState.flightType === 'multicity'
+        ? formState.legs[0]?.passengers > 0
+        : formState.passengers > 0)
+  );
   useEffect(() => {
     if (user) {
       const draft = getDraftFromLocalStorage();
@@ -712,12 +720,18 @@ export default function BookingForm() {
       <Paper
         component="form"
         onSubmit={handleSubmit}
-        elevation={5}
+        elevation={0}
         sx={{
-          p: { xs: 2, sm: 3, md: 4 },
+          pt: { xs: 2, sm: 3, md: 4 },
+          pr: { xs: 2, sm: 3, md: 4 },
+          pl: { xs: 2, sm: 3, md: 4 },
+          pb: { xs: 1, sm: 1.5, md: 2 },
           borderRadius: '12px',
           width: '100%',
-          backgroundColor: alpha(theme.palette.common.white, 0.8),
+          backgroundColor: alpha(theme.palette.common.white, 0.2),
+          backdropFilter: 'blur(10px)',
+          boxShadow: '0 4px 30px rgba(0,0,0,0.1)',
+          border: `1px solid ${alpha(theme.palette.common.white, 0.3)}`,
           fontFamily: theme.typography.fontFamily,
         }}
         data-testid="booking-form"
@@ -731,7 +745,7 @@ export default function BookingForm() {
               onChange={(_, val) => {
                 if (val) handleFlightTypeChange(val as FlightType);
               }}
-              sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}
+              sx={{ display: 'flex', justifyContent: 'flex-start', gap: 1 }}
             >
               <ToggleButton
                 value="one-way"
@@ -766,7 +780,8 @@ export default function BookingForm() {
                 p: 2,
                 borderRadius: 2,
                 border: '1px solid',
-                borderColor: 'divider',
+                borderColor: alpha(theme.palette.primary.main, 0.0),
+                backgroundColor: alpha(theme.palette.background.default, 1.0),
               }}
             >
               {formState.flightType === 'multicity' && (
@@ -790,7 +805,21 @@ export default function BookingForm() {
                 sx={{ display: 'flex', flexWrap: 'nowrap', gap: 2, mb: 2, alignItems: 'center' }}
               >
                 {/* From Airport */}
-                <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    // Square right corners for the From field
+                    '& .MuiOutlinedInput-root': {
+                      borderTopRightRadius: 0,
+                      borderBottomRightRadius: 0,
+                    },
+                    '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                      borderTopRightRadius: 0,
+                      borderBottomRightRadius: 0,
+                    },
+                  }}
+                >
                   <AirportSelect
                     label="From"
                     value={leg.from}
@@ -801,7 +830,7 @@ export default function BookingForm() {
                 </Box>
 
                 {/* To Airport */}
-                <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ flex: 1, minWidth: 0, '& .MuiOutlinedInput-root': { borderRadius: 0 } }}>
                   <AirportSelect
                     label="To"
                     value={leg.to}
@@ -811,7 +840,7 @@ export default function BookingForm() {
                 </Box>
 
                 {/* Departure Date & Time */}
-                <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ flex: 1, minWidth: 0, '& .MuiOutlinedInput-root': { borderRadius: 0 } }}>
                   <CustomDateTimePicker
                     label={
                       formState.flightType === 'multicity'
@@ -840,7 +869,9 @@ export default function BookingForm() {
 
                 {/* Return Date & Time - Conditionally rendered for the first leg of a return flight */}
                 {formState.flightType === 'return' && index === 0 && (
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Box
+                    sx={{ flex: 1, minWidth: 0, '& .MuiOutlinedInput-root': { borderRadius: 0 } }}
+                  >
                     <CustomDateTimePicker
                       label="Return Date & Time"
                       value={formState.returnDate}
@@ -863,13 +894,20 @@ export default function BookingForm() {
                       sx={{
                         flex: 1,
                         minWidth: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
+                        // Square left corners of the passenger field
+                        '& .MuiOutlinedInput-root': {
+                          borderTopLeftRadius: 0,
+                          borderBottomLeftRadius: 0,
+                        },
+                        '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                          borderTopLeftRadius: 0,
+                          borderBottomLeftRadius: 0,
+                        },
                       }}
                     >
                       <TextField
                         id="global-passengers"
+                        autoComplete="off"
                         name="passengers"
                         value={formState.passengers > 0 ? formState.passengers : ''}
                         placeholder="-"
@@ -885,32 +923,31 @@ export default function BookingForm() {
                               <PersonOutlineIcon />
                             </InputAdornment>
                           ),
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                                <IconButton
+                                  onClick={() => incrementPassengers()}
+                                  disabled={formState.passengers >= 300}
+                                  size="small"
+                                >
+                                  <AddIcon />
+                                </IconButton>
+                                <IconButton
+                                  onClick={() => decrementPassengers()}
+                                  disabled={formState.passengers <= 1}
+                                  size="small"
+                                >
+                                  <RemoveIcon />
+                                </IconButton>
+                              </Box>
+                            </InputAdornment>
+                          ),
                         }}
-                        inputProps={{ min: 1, max: 300 }}
-                        sx={{
-                          '& .MuiInputBase-root': { fontFamily: 'inherit' },
-                          '& .MuiInputBase-input': {
-                            width: `${Math.max((formState.passengers > 0 ? formState.passengers.toString() : '').length, 1)}ch`,
-                            textAlign: 'center',
-                          },
-                        }}
+                        inputProps={{ min: 1, max: 300, style: { textAlign: 'center' } }}
+                        fullWidth
+                        sx={{ fontFamily: 'inherit' }}
                       />
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                        <IconButton
-                          onClick={() => incrementPassengers()}
-                          disabled={formState.passengers >= 300}
-                          size="small"
-                        >
-                          <AddIcon />
-                        </IconButton>
-                        <IconButton
-                          onClick={() => decrementPassengers()}
-                          disabled={formState.passengers <= 1}
-                          size="small"
-                        >
-                          <RemoveIcon />
-                        </IconButton>
-                      </Box>
                     </Box>
                   )}
 
@@ -920,13 +957,20 @@ export default function BookingForm() {
                     sx={{
                       flex: 1,
                       minWidth: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
+                      // Square left corners of the per-leg passenger field
+                      '& .MuiOutlinedInput-root': {
+                        borderTopLeftRadius: 0,
+                        borderBottomLeftRadius: 0,
+                      },
+                      '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                        borderTopLeftRadius: 0,
+                        borderBottomLeftRadius: 0,
+                      },
                     }}
                   >
                     <TextField
                       id={`leg-${index}-passengers`}
+                      autoComplete="off"
                       name={`leg${index}Passengers`}
                       value={leg.passengers > 0 ? leg.passengers : ''}
                       placeholder="-"
@@ -942,32 +986,31 @@ export default function BookingForm() {
                             <PersonOutlineIcon />
                           </InputAdornment>
                         ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                              <IconButton
+                                onClick={() => incrementPassengers(index)}
+                                disabled={leg.passengers >= 300}
+                                size="small"
+                              >
+                                <AddIcon />
+                              </IconButton>
+                              <IconButton
+                                onClick={() => decrementPassengers(index)}
+                                disabled={leg.passengers <= 1}
+                                size="small"
+                              >
+                                <RemoveIcon />
+                              </IconButton>
+                            </Box>
+                          </InputAdornment>
+                        ),
                       }}
-                      inputProps={{ min: 1, max: 300 }}
-                      sx={{
-                        '& .MuiInputBase-root': { fontFamily: 'inherit' },
-                        '& .MuiInputBase-input': {
-                          width: `${Math.max((leg.passengers > 0 ? leg.passengers.toString() : '').length, 1)}ch`,
-                          textAlign: 'center',
-                        },
-                      }}
+                      inputProps={{ min: 1, max: 300, style: { textAlign: 'center' } }}
+                      fullWidth
+                      sx={{ fontFamily: 'inherit' }}
                     />
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      <IconButton
-                        onClick={() => incrementPassengers(index)}
-                        disabled={leg.passengers >= 300}
-                        size="small"
-                      >
-                        <AddIcon />
-                      </IconButton>
-                      <IconButton
-                        onClick={() => decrementPassengers(index)}
-                        disabled={leg.passengers <= 1}
-                        size="small"
-                      >
-                        <RemoveIcon />
-                      </IconButton>
-                    </Box>
                   </Box>
                 )}
               </Box>
@@ -989,207 +1032,225 @@ export default function BookingForm() {
             </Box>
           )}
 
-          {/* Additional Options */}
-          <Box sx={{ mb: 3, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="h6" gutterBottom sx={{ fontFamily: 'inherit' }}>
-                Additional Options
-              </Typography>
-              <IconButton
-                size="small"
-                onClick={() => setShowAdditionalOptions((prev) => !prev)}
-                sx={{ fontFamily: 'inherit' }}
-              >
-                {showAdditionalOptions ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-              </IconButton>
+          {/* Slide-in Additional Options and Submission */}
+          <Collapse in={baseFieldsComplete} timeout="auto" unmountOnExit>
+            {/* Additional Options */}
+            <Box sx={{ mb: 3, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography variant="h6" gutterBottom sx={{ fontFamily: 'inherit' }}>
+                  Additional Options
+                </Typography>
+                <IconButton
+                  size="small"
+                  onClick={() => setShowAdditionalOptions((prev) => !prev)}
+                  sx={{ fontFamily: 'inherit' }}
+                >
+                  {showAdditionalOptions ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                </IconButton>
+              </Box>
+              <Collapse in={showAdditionalOptions}>
+                <Typography
+                  variant="subtitle1"
+                  gutterBottom
+                  sx={{
+                    fontFamily: 'inherit',
+                    mt: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
+                  <FlightTakeoffIcon fontSize="small" />
+                  Aircraft Options
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={formState.twinEngineMin}
+                        onChange={handleCheckboxChange('twinEngineMin')}
+                      />
+                    }
+                    label={
+                      <Typography sx={{ fontFamily: 'inherit' }}>Twin Engine Minimum</Typography>
+                    }
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={formState.pressurisedCabin}
+                        onChange={handleCheckboxChange('pressurisedCabin')}
+                      />
+                    }
+                    label={
+                      <Typography sx={{ fontFamily: 'inherit' }}>Pressurised Cabin</Typography>
+                    }
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={formState.twoCrewMin}
+                        onChange={handleCheckboxChange('twoCrewMin')}
+                      />
+                    }
+                    label={<Typography sx={{ fontFamily: 'inherit' }}>Two Crew Minimum</Typography>}
+                  />
+                </Box>
+
+                <Typography
+                  variant="subtitle1"
+                  gutterBottom
+                  sx={{
+                    fontFamily: 'inherit',
+                    mt: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
+                  <LuggageIcon fontSize="small" />
+                  Baggage Options
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={formState.hasExtraBaggage}
+                        onChange={handleCheckboxChange('hasExtraBaggage')}
+                      />
+                    }
+                    label={<Typography sx={{ fontFamily: 'inherit' }}>Extra Baggage</Typography>}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={formState.hasPets}
+                        onChange={handleCheckboxChange('hasPets')}
+                      />
+                    }
+                    label={
+                      <Typography sx={{ fontFamily: 'inherit' }}>Traveling with Pets</Typography>
+                    }
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={formState.hasHardBags}
+                        onChange={handleCheckboxChange('hasHardBags')}
+                      />
+                    }
+                    label={<Typography sx={{ fontFamily: 'inherit' }}>Hard Bags</Typography>}
+                  />
+                </Box>
+                {/* Conditional Baggage fields */}
+                {formState.hasExtraBaggage && (
+                  <TextField
+                    id="baggage-details"
+                    name="baggageDetails"
+                    fullWidth
+                    margin="normal"
+                    label="Extra Baggage Details"
+                    placeholder="Number of bags, total weight, dimensions, etc."
+                    value={formState.baggageDetails}
+                    onChange={handleTextChange('baggageDetails')}
+                    sx={{
+                      '& .MuiInputLabel-root': { fontFamily: 'inherit' },
+                      '& .MuiInputBase-root': { fontFamily: 'inherit' },
+                    }}
+                  />
+                )}
+                {/* Conditional Pets fields under Baggage */}
+                {formState.hasPets && (
+                  <TextField
+                    id="pet-details"
+                    name="petDetails"
+                    fullWidth
+                    margin="normal"
+                    label="Pet Details"
+                    placeholder="Type, weight, crate dimensions, etc."
+                    value={formState.petDetails}
+                    onChange={handleTextChange('petDetails')}
+                    sx={{
+                      '& .MuiInputLabel-root': { fontFamily: 'inherit' },
+                      '& .MuiInputBase-root': { fontFamily: 'inherit' },
+                    }}
+                  />
+                )}
+                {/* Conditional Hard Bags fields under Baggage */}
+                {formState.hasHardBags && (
+                  <TextField
+                    id="hard-bags-details"
+                    name="hardBagsDetails"
+                    fullWidth
+                    margin="normal"
+                    label="Hard Bags Details"
+                    placeholder="Number and dimensions, etc."
+                    value={formState.hardBagsDetails}
+                    onChange={handleTextChange('hardBagsDetails')}
+                    sx={{
+                      '& .MuiInputLabel-root': { fontFamily: 'inherit' },
+                      '& .MuiInputBase-root': { fontFamily: 'inherit' },
+                    }}
+                  />
+                )}
+                {/* Additional Notes */}
+                <TextField
+                  id="additional-notes"
+                  name="additionalNotes"
+                  fullWidth
+                  margin="normal"
+                  label="Additional Notes"
+                  placeholder="Any other requirements or information"
+                  multiline
+                  rows={3}
+                  value={formState.additionalNotes}
+                  onChange={handleTextChange('additionalNotes')}
+                  sx={{
+                    '& .MuiInputLabel-root': { fontFamily: 'inherit' },
+                    '& .MuiInputBase-root': { fontFamily: 'inherit' },
+                  }}
+                />
+              </Collapse>
             </Box>
-            <Collapse in={showAdditionalOptions}>
-              <Typography
-                variant="subtitle1"
-                gutterBottom
-                sx={{ fontFamily: 'inherit', mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}
-              >
-                <FlightTakeoffIcon fontSize="small" />
-                Aircraft Options
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={formState.twinEngineMin}
-                      onChange={handleCheckboxChange('twinEngineMin')}
-                    />
-                  }
-                  label={
-                    <Typography sx={{ fontFamily: 'inherit' }}>Twin Engine Minimum</Typography>
-                  }
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={formState.pressurisedCabin}
-                      onChange={handleCheckboxChange('pressurisedCabin')}
-                    />
-                  }
-                  label={<Typography sx={{ fontFamily: 'inherit' }}>Pressurised Cabin</Typography>}
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={formState.twoCrewMin}
-                      onChange={handleCheckboxChange('twoCrewMin')}
-                    />
-                  }
-                  label={<Typography sx={{ fontFamily: 'inherit' }}>Two Crew Minimum</Typography>}
-                />
-              </Box>
 
-              <Typography
-                variant="subtitle1"
-                gutterBottom
-                sx={{ fontFamily: 'inherit', mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}
-              >
-                <LuggageIcon fontSize="small" />
-                Baggage Options
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={formState.hasExtraBaggage}
-                      onChange={handleCheckboxChange('hasExtraBaggage')}
-                    />
-                  }
-                  label={<Typography sx={{ fontFamily: 'inherit' }}>Extra Baggage</Typography>}
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={formState.hasPets}
-                      onChange={handleCheckboxChange('hasPets')}
-                    />
-                  }
-                  label={
-                    <Typography sx={{ fontFamily: 'inherit' }}>Traveling with Pets</Typography>
-                  }
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={formState.hasHardBags}
-                      onChange={handleCheckboxChange('hasHardBags')}
-                    />
-                  }
-                  label={<Typography sx={{ fontFamily: 'inherit' }}>Hard Bags</Typography>}
-                />
-              </Box>
-              {/* Conditional Baggage fields */}
-              {formState.hasExtraBaggage && (
-                <TextField
-                  id="baggage-details"
-                  name="baggageDetails"
-                  fullWidth
-                  margin="normal"
-                  label="Extra Baggage Details"
-                  placeholder="Number of bags, total weight, dimensions, etc."
-                  value={formState.baggageDetails}
-                  onChange={handleTextChange('baggageDetails')}
-                  sx={{
-                    '& .MuiInputLabel-root': { fontFamily: 'inherit' },
-                    '& .MuiInputBase-root': { fontFamily: 'inherit' },
-                  }}
-                />
-              )}
-              {/* Conditional Pets fields under Baggage */}
-              {formState.hasPets && (
-                <TextField
-                  id="pet-details"
-                  name="petDetails"
-                  fullWidth
-                  margin="normal"
-                  label="Pet Details"
-                  placeholder="Type, weight, crate dimensions, etc."
-                  value={formState.petDetails}
-                  onChange={handleTextChange('petDetails')}
-                  sx={{
-                    '& .MuiInputLabel-root': { fontFamily: 'inherit' },
-                    '& .MuiInputBase-root': { fontFamily: 'inherit' },
-                  }}
-                />
-              )}
-              {/* Conditional Hard Bags fields under Baggage */}
-              {formState.hasHardBags && (
-                <TextField
-                  id="hard-bags-details"
-                  name="hardBagsDetails"
-                  fullWidth
-                  margin="normal"
-                  label="Hard Bags Details"
-                  placeholder="Number and dimensions, etc."
-                  value={formState.hardBagsDetails}
-                  onChange={handleTextChange('hardBagsDetails')}
-                  sx={{
-                    '& .MuiInputLabel-root': { fontFamily: 'inherit' },
-                    '& .MuiInputBase-root': { fontFamily: 'inherit' },
-                  }}
-                />
-              )}
-              {/* Additional Notes */}
-              <TextField
-                id="additional-notes"
-                name="additionalNotes"
+            {/* Submit Button */}
+            <Box sx={{ mb: 3 }}>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                size="large"
                 fullWidth
-                margin="normal"
-                label="Additional Notes"
-                placeholder="Any other requirements or information"
-                multiline
-                rows={3}
-                value={formState.additionalNotes}
-                onChange={handleTextChange('additionalNotes')}
+                disabled={!isFormComplete()}
                 sx={{
-                  '& .MuiInputLabel-root': { fontFamily: 'inherit' },
-                  '& .MuiInputBase-root': { fontFamily: 'inherit' },
+                  py: 1.5,
+                  fontSize: '1rem',
+                  textTransform: 'none',
+                  fontFamily: 'inherit',
+                  fontWeight: 600,
                 }}
-              />
-            </Collapse>
-          </Box>
+              >
+                Submit Quote Request
+              </Button>
+            </Box>
 
-          {/* Submit Button */}
-          <Box sx={{ mb: 3 }}>
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              size="large"
-              fullWidth
-              disabled={!isFormComplete()}
-              sx={{
-                py: 1.5,
-                fontSize: '1rem',
-                textTransform: 'none',
-                fontFamily: 'inherit',
-                fontWeight: 600,
-              }}
-            >
-              Submit Quote Request
-            </Button>
-          </Box>
-          {/* Reset Button */}
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
-            <Button
-              variant="text"
-              size="small"
-              onClick={handleReset}
-              sx={{
-                textTransform: 'none',
-                fontFamily: 'inherit',
-                fontSize: '0.875rem',
-                color: 'text.secondary',
-              }}
-            >
-              Reset form
-            </Button>
-          </Box>
+            {/* Reset Button */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+              <Button
+                variant="text"
+                size="small"
+                onClick={handleReset}
+                sx={{
+                  textTransform: 'none',
+                  fontFamily: 'inherit',
+                  fontSize: '0.875rem',
+                  color: 'text.secondary',
+                }}
+              >
+                Reset form
+              </Button>
+            </Box>
+          </Collapse>
         </LocalizationProvider>
       </Paper>
 

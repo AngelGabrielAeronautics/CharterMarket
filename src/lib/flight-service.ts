@@ -260,6 +260,18 @@ export class FlightService {
   }
 
   /**
+   * Gets all flights from the system. FOR ADMIN/SUPERADMIN USE ONLY.
+   */
+  static async getAllFlights(): Promise<Flight[]> {
+    const flightsQuery = query(collection(db, 'flights'));
+    const flightsSnapshot = await getDocs(flightsQuery);
+    return flightsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Flight[];
+  }
+
+  /**
    * Updates flight status
    */
   static async updateFlightStatus(flightId: string, status: Flight['status']): Promise<void> {

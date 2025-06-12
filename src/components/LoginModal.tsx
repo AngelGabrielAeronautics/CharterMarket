@@ -23,6 +23,7 @@ import { Visibility, VisibilityOff } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import Image from 'next/image';
+import { useTheme } from '@mui/material/styles';
 
 import { auth } from '@/lib/firebase';
 import { useModal } from '@/contexts/ModalContext';
@@ -80,6 +81,7 @@ interface LoginModalProps {
 const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
   const { isLoginModalOpen, closeLoginModal, openRegisterModal } = useModal();
   const router = useRouter();
+  const theme = useTheme();
   const emailInputRef = useRef<HTMLInputElement>(null);
 
   // Use props if provided, otherwise fall back to context
@@ -315,6 +317,9 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
           width: { xs: '100%', md: '1200px' },
           maxHeight: { xs: '60vh', md: '50vh' },
           height: { xs: '60vh', md: '50vh' },
+          '& .MuiOutlinedInput-notchedOutline': {
+            border: `1px solid ${theme.palette.divider}`,
+          },
         },
       }}
     >
@@ -333,64 +338,56 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
             overflow: 'hidden',
           }}
         >
-          {/* Static Image Background */}
-          <Image
-            src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&q=80"
-            alt="Login Background"
-            fill
-            sizes="(max-width: 768px) 100vw, 50vw"
-            style={{ objectFit: 'cover' }}
-            priority
+          {/* Static Video Background */}
+          <video
+            key="login-modal-video"
+            src="/images/login/login_modal.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            style={{ display: 'block', objectFit: 'cover', width: '100%', height: '100%' }}
           />
           <Box
             sx={{
-              position: 'relative',
-              zIndex: 1,
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
               height: '100%',
+              zIndex: 1,
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
               p: 4,
               color: 'white',
-              backgroundColor: 'rgba(0,0,0,0.5)',
+              backgroundColor: 'transparent',
             }}
           >
             <Box
               component="img"
               src="/branding/logos/light/charter logo - dark mode.png"
               alt="Charter Logo"
-              sx={{ mb: 3, width: 150, height: 'auto' }}
+              sx={{ mb: 3, width: 180, height: 'auto' }}
             />
-            <Typography variant="h4" fontWeight={600} mb={2} textAlign="center">
+            <Typography
+              variant="h4"
+              fontWeight={600}
+              mb={2}
+              textAlign="center"
+              color="common.white"
+              sx={{ textShadow: '0 2px 4px rgba(0, 0, 0, 0.7)' }}
+            >
               Welcome to Charter
             </Typography>
-            <Typography variant="body1" textAlign="center" sx={{ maxWidth: '300px', mb: 3 }}>
+            <Typography
+              variant="body1"
+              textAlign="center"
+              sx={{ maxWidth: '300px', mb: 3, textShadow: '0 1px 3px rgba(0, 0, 0, 0.6)' }}
+            >
               Your premier private jet charter marketplace
             </Typography>
-
-            <Box
-              sx={{
-                mt: 4,
-                p: 2,
-                borderRadius: tokens.borderRadius.sm.value,
-                bgcolor: 'rgba(255, 255, 255, 0.15)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                width: '100%',
-                maxWidth: '300px',
-              }}
-            >
-              <Typography variant="body2" sx={{ fontStyle: 'italic', textAlign: 'center' }}>
-                &quot;Charter has revolutionized how we book private jets. The interface is
-                intuitive and the service is exceptional.&quot;
-              </Typography>
-              <Typography
-                variant="caption"
-                sx={{ display: 'block', textAlign: 'right', mt: 1, opacity: 0.8 }}
-              >
-                — Michael R., CEO
-              </Typography>
-            </Box>
           </Box>
         </Box>
 
@@ -442,6 +439,12 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
               label="Email"
               type="email"
               fullWidth
+              sx={{
+                '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                  borderWidth: '1px',
+                  borderColor: theme.palette.divider,
+                },
+              }}
               size="small"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -456,6 +459,12 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
               label="Password"
               type={showPassword ? 'text' : 'password'}
               fullWidth
+              sx={{
+                '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                  borderWidth: '1px',
+                  borderColor: theme.palette.divider,
+                },
+              }}
               size="small"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

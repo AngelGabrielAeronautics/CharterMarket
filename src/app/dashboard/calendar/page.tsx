@@ -22,14 +22,70 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '@/contexts/AuthContext';
 import FlightCalendar, { CalendarFlight } from '@/components/calendar/FlightCalendar';
-import { generateMockFlights } from '@/lib/mockFlightData';
+import { useBookings } from '@/hooks/useBookings';
+import { Booking, BookingStatus } from '@/types/booking';
+import { Timestamp } from 'firebase/firestore';
+import { UserRole } from '@/lib/userCode';
+
+// Helper to transform Booking status to CalendarFlight status
+const transformBookingStatus = (status: BookingStatus): 'confirmed' | 'pending' | 'cancelled' => {
+  switch (status) {
+    case 'confirmed':
+    case 'client-ready':
+    case 'flight-ready':
+    case 'archived':
+      return 'confirmed';
+    case 'cancelled':
+    case 'credited':
+    case 'refunded':
+      return 'cancelled';
+    case 'pending-payment':
+    case 'deposit-paid':
+    default:
+      return 'pending';
+  }
+};
+
+const transformBookingToCalendarFlight = (
+  booking: Booking,
+  userRole: UserRole | null
+): CalendarFlight => {
+  return {
+    id: booking.id,
+    flightCode: booking.flightDetails?.flightNumber || booking.bookingId,
+    from: booking.routing.departureAirport,
+    to: booking.routing.arrivalAirport,
+    date: (booking.routing.departureDate as Timestamp).toDate(),
+    status: transformBookingStatus(booking.status),
+    role: userRole === 'operator' ? 'both' : 'departure',
+    passengers: booking.passengerCount,
+    operatorCode: booking.operator.operatorUserCode,
+    operatorName: booking.operator.operatorName,
+    // clientName can be added later if needed, for now it's self-evident
+  };
+};
 
 export default function CalendarPage() {
-  const { user, userRole, loading } = useAuth();
+  const { user, userRole, loading: authLoading } = useAuth();
+  const {
+    bookings,
+    loading: bookingsLoading,
+    error: bookingsError,
+    refreshBookings,
+  } = useBookings(user?.userCode, userRole ?? undefined);
+
   const [flights, setFlights] = useState<CalendarFlight[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [viewType, setViewType] = useState<'calendar' | 'list'>('calendar');
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    if (bookings) {
+      const calendarFlights = bookings.map((booking) =>
+        transformBookingToCalendarFlight(booking, userRole)
+      );
+      setFlights(calendarFlights);
+    }
+  }, [bookings, userRole]);
 
   // Handle change of view type (calendar/list)
   const handleViewTypeChange = (
@@ -41,40 +97,16 @@ export default function CalendarPage() {
     }
   };
 
-  // Simulate loading flights from an API
-  const loadFlights = async () => {
-    setIsLoading(true);
-    try {
-      // Simulate network delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      if (userRole) {
-        // Generate mock flights for the user role
-        const mockFlights = generateMockFlights(userRole, 60, 25);
-        setFlights(mockFlights);
-      }
-    } catch (error) {
-      console.error('Error loading flights:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Refresh flights data
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await loadFlights();
+    if (refreshBookings) {
+      await refreshBookings();
+    }
     setIsRefreshing(false);
   };
 
-  // Load flights on component mount
-  useEffect(() => {
-    if (userRole) {
-      loadFlights();
-    }
-  }, [userRole]);
-
-  if (loading) {
+  if (authLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
         <CircularProgress />
@@ -91,6 +123,8 @@ export default function CalendarPage() {
       </Box>
     );
   }
+
+  const isLoading = bookingsLoading || isRefreshing;
 
   return (
     <Box>

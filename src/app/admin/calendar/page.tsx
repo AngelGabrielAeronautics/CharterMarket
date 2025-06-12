@@ -33,7 +33,25 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '@/contexts/AuthContext';
 import FlightCalendar, { CalendarFlight } from '@/components/calendar/FlightCalendar';
-import { generateMockFlights } from '@/lib/mockFlightData';
+import { FlightService } from '@/lib/flight-service';
+import { Flight, FlightLeg } from '@/types/flight';
+import { Timestamp } from 'firebase/firestore';
+
+// Helper to transform FlightLeg status to CalendarFlight status
+const transformStatus = (status: FlightLeg['status']): 'confirmed' | 'pending' | 'cancelled' => {
+  switch (status) {
+    case 'booked':
+    case 'in-progress':
+    case 'completed':
+      return 'confirmed';
+    case 'cancelled':
+      return 'cancelled';
+    case 'scheduled':
+    case 'available':
+    default:
+      return 'pending';
+  }
+};
 
 export default function AdminCalendarPage() {
   const { user, userRole, loading } = useAuth();
@@ -64,14 +82,25 @@ export default function AdminCalendarPage() {
   const loadFlights = async () => {
     setIsLoading(true);
     try {
-      // Simulate network delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
       if (userRole === 'admin' || userRole === 'superAdmin') {
-        // Generate mock flights - more for admin view
-        const mockFlights = generateMockFlights(userRole, 90, 50);
-        setFlights(mockFlights);
-        setFilteredFlights(mockFlights);
+        const allFlights = await FlightService.getAllFlights();
+
+        const calendarFlights: CalendarFlight[] = allFlights.flatMap((flight: Flight) =>
+          flight.legs.map((leg: FlightLeg) => ({
+            id: `${flight.id}-${leg.legNumber}`,
+            flightCode: leg.flightNumber,
+            from: leg.departureAirport,
+            to: leg.arrivalAirport,
+            date: (leg.scheduledDepartureTime as Timestamp).toDate(),
+            status: transformStatus(leg.status),
+            role: 'both', // For admin view, all flights are relevant
+            operatorCode: flight.operatorUserCode,
+            // operatorName and clientName will be added later
+          }))
+        );
+
+        setFlights(calendarFlights);
+        setFilteredFlights(calendarFlights);
       }
     } catch (error) {
       console.error('Error loading flights:', error);

@@ -69,22 +69,29 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
       }
     } else if (clientId) {
-      console.log(`Retrieving bookings for client (server-side with Admin SDK): ${clientId}`);
+      console.log(`[API] Retrieving bookings for client (server-side with Admin SDK): ${clientId}`);
 
       // Use Firebase Admin SDK on the server to bypass security-rule auth issues
       const adminDb = getAdminDb();
       if (!adminDb) {
-        console.error('Firebase Admin DB not available');
+        console.error('[API] Firebase Admin DB not available');
         return NextResponse.json({ error: 'Server database unavailable' }, { status: 500 });
       }
 
+      console.log(`[API] Querying bookings collection where "clientId" == "${clientId}"`);
       const snapshot = await adminDb
         .collection('bookings')
         .where('clientId', '==', clientId)
         .orderBy('createdAt', 'desc')
         .get();
 
-      data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      if (snapshot.empty) {
+        console.log(`[API] No bookings found for clientId: ${clientId}`);
+        data = [];
+      } else {
+        data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        console.log(`[API] Found ${data.length} bookings for clientId: ${clientId}`, data);
+      }
     } else if (operatorUserCode) {
       console.log(`Retrieving bookings for operator: ${operatorUserCode}`);
       data = await getOperatorBookings(operatorUserCode);

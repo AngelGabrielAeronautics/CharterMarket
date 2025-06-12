@@ -250,7 +250,7 @@ export default function Home() {
         {/* Hero Video Background */}
         <Box
           component="video"
-          src="/images/hero/Charter. Landing.mp4"
+          src="/images/hero/Charter. Landing1.mp4"
           autoPlay
           muted
           loop
@@ -306,8 +306,11 @@ export default function Home() {
                         textShadow: '0 2px 4px rgba(0, 0, 0, 0.6)',
                       }}
                     >
-                      The Worlds First and Only Charter Marketplace.
-                      {!isMobile && <br />}
+                      The Worlds First and Only
+                      <br />
+                      <Box component="span" sx={{ whiteSpace: 'nowrap' }}>
+                        Charter Market.
+                      </Box>
                     </Typography>
                     <Typography
                       variant="h5"

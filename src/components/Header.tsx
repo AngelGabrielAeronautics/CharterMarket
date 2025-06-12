@@ -32,11 +32,13 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { useTheme as useCharterTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useModal } from '@/contexts/ModalContext';
 import Logo from './Logo';
 
 export default function Header() {
   const theme = useTheme();
   const router = useRouter();
+  const { openRegisterModal, openLoginModal } = useModal();
   const { isDarkMode, toggleTheme } = useCharterTheme();
   const { user, profile, logout, loading } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -316,14 +318,18 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Link href="/login" passHref>
-                <Button sx={{ color: isScrolled ? 'text.primary' : 'common.white' }}>Login</Button>
-              </Link>
-              <Link href="/register" passHref>
-                <Button sx={{ color: isScrolled ? 'text.primary' : 'common.white' }}>
-                  Register
-                </Button>
-              </Link>
+              <Button
+                onClick={() => openLoginModal()}
+                sx={{ color: isScrolled ? 'text.primary' : 'common.white' }}
+              >
+                Login
+              </Button>
+              <Button
+                onClick={() => openRegisterModal()}
+                sx={{ color: isScrolled ? 'text.primary' : 'common.white' }}
+              >
+                Register
+              </Button>
             </>
           )}
         </Box>

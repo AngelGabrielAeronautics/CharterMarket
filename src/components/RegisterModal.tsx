@@ -23,6 +23,7 @@ import { Visibility, VisibilityOff, Check, Close } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useModal } from '@/contexts/ModalContext';
+import { useTheme } from '@mui/material/styles';
 import tokens from '@/styles/tokens';
 import Image from 'next/image';
 import { grey } from '@mui/material/colors';
@@ -76,6 +77,7 @@ const getStrengthText = (strength: number): string => {
 
 export default function RegisterModal({ isOpen, onClose, defaultUserType }: RegisterModalProps) {
   const { isRegisterModalOpen, closeRegisterModal, openLoginModal } = useModal();
+  const theme = useTheme();
   const router = useRouter();
 
   const [step, setStep] = useState(1);
@@ -96,7 +98,7 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
   const accountImages: Record<UserRole, string> = {
     passenger: '/images/register/passenger.mp4',
     agent: '/images/register/agent.mp4',
-    operator: '/images/register/operator.png',
+    operator: '/images/register/operator.mp4',
     admin: '/images/register/operator.png', // Fallback for admin
     superAdmin: '/images/register/operator.png', // Fallback for superAdmin
   };
@@ -208,7 +210,7 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
     openLoginModal();
   };
 
-  const currentImageSrc = userType ? accountImages[userType] : '/images/register/operator.png';
+  const currentImageSrc = userType ? accountImages[userType] : '/images/register/register.png';
   const isVideo = userType && accountImages[userType]?.endsWith('.mp4');
 
   const renderPasswordRequirements = () => {
@@ -286,10 +288,11 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
           boxShadow: tokens.shadow.medium.value,
           overflow: 'hidden',
           m: { xs: tokens.spacing[2].value, sm: tokens.spacing[4].value },
-          maxWidth: '1200px',
-          width: { xs: '100%', md: '1200px' },
-          maxHeight: { xs: '80vh', md: '70vh' },
-          height: { xs: '80vh', md: '70vh' },
+          maxWidth: '1400px',
+          width: { xs: '100%', md: '1400px' },
+          '& .MuiOutlinedInput-notchedOutline': {
+            border: `1px solid ${theme.palette.divider}`,
+          },
         },
       }}
     >
@@ -297,7 +300,7 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' },
-          height: '100%',
+          // height auto for square media
         }}
       >
         <Box
@@ -308,7 +311,20 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
             overflow: 'hidden',
           }}
         >
-          <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
+          <Box
+            key={currentImageSrc}
+            sx={{
+              position: 'relative',
+              width: '100%',
+              aspectRatio: '1 / 1',
+              '@keyframes fadeIn': {
+                '0%': { opacity: 0 },
+                '100%': { opacity: 1 },
+              },
+              animation: 'fadeIn 0.5s ease-in-out',
+              margin: '0 auto',
+            }}
+          >
             {isVideo ? (
               <video
                 key={currentImageSrc}
@@ -316,7 +332,7 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                 autoPlay
                 muted
                 loop
-                style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                style={{ display: 'block', objectFit: 'cover', width: '100%', height: '100%' }}
               />
             ) : (
               <Image
@@ -352,7 +368,7 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            height: '100%',
+            // height auto for content
           }}
         >
           <IconButton
@@ -528,6 +544,12 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
                     required
+                    sx={{
+                      '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                        borderWidth: '1px',
+                        borderColor: theme.palette.divider,
+                      },
+                    }}
                   />
                 )}
                 <TextField
@@ -541,6 +563,12 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
+                  sx={{
+                    '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                      borderWidth: '1px',
+                      borderColor: theme.palette.divider,
+                    },
+                  }}
                 />
                 <TextField
                   label={
@@ -553,6 +581,12 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   required
+                  sx={{
+                    '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                      borderWidth: '1px',
+                      borderColor: theme.palette.divider,
+                    },
+                  }}
                 />
                 <TextField
                   label="Email"
@@ -562,6 +596,12 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  sx={{
+                    '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                      borderWidth: '1px',
+                      borderColor: theme.palette.divider,
+                    },
+                  }}
                 />
                 <Box>
                   <TextField
@@ -580,6 +620,12 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                         ? 'Password must meet all requirements'
                         : ''
                     }
+                    sx={{
+                      '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                        borderWidth: '1px',
+                        borderColor: theme.palette.divider,
+                      },
+                    }}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
@@ -606,6 +652,12 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                       ? 'Passwords do not match'
                       : ''
                   }
+                  sx={{
+                    '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                      borderWidth: '1px',
+                      borderColor: theme.palette.divider,
+                    },
+                  }}
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">

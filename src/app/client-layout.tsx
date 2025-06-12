@@ -46,16 +46,16 @@ export default function ClientLayout({
           <Toaster
             position="top-right"
             toastOptions={{
-              duration: 3000,
+              duration: 8000,
               success: {
-                duration: 3000,
+                duration: 8000,
                 style: {
                   background: '#10B981',
                   color: 'white',
                 },
               },
               error: {
-                duration: 4000,
+                duration: 10000,
                 style: {
                   background: '#EF4444',
                   color: 'white',
