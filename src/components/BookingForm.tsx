@@ -644,6 +644,15 @@ export default function BookingForm() {
         specialRequirements: formState.additionalNotes || undefined,
         twinEngineMin: formState.twinEngineMin,
         multiCityRoutes,
+        pressurisedCabin: formState.pressurisedCabin,
+        twoCrewMin: formState.twoCrewMin,
+        hasPets: formState.hasPets,
+        petDetails: formState.petDetails || undefined,
+        hasExtraBaggage: formState.hasExtraBaggage,
+        baggageDetails: formState.baggageDetails || undefined,
+        hasHardBags: formState.hasHardBags,
+        hardBagsDetails: formState.hardBagsDetails || undefined,
+        additionalNotes: formState.additionalNotes || undefined,
       } as any;
 
       const requestId = await createQuoteRequest(user.userCode, dataToSubmit);

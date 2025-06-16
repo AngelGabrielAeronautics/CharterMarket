@@ -15,7 +15,7 @@ import { QuoteRequest } from '@/types/flight';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Chip from '@mui/material/Chip';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/GridLegacy';
 import Alert from '@mui/material/Alert';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -284,7 +284,7 @@ export default function OperatorQuoteSubmissionPage() {
         // From
         React.createElement(
           Grid,
-          { size: { xs: 12, sm: 6 } },
+          { item: true, xs: 12, sm: 6 },
           React.createElement(
             'div',
             { className: 'flex items-center mb-2' },
@@ -296,7 +296,7 @@ export default function OperatorQuoteSubmissionPage() {
         // To
         React.createElement(
           Grid,
-          { size: { xs: 12, sm: 6 } },
+          { item: true, xs: 12, sm: 6 },
           React.createElement(
             'div',
             { className: 'flex items-center mb-2' },
@@ -308,7 +308,7 @@ export default function OperatorQuoteSubmissionPage() {
         // Passengers
         React.createElement(
           Grid,
-          { size: { xs: 12, sm: 6 } },
+          { item: true, xs: 12, sm: 6 },
           React.createElement(
             'div',
             { className: 'flex items-center mb-2' },

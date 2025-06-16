@@ -19,6 +19,8 @@ export interface UserProfile {
   status: UserStatus;
   isProfileComplete: boolean;
   dormantDate: Date | null;
+  photoURL?: string | null;
+  companyName?: string | null;
 }
 
 export interface User extends FirebaseUser {

@@ -11,14 +11,15 @@ import { getCityImageUrlWithFallback } from '@/lib/cityImages';
 import Image from 'next/image';
 import {
   Box,
-  Grid,
   Typography,
   CircularProgress,
   Paper,
   Container,
   ToggleButtonGroup,
   ToggleButton,
+  Alert,
 } from '@mui/material';
+import Grid from '@mui/material/GridLegacy';
 import {
   ArrowUpward as ArrowUpwardIcon,
   ArrowDownward as ArrowDownwardIcon,
@@ -33,6 +34,10 @@ import toast from 'react-hot-toast';
 
 import { getQuoteRequest as fetchQuoteRequest } from '@/lib/flight';
 
+// New Component Imports
+import QuoteRequestDetails from '@/components/quotes/QuoteRequestDetails';
+import OfferCard from '@/components/quotes/OfferCard';
+
 export default function RequestDetailsPage() {
   const { id } = useParams();
   const requestId = Array.isArray(id) ? id[0] : id;
@@ -46,47 +51,23 @@ export default function RequestDetailsPage() {
 
   const [departureAirportDetails, setDepartureAirportDetails] = useState<Airport | null>(null);
   const [arrivalAirportDetails, setArrivalAirportDetails] = useState<Airport | null>(null);
-  const [departureCityImageUrl, setDepartureCityImageUrl] = useState<string | null>(null);
-  const [arrivalCityImageUrl, setArrivalCityImageUrl] = useState<string | null>(null);
-  const [imageLoading, setImageLoading] = useState<boolean>(true);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     const fetchData = async () => {
       if (!requestId || !user) return;
       setLoading(true);
-      setImageLoading(true);
       try {
         const req = await fetchQuoteRequest(requestId);
-        console.log('Fetched Quote Request:', req);
         if (req) {
           setRequest(req);
-          setDepartureCityImageUrl(null);
-          setArrivalCityImageUrl(null);
-
-          let depImageUrl, arrImageUrl;
-
           if (req.routing?.departureAirport) {
-            console.log('Fetching departure airport for ICAO:', req.routing.departureAirport);
             const depAirport = await getAirportByICAO(req.routing.departureAirport);
-            console.log('Departure Airport Details:', depAirport);
             setDepartureAirportDetails(depAirport);
-            if (depAirport) {
-              depImageUrl = await getCityImageUrlWithFallback(depAirport);
-              console.log('Departure City Image URL:', depImageUrl);
-              setDepartureCityImageUrl(depImageUrl);
-            }
           }
           if (req.routing?.arrivalAirport) {
-            console.log('Fetching arrival airport for ICAO:', req.routing.arrivalAirport);
             const arrAirport = await getAirportByICAO(req.routing.arrivalAirport);
-            console.log('Arrival Airport Details:', arrAirport);
             setArrivalAirportDetails(arrAirport);
-            if (arrAirport) {
-              arrImageUrl = await getCityImageUrlWithFallback(arrAirport);
-              console.log('Arrival City Image URL:', arrImageUrl);
-              setArrivalCityImageUrl(arrImageUrl);
-            }
           }
         } else {
           setError('Quote request not found.');
@@ -97,7 +78,6 @@ export default function RequestDetailsPage() {
         toast.error(err.message || 'Failed to load quote request details.');
       } finally {
         setLoading(false);
-        setImageLoading(false);
       }
     };
 
@@ -248,285 +228,101 @@ export default function RequestDetailsPage() {
     );
   }, [request?.offers, sortOrder]);
 
-  if (loading) return <div className="p-8 text-center">Loading request details...</div>;
-  if (error && !request) return <div className="p-8 text-center text-red-600">{error}</div>;
-  if (!request) return <div className="p-8 text-center text-red-600">Request not found.</div>;
-
-  const MAP_WIDTH = 600;
-  const MAP_HEIGHT = 300;
-  let staticMapUrl = '';
-
-  if (
-    departureAirportDetails?.latitude &&
-    departureAirportDetails?.longitude &&
-    arrivalAirportDetails?.latitude &&
-    arrivalAirportDetails?.longitude
-  ) {
-    const depLat = departureAirportDetails.latitude;
-    const depLon = departureAirportDetails.longitude;
-    const arrLat = arrivalAirportDetails.latitude;
-    const arrLon = arrivalAirportDetails.longitude;
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-    if (apiKey) {
-      staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?size=${MAP_WIDTH}x${MAP_HEIGHT}&maptype=roadmap&markers=color:red|label:D|${depLat},${depLon}&markers=color:red|label:A|${arrLat},${arrLon}&path=color:0x0000ff|weight:2|${depLat},${depLon}|${arrLat},${arrLon}&key=${apiKey}`;
-    } else {
-      console.warn('Google Maps API key is missing. Map will not be displayed.');
-    }
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 8 }}>
+        <CircularProgress />
+        <Typography sx={{ ml: 2 }}>Loading Request Details...</Typography>
+      </Box>
+    );
   }
 
+  if (error && !request) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Alert severity="error">{error}</Alert>
+      </Container>
+    );
+  }
+
+  if (!request) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Alert severity="warning">Quote request could not be loaded.</Alert>
+      </Container>
+    );
+  }
+
+  // Determine if there are any offers that are not expired or rejected
+  const hasActiveOffers = sortedOffers.some(
+    (offer) => offer.offerStatus !== 'expired' && offer.offerStatus !== 'rejected-by-client'
+  );
+
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2 }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-          Request {request.requestCode}
-        </Typography>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Paper elevation={2} sx={{ p: { xs: 2, sm: 3, md: 4 }, borderRadius: 2 }}>
+        <QuoteRequestDetails
+          request={request}
+          departureAirportDetails={departureAirportDetails}
+          arrivalAirportDetails={arrivalAirportDetails}
+        />
 
-        <Grid container spacing={2} sx={{ mb: 3, alignItems: 'center' }}>
-          {/* Departure Image */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            {imageLoading ? (
-              <Box
-                sx={{
-                  width: '100%',
-                  height: '200px',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  bgcolor: 'background.paper',
-                  borderRadius: 2,
-                }}
-              >
-                <CircularProgress />
-              </Box>
-            ) : departureCityImageUrl ? (
-              <Box sx={{ position: 'relative' }}>
-                <Box
-                  component="img"
-                  src={departureCityImageUrl}
-                  alt={`City image for ${departureAirportDetails?.city}`}
-                  sx={{
-                    width: '100%',
-                    height: 'auto',
-                    maxHeight: '200px',
-                    objectFit: 'cover',
-                    borderRadius: 2,
-                  }}
-                />
-                <Typography
-                  variant="h6"
-                  sx={{
-                    position: 'absolute',
-                    bottom: 8,
-                    left: 8,
-                    color: 'white',
-                    textShadow: '1px 1px 3px rgba(0,0,0,0.7)',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  {departureAirportDetails?.city}, {departureAirportDetails?.country}
-                </Typography>
-              </Box>
-            ) : null}
-          </Grid>
-
-          {/* Arrival Image */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            {imageLoading ? (
-              <Box
-                sx={{
-                  width: '100%',
-                  height: '200px',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  bgcolor: 'background.paper',
-                  borderRadius: 2,
-                }}
-              >
-                <CircularProgress />
-              </Box>
-            ) : arrivalCityImageUrl ? (
-              <Box sx={{ position: 'relative' }}>
-                <Box
-                  component="img"
-                  src={arrivalCityImageUrl}
-                  alt={`City image for ${arrivalAirportDetails?.city}`}
-                  sx={{
-                    width: '100%',
-                    height: 'auto',
-                    maxHeight: '200px',
-                    objectFit: 'cover',
-                    borderRadius: 2,
-                  }}
-                />
-                <Typography
-                  variant="h6"
-                  sx={{
-                    position: 'absolute',
-                    bottom: 8,
-                    left: 8,
-                    color: 'white',
-                    textShadow: '1px 1px 3px rgba(0,0,0,0.7)',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  {arrivalAirportDetails?.city}, {arrivalAirportDetails?.country}
-                </Typography>
-              </Box>
-            ) : null}
-          </Grid>
-        </Grid>
-
-        <Box sx={{ mb: 3, pl: 1 }}>
-          <Typography variant="body1">
-            <strong>Route:</strong> {request.routing.departureAirport} →{' '}
-            {request.routing.arrivalAirport}
-          </Typography>
-          <Typography variant="body1">
-            <strong>Date:</strong>{' '}
-            {format(request.routing.departureDate.toDate(), 'dd MMM yyyy, HH:mm')}
-          </Typography>
-          {request.routing.returnDate && (
-            <Typography variant="body1">
-              <strong>Return:</strong>{' '}
-              {format(request.routing.returnDate.toDate(), 'dd MMM yyyy, HH:mm')}
-            </Typography>
-          )}
-          <Typography variant="body1">
-            <strong>Passengers:</strong> {request.passengerCount}
-          </Typography>
-          <Typography variant="body1">
-            <strong>Status:</strong>{' '}
-            <Typography
-              component="span"
-              sx={{
-                fontWeight: 'bold',
-                color: request.status === 'booked' ? 'success.main' : 'text.primary',
-              }}
-            >
-              {request.status}
-            </Typography>
-          </Typography>
-          {request.specialRequirements && (
-            <Typography variant="body1">
-              <strong>Notes:</strong> {request.specialRequirements}
-            </Typography>
-          )}
-        </Box>
-
-        {/* Route Map Section */}
-        {staticMapUrl && (
-          <Box sx={{ my: 4 }}>
-            <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'medium' }}>
-              Route Map
-            </Typography>
-            <Paper
-              elevation={2}
-              sx={{
-                overflow: 'hidden',
-                borderRadius: 2,
-                display: 'flex',
-                justifyContent: 'center',
-              }}
-            >
-              <Image
-                src={staticMapUrl}
-                alt={`Route map from ${departureAirportDetails?.name || 'Departure'} to ${arrivalAirportDetails?.name || 'Arrival'}`}
-                width={MAP_WIDTH}
-                height={MAP_HEIGHT}
-                // layout="responsive" // Use this if you want the map to scale with container width
-              />
-            </Paper>
-          </Box>
-        )}
-
-        <Box>
+        {/* Available Offers Section */}
+        <Box sx={{ mt: 4 }}>
           <Box
-            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 2,
+            }}
           >
-            <Typography variant="h5" component="h2" sx={{ fontWeight: 'semibold' }}>
-              Available Offers
-            </Typography>
+            <Typography variant="h5">Available Offers</Typography>
             <ToggleButtonGroup
               value={sortOrder}
               exclusive
-              onChange={(event, newOrder) => {
-                if (newOrder) {
-                  setSortOrder(newOrder);
-                }
+              onChange={(_, newOrder) => {
+                if (newOrder) setSortOrder(newOrder);
               }}
-              aria-label="Sort by price"
               size="small"
             >
-              <ToggleButton value="asc" aria-label="Sort by price ascending">
+              <ToggleButton value="asc">
                 <ArrowUpwardIcon fontSize="small" sx={{ mr: 0.5 }} />
                 Low-High
               </ToggleButton>
-              <ToggleButton value="desc" aria-label="Sort by price descending">
+              <ToggleButton value="desc">
                 <ArrowDownwardIcon fontSize="small" sx={{ mr: 0.5 }} />
                 High-Low
               </ToggleButton>
             </ToggleButtonGroup>
           </Box>
-          {!sortedOffers || sortedOffers.length === 0 ? (
-            <Typography color="textSecondary">No offers available yet.</Typography>
-          ) : (
-            <div className="flex flex-wrap -mx-2">
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {sortedOffers.length > 0 ? (
+            <Grid container spacing={3}>
               {sortedOffers.map((offer) => (
-                <div className="w-full px-2 mb-4" key={offer.offerId}>
-                  <Paper
-                    variant="outlined"
-                    sx={{
-                      p: 3,
-                      borderRadius: 2,
-                      borderColor:
-                        offer.offerStatus === 'accepted-by-client' ? 'success.main' : 'divider',
-                      borderWidth: offer.offerStatus === 'accepted-by-client' ? 2 : 1,
-                    }}
-                  >
-                    <Box>
-                      <Typography variant="body1">
-                        Price: <strong>${offer.price.toFixed(2)}</strong>
-                      </Typography>
-                      <Typography variant="body1">
-                        Total (incl. 3%): <strong>${offer.totalPrice.toFixed(2)}</strong>
-                      </Typography>
-                      <Typography variant="body1">
-                        Status: <strong>{offer.offerStatus}</strong>
-                      </Typography>
-                      <Typography variant="caption" color="textSecondary">
-                        Operator: {offer.operatorUserCode}
-                      </Typography>
-                      <br />
-                      <Typography variant="caption" color="textSecondary">
-                        Offer ID: {offer.offerId}
-                      </Typography>
-                    </Box>
-                    <Button
-                      variant="outlined"
-                      onClick={() => handleAccept(offer)}
-                      disabled={
-                        submitting ||
-                        offer.offerStatus !== 'pending-client-acceptance' ||
-                        request.status === 'booked' ||
-                        request.status === 'cancelled'
-                      }
-                      size="small"
-                    >
-                      {submitting ? 'Processing...' : 'Accept Offer'}
-                    </Button>
-                  </Paper>
-                </div>
+                <Grid item xs={12} key={offer.offerId}>
+                  <OfferCard
+                    offer={offer}
+                    isClientView={true}
+                    onAccept={() => handleAccept(offer)}
+                    isAccepting={submitting}
+                    isRequestBooked={!!request.acceptedOfferId}
+                  />
+                </Grid>
               ))}
-            </div>
+            </Grid>
+          ) : (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              No offers have been submitted for this request yet.
+            </Alert>
           )}
         </Box>
-        {error && (
-          <Typography color="error" sx={{ mt: 2 }}>
-            Error: {error}
-          </Typography>
-        )}
       </Paper>
     </Container>
   );

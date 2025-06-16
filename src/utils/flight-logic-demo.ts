@@ -163,6 +163,14 @@ export class FlightSystemDemo {
       status: 'submitted',
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
+
+      // Add missing required and optional fields
+      twinEngineMin: false,
+      pressurisedCabin: false,
+      twoCrewMin: false,
+      hasPets: false,
+      hasExtraBaggage: false,
+      hasHardBags: false,
     };
   }
 

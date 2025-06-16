@@ -65,7 +65,19 @@ export interface QuoteRequest {
   arrivalAirportName?: string; // Full name of the arrival airport
   passengerCount: number;
   specialRequirements?: string;
-  twinEngineMin?: boolean;
+
+  // Aircraft & Baggage Options
+  twinEngineMin: boolean;
+  pressurisedCabin?: boolean;
+  twoCrewMin?: boolean;
+  hasPets?: boolean;
+  petDetails?: string;
+  hasExtraBaggage?: boolean;
+  baggageDetails?: string;
+  hasHardBags?: boolean;
+  hardBagsDetails?: string;
+  additionalNotes?: string;
+
   status: FlightStatus; // Overall status of the QuoteRequest
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -75,6 +87,8 @@ export interface QuoteRequest {
   operatorUserCodesWhoHaveQuoted?: string[]; // Helper array to easily find requests an operator has quoted on
   acceptedOfferId?: string; // The offerId of the offer that was accepted by the client
   acceptedOperatorUserCode?: string; // The operatorUserCode corresponding to the acceptedOfferId
+
+  multiCityRoutes?: MultiCityRoute[]; // For multi-city trips
 }
 
 export interface QuoteRequestFormData {
@@ -85,8 +99,19 @@ export interface QuoteRequestFormData {
   returnDate?: Date;
   flexibleDates: boolean;
   passengerCount: number;
-  specialRequirements?: string;
+
+  // Aircraft & Baggage Options
   twinEngineMin?: boolean;
+  pressurisedCabin?: boolean;
+  twoCrewMin?: boolean;
+  hasExtraBaggage?: boolean;
+  hasPets?: boolean;
+  hasHardBags?: boolean;
+  baggageDetails?: string;
+  petDetails?: string;
+  hardBagsDetails?: string;
+  additionalNotes?: string;
+
   multiCityRoutes?: MultiCityRoute[]; // For multi-city trips
 }
 

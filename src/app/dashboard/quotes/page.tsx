@@ -270,13 +270,18 @@ export default function QuotesDashboardPage() {
   useEffect(() => {
     if (searchParams.get('submitted') === 'true') {
       setShowSearchModal(true);
-      router.replace('/dashboard/quotes', { scroll: false });
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (showSearchModal) {
       const timer = setTimeout(() => {
         setShowSearchModal(false);
-      }, 5000);
-      return () => clearTimeout(timer);
+      }, 5000); // 5 seconds
+
+      return () => clearTimeout(timer); // Cleanup timer on unmount
     }
-  }, [searchParams, router]);
+  }, [showSearchModal]);
 
   // Calculate stats for operators
   const operatorStats = useMemo(() => {
