@@ -6,7 +6,7 @@ import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/fire
 import { changePassword } from '@/lib/auth';
 import { validatePassword } from '@/components/PasswordStrengthChecker';
 import PasswordStrengthChecker from '@/components/PasswordStrengthChecker';
-import DarkModeToggle from '@/components/DarkModeToggle';
+// import DarkModeToggle from '@/components/DarkModeToggle';
 import Input from '@/components/ui/Input';
 import PhoneInput from '@/components/ui/PhoneInput';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -14,6 +14,8 @@ import Link from 'next/link';
 import { Box, Typography, Button, Grid, Paper, Alert, Chip, Stack, Container } from '@mui/material';
 import { UserRole } from '@/lib/userCode';
 import { Business as BusinessIcon } from '@mui/icons-material';
+import { MainContent } from '@/components/ui/MainContent';
+import { UserProfile, UserProfileSkeleton } from '@/components/ui/UserProfile';
 
 interface UserProfile {
   uid: string; // Firebase Authentication UID
@@ -535,7 +537,7 @@ export default function ProfilePage() {
             Display Preferences
           </Typography>
           <Box sx={{ maxWidth: 400 }}>
-            <DarkModeToggle />
+            {/* <DarkModeToggle /> */}
           </Box>
         </Paper>
       </Stack>

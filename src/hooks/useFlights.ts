@@ -17,27 +17,52 @@ export function useClientQuoteRequests(clientUserCode?: string) {
   const [requests, setRequests] = useState<QuoteRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastRefresh, setLastRefresh] = useState(Date.now());
+
+  const refreshRequests = useCallback(() => {
+    setLastRefresh(Date.now());
+  }, []);
 
   useEffect(() => {
     if (!clientUserCode) {
       setLoading(false);
       return;
     }
-    (async () => {
+
+    let isMounted = true;
+
+    const fetchClientRequests = async () => {
+      if (!isMounted) return;
       setLoading(true);
       try {
         const rs = await getClientQuoteRequests(clientUserCode);
-        setRequests(rs);
+        if (isMounted) {
+          setRequests(rs);
+        }
       } catch (err) {
         console.error(err);
-        setError('Failed to load quote requests');
+        if (isMounted) {
+          setError('Failed to load quote requests');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    })();
-  }, [clientUserCode]);
+    };
 
-  return { requests, loading, error };
+    fetchClientRequests();
+
+    // Set up auto-refresh every 30 seconds
+    const intervalId = setInterval(fetchClientRequests, 30000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [clientUserCode, lastRefresh]);
+
+  return { requests, loading, error, refreshRequests };
 }
 
 /**

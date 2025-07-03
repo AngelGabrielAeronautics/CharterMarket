@@ -90,18 +90,36 @@ describe('BookingForm', () => {
     return { mockAuth, mockModal };
   };
 
-  it('renders submit and reset buttons and initial state', () => {
+  it('renders submit and reset buttons and initial state', async () => {
     renderWithProviders();
-    const submitBtn = screen.getByRole('button', { name: /Submit Quote Request/i });
-    const resetBtn = screen.getByRole('button', { name: /Reset Form/i });
+    // Initially, buttons should not be visible
+    expect(screen.queryByRole('button', { name: /Submit Quote Request/i })).toBeNull();
+    // Fill the form to make buttons visible
+    fireEvent.change(screen.getByLabelText(/from/i), { target: { value: 'JFK' } });
+    fireEvent.change(screen.getByLabelText(/to/i), { target: { value: 'LAX' } });
+    // This is a simplified way to set a date, a real scenario might need `user-event` for date pickers
+    fireEvent.change(screen.getByLabelText(/departure date/i), {
+      target: { value: '2023-10-27T10:00:00.000Z' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('-'), { target: { value: '2' } });
 
-    expect(submitBtn).toBeDisabled();
+    const submitBtn = await screen.findByRole('button', { name: /Submit Quote Request/i });
+    const resetBtn = await screen.findByRole('button', { name: /Reset Form/i });
+    expect(submitBtn).toBeEnabled();
     expect(resetBtn).toBeEnabled();
   });
 
-  it('does not throw when clicking reset', () => {
+  it('does not throw when clicking reset', async () => {
     renderWithProviders();
-    const resetBtn = screen.getByRole('button', { name: /Reset Form/i });
+    // Fill the form to make the reset button visible
+    fireEvent.change(screen.getByLabelText(/from/i), { target: { value: 'JFK' } });
+    fireEvent.change(screen.getByLabelText(/to/i), { target: { value: 'LAX' } });
+    fireEvent.change(screen.getByLabelText(/departure date/i), {
+      target: { value: '2023-10-27T10:00:00.000Z' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('-'), { target: { value: '2' } });
+
+    const resetBtn = await screen.findByRole('button', { name: /Reset Form/i });
     expect(() => fireEvent.click(resetBtn)).not.toThrow();
   });
 

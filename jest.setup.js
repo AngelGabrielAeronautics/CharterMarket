@@ -89,4 +89,11 @@ console.warn = function (message) {
   }
   originalConsoleWarn.apply(console, arguments);
   throw new Error('Console warning was called during testing. See above for details.');
-}; 
+};
+
+// Mocking fetch globally
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    json: () => Promise.resolve([]),
+  })
+); 

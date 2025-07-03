@@ -25,6 +25,8 @@ import type { GridProps as MuiGridProps } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import BookingForm from '@/components/BookingForm';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import PeopleIcon from '@mui/icons-material/People';
 
 // Define props that are specific to Grid containers and should be omitted for items
 type GridContainerPropsKeys =
@@ -147,6 +149,42 @@ const aircraft = [
   },
 ];
 
+const emptyLegs = [
+  {
+    operator: 'MercAir',
+    verified: false,
+    route: 'Johannesburg -> Cape Town',
+    date: '29 July, Mon',
+    passengers: 8,
+    flightPrice: 3400,
+    seatPrice: null,
+    image:
+      'https://images.unsplash.com/photo-1610642372651-fe6e7bc40639?q=80&w=2670&auto=format&fit=crop',
+  },
+  {
+    operator: 'MercAir',
+    verified: true,
+    route: 'Johannesburg -> Cape Town',
+    date: '29 July, Mon',
+    passengers: 8,
+    flightPrice: 3400,
+    seatPrice: 640,
+    image:
+      'https://images.unsplash.com/photo-1610642372651-fe6e7bc40639?q=80&w=2670&auto=format&fit=crop',
+  },
+  {
+    operator: 'MercAir',
+    verified: true,
+    route: 'Johannesburg -> Cape Town',
+    date: '29 July, Mon',
+    passengers: 8,
+    flightPrice: 3400,
+    seatPrice: 640,
+    image:
+      'https://images.unsplash.com/photo-1610642372651-fe6e7bc40639?q=80&w=2670&auto=format&fit=crop',
+  },
+];
+
 // Styled components for destination card
 const DestinationCard = styled(Box)(({ theme }) => ({
   position: 'relative',
@@ -191,6 +229,91 @@ const FooterLink = styled(Link)(({ theme }) => ({
     fontSize: '1rem',
   },
 }));
+
+interface EmptyLeg {
+  operator: string;
+  verified: boolean;
+  route: string;
+  date: string;
+  passengers: number;
+  flightPrice: number;
+  seatPrice: number | null;
+  image: string;
+}
+
+const EmptyLegCard: React.FC<{ leg: EmptyLeg }> = ({ leg }) => {
+  const theme = useTheme();
+  const formattedFlightPrice = leg.flightPrice.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+  });
+  const formattedSeatPrice = leg.seatPrice
+    ? leg.seatPrice.toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+      })
+    : 'n/a';
+
+  return (
+    <Paper
+      elevation={leg.verified ? 0 : 3}
+      sx={{
+        borderRadius: 3,
+        overflow: 'hidden',
+        mb: 2,
+        bgcolor: leg.verified ? 'grey.50' : '#0B3D59',
+        color: leg.verified ? 'text.primary' : 'common.white',
+        border: leg.verified ? 1 : 0,
+        borderColor: 'grey.300',
+      }}
+    >
+      <Box sx={{ p: 1.5, display: 'flex', alignItems: 'center' }}>
+        <Typography variant="caption">{leg.operator}</Typography>
+        <Box sx={{ flexGrow: 1 }} />
+        <Typography variant="caption">{leg.verified ? 'VERIFIED' : 'UNVERIFIED'} OPERATOR</Typography>
+        {leg.verified && (
+          <CheckCircleIcon color="success" sx={{ fontSize: 16, ml: 0.5, color: '#D4AF37' }} />
+        )}
+      </Box>
+      <Box sx={{ position: 'relative', height: 120 }}>
+        <Image src={leg.image} alt={leg.route} fill style={{ objectFit: 'cover' }} />
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: leg.verified
+              ? 'linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.7))'
+              : 'linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.5))',
+          }}
+        >
+          <Typography variant="h5" fontWeight="bold">
+            {leg.route}
+          </Typography>
+        </Box>
+      </Box>
+      <Box sx={{ p: 2, display: 'flex', alignItems: 'center' }}>
+        <Typography variant="body2">{leg.date}</Typography>
+        <Box sx={{ mx: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <PeopleIcon sx={{ fontSize: 18 }} />
+          <Typography variant="body2">max {leg.passengers}</Typography>
+        </Box>
+        <Box sx={{ flexGrow: 1 }} />
+        <Box sx={{ textAlign: 'right' }}>
+          <Typography variant="caption">Flight</Typography>
+          <Typography variant="h6" fontWeight="bold" lineHeight={1}>
+            {formattedFlightPrice}
+          </Typography>
+          <Typography variant="caption">Seat {formattedSeatPrice}</Typography>
+        </Box>
+      </Box>
+    </Paper>
+  );
+};
 
 export default function Home() {
   const theme = useTheme();
@@ -334,143 +457,6 @@ export default function Home() {
         </Box>
       </Box>
 
-      {/* Featured Destinations */}
-      <Box
-        component="section"
-        sx={{
-          py: { xs: 6, sm: 8, md: 10 },
-          bgcolor: 'background.default',
-        }}
-      >
-        <Container>
-          <Typography
-            variant="h2"
-            align="center"
-            gutterBottom
-            sx={{
-              fontFamily: 'var(--font-playfair)',
-              mb: { xs: 4, sm: 6 },
-              color: 'primary.main',
-            }}
-          >
-            Popular Destinations
-          </Typography>
-
-          <Grid container spacing={3}>
-            {destinations.map((city) => (
-              <GridItem xs={12} sm={6} md={4} key={city.name}>
-                <DestinationCard>
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      height: '100%',
-                      width: '100%',
-                    }}
-                  >
-                    <Image
-                      src={city.image}
-                      alt={city.name}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      style={{
-                        objectFit: 'cover',
-                        transition: 'transform 0.3s ease-in-out',
-                      }}
-                    />
-                  </Box>
-                  <DestinationOverlay>
-                    <Typography
-                      variant="h5"
-                      sx={{
-                        fontFamily: 'var(--font-playfair)',
-                        color: 'common.white',
-                        mb: 0.5,
-                      }}
-                    >
-                      {city.name}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-                      {city.description}
-                    </Typography>
-                  </DestinationOverlay>
-                </DestinationCard>
-              </GridItem>
-            ))}
-          </Grid>
-        </Container>
-      </Box>
-
-      {/* Aircraft Showcase */}
-      <Box
-        component="section"
-        sx={{
-          py: { xs: 6, sm: 8, md: 10 },
-          bgcolor: 'background.paper',
-        }}
-      >
-        <Container>
-          <Typography
-            variant="h2"
-            align="center"
-            gutterBottom
-            sx={{
-              fontFamily: 'var(--font-playfair)',
-              mb: { xs: 4, sm: 6 },
-              color: 'primary.main',
-            }}
-          >
-            Our Fleet
-          </Typography>
-
-          <Grid container spacing={3}>
-            {aircraft.map((item) => (
-              <GridItem xs={12} sm={6} lg={3} key={item.name}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    boxShadow: 2,
-                    transition: 'transform 0.3s',
-                    '&:hover': {
-                      transform: 'translateY(-5px)',
-                      boxShadow: 4,
-                    },
-                  }}
-                >
-                  <CardMedia
-                    component="div"
-                    sx={{
-                      height: { xs: 200, sm: 220, md: 240 },
-                      position: 'relative',
-                    }}
-                  >
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      style={{ objectFit: 'cover' }}
-                    />
-                  </CardMedia>
-                  <CardContent>
-                    <Typography
-                      variant="h6"
-                      align="center"
-                      gutterBottom
-                      sx={{ fontFamily: 'var(--font-playfair)' }}
-                    >
-                      {item.name}
-                    </Typography>
-                    <Typography variant="body2" align="center" color="text.secondary">
-                      {item.description}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </GridItem>
-            ))}
-          </Grid>
-        </Container>
-      </Box>
-
       {/* Empty Legs Section */}
       <Box
         component="section"
@@ -524,22 +510,13 @@ export default function Home() {
               </Button>
             </GridItem>
             <GridItem xs={12} md={6}>
-              <Box
-                sx={{
-                  position: 'relative',
-                  height: { xs: 300, sm: 350, md: 400 },
-                  borderRadius: 3,
-                  overflow: 'hidden',
-                }}
-              >
-                <Image
-                  src={`${PLACEHOLDER_BASE}/800x600/${BRAND_COLORS.gold}/${BRAND_COLORS.navy}?text=Empty+Leg+Flights`}
-                  alt="Empty leg flight promotion"
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  style={{ objectFit: 'cover' }}
-                />
-              </Box>
+              <Grid container spacing={2}>
+                {emptyLegs.slice(0, 3).map((leg, index) => (
+                  <GridItem xs={12} key={index}>
+                    <EmptyLegCard leg={leg} />
+                  </GridItem>
+                ))}
+              </Grid>
             </GridItem>
           </Grid>
         </Container>
@@ -549,8 +526,8 @@ export default function Home() {
       <Box
         component="footer"
         sx={{
-          py: { xs: 4, sm: 6 },
-          bgcolor: 'primary.dark',
+          py: { xs: 4, sm: 6, md: 8 },
+          bgcolor: 'background.paper',
           color: 'common.white',
         }}
       >

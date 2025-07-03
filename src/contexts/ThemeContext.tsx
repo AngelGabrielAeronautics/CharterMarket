@@ -13,50 +13,20 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  // Read initial color scheme preference on component mount
-  useEffect(() => {
-    // Check if user has a theme preference in localStorage
-    const storedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    setIsDarkMode(storedTheme === 'dark' || (!storedTheme && prefersDark));
-  }, []);
-
-  // Update document class and localStorage when theme changes
-  useEffect(() => {
-    console.log('Theme effect: applying dark mode =', isDarkMode);
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDarkMode]);
-
-  // Toggle theme function
+  // Dark mode is disabled for now
+  const isDarkMode = false;
   const toggleTheme = () => {
-    setIsDarkMode((prev) => {
-      console.log('Toggling theme from', prev, 'to', !prev);
-      return !prev;
-    });
+    // no-op until dark mode is re-enabled
   };
-
-  // Memoize the context value to prevent unnecessary re-renders
   const contextValue = useMemo(
-    () => ({
-      isDarkMode,
-      toggleTheme,
-    }),
-    [isDarkMode]
+    () => ({ isDarkMode, toggleTheme }),
+    []
   );
 
-  // Use Material-UI ThemeProvider with the appropriate theme
+  // Always use light theme
   return (
     <ThemeContext.Provider value={contextValue}>
-      <MuiThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
+      <MuiThemeProvider theme={lightTheme}>
         <CssBaseline />
         {children}
       </MuiThemeProvider>

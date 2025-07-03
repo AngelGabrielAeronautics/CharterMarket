@@ -14,13 +14,18 @@ const customJestConfig = {
     '<rootDir>/node_modules/',
     '<rootDir>/.husky/',
   ],
+  transformIgnorePatterns: [
+    '/node_modules/(?!(@mui|@babel|@heroicons|@headlessui|@radix-ui|react-phone-input-2|sonner)/)',
+  ],
   moduleNameMapper: {
+    // Mock nanoid
+    '^nanoid$': '<rootDir>/__mocks__/nanoid.js',
     // Handle CSS imports (with CSS modules)
     '^.+\\.module\\.(css|sass|scss)$': 'identity-obj-proxy',
     // Handle CSS imports (without CSS modules)
-    '^.+\\.(css|sass|scss)$': 'identity-obj-proxy',
+    '^.+\\.(css|sass|scss)$': '<rootDir>/__mocks__/styleMock.js',
     // Handle image imports
-    '^.+\\.(jpg|jpeg|png|gif|webp|avif|svg)$': '<rootDir>/__mocks__/fileMock.js',
+    '^.+\\.(png|jpg|jpeg|gif|webp|avif|ico|bmp|svg)$/i': `<rootDir>/__mocks__/fileMock.js`,
     // Handle module aliases
     '^@/(.*)$': '<rootDir>/src/$1',
   },

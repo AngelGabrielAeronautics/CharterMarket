@@ -50,7 +50,7 @@
     "lodash": "^4.17.21",
     "lodash.kebabcase": "^4.1.1",
     "lucide-react": "^0.488.0",
-    "nanoid": "^5.1.5",
+    "nanoid": "^3.3.7",
     "next": "15.3.0",
     "pdfkit": "^0.17.1",
     "puppeteer": "^24.9.0",

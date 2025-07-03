@@ -46,7 +46,7 @@ import {
 } from 'firebase/firestore';
 import { generateQuoteId } from '@/lib/serials';
 import { QuoteFormData } from '@/types/quote';
-import { Offer, OfferStatus, QuoteRequest, FlightStatus } from '@/types/flight';
+import { Offer, OfferStatus, QuoteRequest, FlightStatus, User } from '@/types/flight';
 
 /**
  * Submit an operator's offer for a specific quote request.
@@ -520,6 +520,35 @@ export const updateQuoteDetails = async (
   } catch (error) {
     console.error('Error updating quote details:', error);
     throw new Error('Failed to update quote details');
+  }
+};
+
+/**
+ * A simplified function for an operator to submit an offer from the UI.
+ * It constructs the required data object and calls the comprehensive createQuote function.
+ */
+export const submitOffer = async (
+  request: QuoteRequest,
+  operator: User,
+  price: number
+): Promise<string> => {
+  if (!request || !operator || !price) {
+    throw new Error('Missing required arguments to submit an offer.');
+  }
+
+  const quoteData: QuoteFormData = {
+    price,
+    // Add any other default or required fields for QuoteFormData here
+  };
+
+  try {
+    const offerId = await createQuote(request.id, operator.userCode, quoteData);
+    console.log(`Offer ${offerId} submitted successfully for request ${request.id}`);
+    return offerId;
+  } catch (error) {
+    console.error(`Failed to submit offer for request ${request.id}:`, error);
+    // Re-throw the error to be handled by the calling UI component
+    throw error;
   }
 };
 

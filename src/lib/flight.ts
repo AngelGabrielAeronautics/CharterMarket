@@ -137,6 +137,13 @@ export const createQuoteRequest = async (
     );
     console.log(`Attempting to create quote request with structured document ID: ${requestCode}`);
 
+    // Remove undefined fields to prevent Firestore errors
+    Object.keys(quoteRequestData).forEach((key) => {
+      if (quoteRequestData[key] === undefined) {
+        delete quoteRequestData[key];
+      }
+    });
+
     const requestDocRef = doc(db, 'quoteRequests', requestCode);
     // Explicitly cast to QuoteRequest before saving, after all modifications
     await setDoc(requestDocRef, quoteRequestData as QuoteRequest);

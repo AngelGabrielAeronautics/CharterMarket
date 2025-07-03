@@ -684,7 +684,7 @@ export default function BookingForm() {
         departureDate && returnDate ? returnDate <= addDays(departureDate, 30) : true;
       return hasValidLegs && !!returnDate && globalPassengers && isValidDateOrder && isWithin30Days;
     } else if (formState.flightType === 'multicity') {
-      if (!hasValidLegs || !hasMultiCityPassengers) return false;
+      if (!hasValidLegs || !hasMultiCityPassengers || formState.legs.length < 2) return false;
       for (let i = 1; i < formState.legs.length; i++) {
         const prevLegDate = formState.legs[i - 1]?.departureDate;
         const currentLegDate = formState.legs[i]?.departureDate;

@@ -31,7 +31,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useTheme as useCharterTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useModal } from '@/contexts/ModalContext';
 import Logo from './Logo';
 
@@ -44,6 +44,7 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -73,9 +74,16 @@ export default function Header() {
       position="fixed"
       elevation={isScrolled ? 1 : 0}
       sx={(t) => ({
-        backgroundColor: isScrolled ? alpha(t.palette.background.paper, 0.5) : 'transparent',
+        backgroundColor: isScrolled
+          ? alpha(t.palette.background.paper, 0.85)
+          : 'transparent',
+        backdropFilter: isScrolled
+          ? (typeof navigator !== 'undefined' && /firefox/i.test(navigator.userAgent)
+              ? 'none'
+              : 'blur(8px)')
+          : 'none',
         color: isScrolled ? t.palette.text.primary : t.palette.common.white,
-        transition: t.transitions.create(['background-color'], {
+        transition: t.transitions.create(['background-color', 'color', 'backdrop-filter'], {
           duration: t.transitions.duration.short,
         }),
         boxShadow: 'none !important',
@@ -92,6 +100,7 @@ export default function Header() {
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Logo
             href="/"
+            height={pathname === '/' ? 60 : 40}
             sx={{ color: 'inherit' }}
             srcOverride={
               isScrolled
@@ -101,9 +110,11 @@ export default function Header() {
           />
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {pathname !== '/' && (
           <IconButton onClick={toggleTheme} sx={{ color: 'inherit' }}>
             {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
           </IconButton>
+          )}
 
           {!loading && profile ? (
             <>
@@ -113,7 +124,10 @@ export default function Header() {
                 href="/dashboard"
                 color="inherit"
                 startIcon={<DashboardIcon />}
-                sx={{ textTransform: 'none' }}
+                sx={{
+                  textTransform: 'none',
+                  color: pathname === '/' && !isScrolled ? 'common.white' : 'inherit',
+                }}
               >
                 Dashboard
               </Button>

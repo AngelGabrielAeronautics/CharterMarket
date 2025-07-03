@@ -31,6 +31,6 @@ describe('Button', () => {
     
     const button = screen.getByRole('button', { name: /outline button/i });
     // Check if the button has the outline class
-    expect(button).toHaveClass('MuiButton-outline');
+    expect(button).toHaveClass('MuiButton-outlined');
   });
 }); 
