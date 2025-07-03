@@ -31,6 +31,7 @@ interface AirportSelectProps {
   showCityImages?: boolean;
   onAirportSelected?: (airport: Airport | null) => void;
   disabled?: boolean;
+  icon?: 'takeoff' | 'landing' | 'none';
 }
 
 export default function AirportSelect({
@@ -44,6 +45,7 @@ export default function AirportSelect({
   showCityImages = false,
   onAirportSelected,
   disabled = false,
+  icon = 'none',
 }: AirportSelectProps) {
   const theme = useTheme();
   const [inputValue, setInputValue] = useState('');
@@ -289,12 +291,12 @@ export default function AirportSelect({
               ...params.InputProps,
               startAdornment: (
                 <>
-                  {label === 'From' && (
+                  {icon === 'takeoff' && (
                     <InputAdornment position="start">
                       <FlightTakeoffIcon />
                     </InputAdornment>
                   )}
-                  {label === 'To' && (
+                  {icon === 'landing' && (
                     <InputAdornment position="start">
                       <FlightLandIcon />
                     </InputAdornment>

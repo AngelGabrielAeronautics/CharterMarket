@@ -827,35 +827,53 @@ export default function BookingForm() {
                       borderTopRightRadius: 0,
                       borderBottomRightRadius: 0,
                     },
+                    '& .MuiOutlinedInput-input': {
+                      paddingTop: '14px',
+                      paddingBottom: '14px',
+                    },
                   }}
                 >
                   <AirportSelect
-                    label="From"
+                    label=""
                     value={leg.from}
                     onChange={(value: string) => updateLeg(index, 'from', value)}
                     disabled={formState.flightType === 'multicity' && index > 0}
                     error={undefined}
+                    icon="takeoff"
                   />
                 </Box>
 
                 {/* To Airport */}
-                <Box sx={{ flex: 1.5, minWidth: 0, '& .MuiOutlinedInput-root': { borderRadius: 0 } }}>
+                <Box sx={{ 
+                  flex: 1.5, 
+                  minWidth: 0, 
+                  '& .MuiOutlinedInput-root': { borderRadius: 0 },
+                  '& .MuiOutlinedInput-input': {
+                    paddingTop: '14px',
+                    paddingBottom: '14px',
+                  },
+                }}>
                   <AirportSelect
-                    label="To"
+                    label=""
                     value={leg.to}
                     onChange={(value: string) => updateLeg(index, 'to', value)}
                     error={undefined}
+                    icon="landing"
                   />
                 </Box>
 
                 {/* Departure Date & Time */}
-                <Box sx={{ flex: 1, minWidth: 0, '& .MuiOutlinedInput-root': { borderRadius: 0 } }}>
+                <Box sx={{ 
+                  flex: 1, 
+                  minWidth: 0, 
+                  '& .MuiOutlinedInput-root': { borderRadius: 0 },
+                  '& .MuiOutlinedInput-input': {
+                    paddingTop: '10px',
+                    paddingBottom: '8px',
+                  },
+                }}>
                   <CustomDateTimePicker
-                    label={
-                      formState.flightType === 'multicity'
-                        ? `Flight ${index + 1} Date & Time`
-                        : 'Departure Date & Time'
-                    }
+                    label=""
                     value={leg.departureDate}
                     onChange={(newDate) => updateLegDateTime(index, newDate)}
                     minDate={
@@ -879,10 +897,18 @@ export default function BookingForm() {
                 {/* Return Date & Time - Conditionally rendered for the first leg of a return flight */}
                 {formState.flightType === 'return' && index === 0 && (
                   <Box
-                    sx={{ flex: 1, minWidth: 0, '& .MuiOutlinedInput-root': { borderRadius: 0 } }}
+                    sx={{ 
+                      flex: 1, 
+                      minWidth: 0, 
+                      '& .MuiOutlinedInput-root': { borderRadius: 0 },
+                      '& .MuiOutlinedInput-input': {
+                        paddingTop: '14px',
+                        paddingBottom: '14px',
+                      },
+                    }}
                   >
                     <CustomDateTimePicker
-                      label="Return Date & Time"
+                      label=""
                       value={formState.returnDate}
                       onChange={updateReturnDateTime}
                       minDate={formState.legs[0]?.departureDate || new Date()}
@@ -911,6 +937,10 @@ export default function BookingForm() {
                         '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
                           borderTopLeftRadius: 0,
                           borderBottomLeftRadius: 0,
+                        },
+                        '& .MuiOutlinedInput-input': {
+                          paddingTop: '14px',
+                          paddingBottom: '14px',
                         },
                       }}
                     >
@@ -974,6 +1004,10 @@ export default function BookingForm() {
                       '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
                         borderTopLeftRadius: 0,
                         borderBottomLeftRadius: 0,
+                      },
+                      '& .MuiOutlinedInput-input': {
+                        paddingTop: '14px',
+                        paddingBottom: '14px',
                       },
                     }}
                   >

@@ -131,13 +131,7 @@ export default function PassengerQuickActions() {
       </Typography>
       <Grid container spacing={2} sx={{ mt: 1 }}>
         {actions.map((action) => (
-          <Grid
-            key={action.title}
-            size={{
-              xs: 12,
-              sm: 6,
-              md: 4
-            }}>
+          <Grid key={action.title} component="div" size={{ xs: 12, sm: 6, md: 4 }}>
             <QuickAction {...action} />
           </Grid>
         ))}

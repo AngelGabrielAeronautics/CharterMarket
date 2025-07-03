@@ -209,7 +209,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         sx={{
           pt: 0,
           display: 'flex',
-          minHeight: '100vh',
+          height: '100vh', // Full viewport height
+          overflow: 'visible',
           position: 'relative',
         }}
       >
@@ -234,7 +235,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             display: 'flex',
             flexDirection: 'column',
             flexShrink: 0,
-            position: { xs: 'fixed', lg: 'static' },
+            position: { xs: 'fixed', lg: 'fixed' },
+            top: { xs: 0, lg: 0 },
             inset: { xs: '0 auto 0 0', lg: 'auto' },
             transform: {
               xs: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)',
@@ -242,7 +244,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             },
             transition: 'transform 300ms ease-in-out',
             zIndex: { xs: 30, lg: 'auto' },
-            height: '100%',
+            height: '100vh',
+            overflow: 'hidden',
           }}
         >
           {userData && (
@@ -261,9 +264,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           sx={{
             flexGrow: 1,
             position: 'relative',
-            overflow: 'auto',
-            width: '100%',
-            pt: { xs: muiTheme.spacing(8), lg: muiTheme.spacing(4) }, // Adjusted lg padding top
+            ml: { lg: isSideNavMini ? collapsedSideNavWidth : expandedSideNavWidth },
+            pt: { xs: muiTheme.spacing(8), lg: muiTheme.spacing(4) },
           }}
         >
           <Container

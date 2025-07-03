@@ -418,29 +418,33 @@ export default function DashboardPage() {
   // Render different dashboard based on user role
   const renderPassengerDashboard = () => {
     return (
-      <div className="flex flex-wrap -mx-3">
-        <div className="w-full px-3 mb-4">
-          <Alert
-            severity="info"
-            sx={{
-              mb: 2,
-            }}
-          >
+      <Grid container component="div" spacing={3}>
+        {/* Welcome banner */}
+        <Grid component="div" size={12}>
+          <Alert severity="info">
             Welcome back, {userData?.firstName || 'Traveler'}! Here's your flight overview.
           </Alert>
-        </div>
+        </Grid>
 
-        <div className="w-full md:w-2/3 px-3 mb-4">
+        {/* Upcoming flights & quick actions */}
+        <Grid component="div" size={{ xs: 12, md: 8 }}>
           <UpcomingFlights userCode={userData?.userCode || ''} />
-        </div>
+        </Grid>
+        <Grid component="div" size={{ xs: 12, md: 4 }}>
+          <PassengerQuickActions />
+        </Grid>
 
-        <div className="w-full px-3 mb-4">
+        {/* Quote requests & weather */}
+        <Grid component="div" size={{ xs: 12, md: 8 }}>
           <Paper sx={{ p: 3, borderRadius: 2 }}>
             <Typography variant="h6" gutterBottom>
               My Quote Requests
             </Typography>
+
             {clientRequestsLoading ? (
-              <CircularProgress size={24} />
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress size={24} />
+              </Box>
             ) : clientRequestsError ? (
               <Alert severity="error">{clientRequestsError}</Alert>
             ) : clientQuoteRequests.length === 0 ? (
@@ -448,13 +452,22 @@ export default function DashboardPage() {
             ) : (
               <Stack spacing={2}>
                 {clientQuoteRequests.map((req) => (
-                  <Card key={req.id}>
+                  <Card key={req.id} variant="outlined" sx={{ cursor: 'pointer' }}>
                     <CardContent>
-                      <Typography variant="subtitle1">Request #{req.id}</Typography>
-                      <Typography variant="body2">Status: {req.status}</Typography>
+                      <Typography variant="subtitle1" fontWeight="medium">
+                        Request #{req.id}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Status: {req.status}
+                      </Typography>
                     </CardContent>
                     <CardActions>
-                      <Button component={Link} href={`/dashboard/quotes/${req.id}`}>
+                      <Button
+                        component={Link}
+                        href={`/dashboard/quotes/${req.id}`}
+                        size="small"
+                        endIcon={<OpenInNewIcon fontSize="small" />}
+                      >
                         View Details
                       </Button>
                     </CardActions>
@@ -462,22 +475,19 @@ export default function DashboardPage() {
                 ))}
               </Stack>
             )}
-            <Box sx={{ mt: 2 }}>
+
+            <Box sx={{ mt: 3, textAlign: 'right' }}>
               <Button component={Link} href="/dashboard/quotes" variant="outlined">
                 View All Quote Requests
               </Button>
             </Box>
           </Paper>
-        </div>
+        </Grid>
 
-        <div className="w-full md:w-1/3 px-3 mb-4">
-          <PassengerQuickActions />
-        </div>
-
-        <div className="w-full md:w-1/2 px-3 mb-4">
+        <Grid component="div" size={{ xs: 12, md: 4 }}>
           <WeatherWidget departureAirport="" arrivalAirport="" departureDate={new Date()} />
-        </div>
-      </div>
+        </Grid>
+      </Grid>
     );
   };
 

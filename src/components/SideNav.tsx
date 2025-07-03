@@ -286,17 +286,22 @@ export default function SideNav({
       elevation={0}
       square
       sx={{
-        p: mini ? 0.5 : 2, // Minimal padding in mini mode
+        p: mini ? 0.5 : 2, // Minimal general padding
+        pb: mini ? 2 : 4, // Extra bottom padding
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
         width: drawerWidthPx,
         bgcolor: 'background.paper',
         borderRadius: `${theme.shape.borderRadius}px`,
-        overflow: 'visible',
+        overflow: 'hidden',
         boxShadow: 'none',
         border: 'none',
         position: 'relative',
+        overflowX: 'hidden',
+        borderRight: `1px solid ${theme.palette.divider}`,
+        overscrollBehavior: 'contain',
+        boxSizing: 'border-box',
       }}
     >
       {/* Logo at top */}
@@ -390,7 +395,7 @@ export default function SideNav({
           flexGrow: 1,
           pt: mini ? 0.5 : 3,
           pb: mini ? 0.5 : 2,
-          overflow: 'auto', // Allow scrolling
+          overflow: 'hidden', // Prevent internal scrolling
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -1004,6 +1009,7 @@ export default function SideNav({
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
+          borderRight: `1px solid ${theme.palette.divider}`,
         },
       }}
     >
