@@ -140,8 +140,8 @@ function FlightDetailModal({ open, onClose, flightId }: FlightDetailModalProps) 
             {/* Flight Overview */}
             <Card sx={{ mb: 3 }}>
               <CardContent>
-                <Grid container spacing={3}>
-                  <Grid size={{ xs: 12, md: 6 }}>
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
+                  <Box sx={{ flex: 1 }}>
                     <Typography variant="h6" gutterBottom>
                       Flight Overview
                     </Typography>
@@ -181,9 +181,9 @@ function FlightDetailModal({ open, onClose, flightId }: FlightDetailModalProps) 
                         />
                       </ListItem>
                     </List>
-                  </Grid>
+                  </Box>
                   
-                  <Grid size={{ xs: 12, md: 6 }}>
+                  <Box sx={{ flex: 1 }}>
                     <Typography variant="h6" gutterBottom>
                       Reference Information
                     </Typography>
@@ -210,8 +210,8 @@ function FlightDetailModal({ open, onClose, flightId }: FlightDetailModalProps) 
                         />
                       </ListItem>
                     </List>
-                  </Grid>
-                </Grid>
+                  </Box>
+                </Box>
               </CardContent>
             </Card>
 
