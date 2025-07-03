@@ -141,7 +141,7 @@ function FlightDetailModal({ open, onClose, flightId }: FlightDetailModalProps) 
             <Card sx={{ mb: 3 }}>
               <CardContent>
                 <Grid container spacing={3}>
-                  <Grid xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Typography variant="h6" gutterBottom>
                       Flight Overview
                     </Typography>
@@ -183,7 +183,7 @@ function FlightDetailModal({ open, onClose, flightId }: FlightDetailModalProps) 
                     </List>
                   </Grid>
                   
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Typography variant="h6" gutterBottom>
                       Reference Information
                     </Typography>
@@ -247,7 +247,7 @@ function FlightDetailModal({ open, onClose, flightId }: FlightDetailModalProps) 
                 <AccordionDetails>
                   <Grid container spacing={3}>
                     {/* Route Information */}
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <Typography variant="subtitle2" gutterBottom>
                         Route Information
                       </Typography>
@@ -284,7 +284,7 @@ function FlightDetailModal({ open, onClose, flightId }: FlightDetailModalProps) 
                     </Grid>
 
                     {/* Capacity & Bookings */}
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <Typography variant="subtitle2" gutterBottom>
                         Capacity & Bookings
                       </Typography>
@@ -452,7 +452,7 @@ export default function FlightsPage() {
             const totalBookings = flight.legs.reduce((acc, leg) => acc + (leg.bookingIds?.length || 0), 0);
             
             return (
-              <Grid item xs={12} lg={6} xl={4} key={flight.id}>
+              <Grid size={{ xs: 12, lg: 6, xl: 4 }} key={flight.id}>
                 <Card 
                   sx={{ 
                     height: '100%',
@@ -515,7 +515,7 @@ export default function FlightsPage() {
 
                     {/* Flight Stats */}
                     <Grid container spacing={2}>
-                      <Grid item xs={4}>
+                      <Grid size={4}>
                         <Box sx={{ textAlign: 'center' }}>
                           <Typography variant="h6" color="primary.main">
                             {flight.totalLegs}
@@ -525,7 +525,7 @@ export default function FlightsPage() {
                           </Typography>
                         </Box>
                       </Grid>
-                      <Grid item xs={4}>
+                      <Grid size={4}>
                         <Box sx={{ textAlign: 'center' }}>
                           <Typography variant="h6" color="primary.main">
                             {totalBookings}
@@ -535,7 +535,7 @@ export default function FlightsPage() {
                           </Typography>
                         </Box>
                       </Grid>
-                      <Grid item xs={4}>
+                      <Grid size={4}>
                         <Box sx={{ textAlign: 'center' }}>
                           <Typography variant="h6" color="primary.main">
                             {format(primaryLeg.scheduledDepartureTime.toDate(), 'MMM dd')}
