@@ -70,6 +70,7 @@ interface NavItem {
   icon: React.ReactNode;
   roles: UserRole[];
   children?: NavItem[];
+  order?: string;
 }
 
 const navigation: NavItem[] = [
@@ -92,46 +93,61 @@ const navigation: NavItem[] = [
     roles: ['passenger', 'agent', 'admin', 'superAdmin'],
   },
   {
-    name: 'Bookings',
-    href: '/dashboard/bookings',
-    icon: <BookIcon />,
-    roles: ['passenger', 'operator', 'agent', 'admin', 'superAdmin'],
-  },
-  {
     name: 'Flights',
     href: '/dashboard/flights',
     icon: <FlightIcon />,
     roles: ['passenger', 'operator', 'agent', 'admin', 'superAdmin'],
-  },
-  {
-    name: 'Invoices',
-    href: '/dashboard/invoices',
-    icon: <ReceiptIcon />,
-    roles: ['passenger', 'agent'],
-  },
-  {
-    name: 'Quotes',
-    href: '/dashboard/quotes',
-    icon: <ListAltIcon />,
-    roles: ['passenger', 'operator', 'agent', 'admin', 'superAdmin'],
-  },
-  {
-    name: 'Quote Requests',
-    href: '/dashboard/quotes/incoming',
-    icon: <ListAltIcon />,
-    roles: ['operator'],
-  },
-  {
-    name: 'My Submitted Quotes',
-    href: '/dashboard/my-quotes',
-    icon: <ListAltIcon />,
-    roles: ['operator'],
-  },
-  {
-    name: 'Operator Bookings',
-    href: '/dashboard/bookings/operator',
-    icon: <BookIcon />,
-    roles: ['operator'],
+    children: [
+      {
+        name: 'Quote Requests',
+        href: '/dashboard/quotes/request',
+        icon: <ListAltIcon />,
+        roles: ['passenger', 'agent', 'admin', 'superAdmin'],
+        order: '1',
+      },
+      {
+        name: 'Incoming Quote Requests',
+        href: '/dashboard/quotes/incoming',
+        icon: <ListAltIcon />,
+        roles: ['operator'],
+        order: '1',
+      },
+      {
+        name: 'Quotes',
+        href: '/dashboard/quotes',
+        icon: <ListAltIcon />,
+        roles: ['passenger', 'operator', 'agent', 'admin', 'superAdmin'],
+        order: '2',
+      },
+      {
+        name: 'My Submitted Quotes',
+        href: '/dashboard/my-quotes',
+        icon: <ListAltIcon />,
+        roles: ['operator'],
+        order: '2',
+      },
+      {
+        name: 'Bookings',
+        href: '/dashboard/bookings',
+        icon: <BookIcon />,
+        roles: ['passenger', 'operator', 'agent', 'admin', 'superAdmin'],
+        order: '3',
+      },
+      {
+        name: 'Operator Bookings',
+        href: '/dashboard/bookings/operator',
+        icon: <BookIcon />,
+        roles: ['operator'],
+        order: '3',
+      },
+      {
+        name: 'Invoices',
+        href: '/dashboard/invoices',
+        icon: <ReceiptIcon />,
+        roles: ['passenger', 'agent'],
+        order: '3a',
+      },
+    ],
   },
   {
     name: 'Aircraft',
@@ -424,13 +440,9 @@ export default function SideNav({
                         aria-expanded={
                           item.children ? expandedItems.includes(item.name) : undefined
                         }
-                        {...(item.children
-                          ? { onClick: () => toggleExpanded(item.name) }
-                          : {
-                              component: Link,
-                              href: item.href,
-                              onClick: isMobile ? onCloseMobile : undefined,
-                            })}
+                        component={Link}
+                        href={item.href}
+                        onClick={isMobile ? onCloseMobile : undefined}
                         onMouseEnter={
                           mini && item.children
                             ? (e) => {
@@ -444,7 +456,7 @@ export default function SideNav({
                           borderRadius: `${theme.shape.borderRadius}px`,
                           mb: mini ? 0 : 0.5,
                           pl: mini ? 0 : 2,
-                          pr: mini ? 0 : 2,
+                          pr: mini ? 0 : (item.children ? 1 : 2),
                           py: mini ? 0.5 : 1.25,
                           justifyContent: mini ? 'center' : 'flex-start',
                           color: active ? 'primary.main' : 'text.primary',
@@ -489,19 +501,27 @@ export default function SideNav({
                             primaryTypographyProps={{ fontWeight: active ? 'medium' : 'regular' }}
                           />
                         )}
-                        {!mini &&
-                          item.children &&
-                          (expandedItems.includes(item.name) ? (
-                            <ExpandLessIcon
-                              fontSize="small"
-                              sx={{ color: active ? 'primary.main' : 'text.secondary' }}
-                            />
-                          ) : (
-                            <ExpandMoreIcon
-                              fontSize="small"
-                              sx={{ color: active ? 'primary.main' : 'text.secondary' }}
-                            />
-                          ))}
+                        {!mini && item.children && (
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toggleExpanded(item.name);
+                            }}
+                            sx={{
+                              ml: 1,
+                              color: active ? 'primary.main' : 'text.secondary',
+                              '&:hover': { backgroundColor: 'action.hover' },
+                            }}
+                          >
+                            {expandedItems.includes(item.name) ? (
+                              <ExpandLessIcon fontSize="small" />
+                            ) : (
+                              <ExpandMoreIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        )}
                       </ListItemButton>
                     </Tooltip>
                   </ListItem>
@@ -510,8 +530,10 @@ export default function SideNav({
                       <List role="menu" component="div" disablePadding sx={{ pl: 2 }}>
                         {item.children
                           .filter((child) => child.roles.includes(userRole))
-                          .map((child) => {
+                          .map((child, childIndex, filteredChildren) => {
                             const childActive = isPathActive(child.href, true);
+                            const isFlightWorkflow = item.name === 'Flights';
+                            const isLastChild = childIndex === filteredChildren.length - 1;
                             return (
                               <ListItem key={child.name} disablePadding>
                                 <Tooltip
@@ -542,7 +564,7 @@ export default function SideNav({
                                       position: 'relative',
                                       borderRadius: `${theme.shape.borderRadius}px`,
                                       mb: 0.5,
-                                      pl: mini ? 0 : 2,
+                                      pl: mini ? 0 : (isFlightWorkflow ? 3 : 2),
                                       pr: mini ? 0 : 2,
                                       py: 1.25,
                                       justifyContent: mini
@@ -566,11 +588,81 @@ export default function SideNav({
                                       '&:hover': { backgroundColor: 'action.hover' },
                                     }}
                                   >
+                                    {/* Progress Bar Design for Flight Workflow */}
+                                    {isFlightWorkflow && child.order && (
+                                      <Box
+                                        sx={{
+                                          position: 'absolute',
+                                          left: 8,
+                                          top: '50%',
+                                          transform: 'translateY(-50%)',
+                                          display: 'flex',
+                                          flexDirection: 'column',
+                                          alignItems: 'center',
+                                          zIndex: 1,
+                                        }}
+                                      >
+                                        {/* Connecting Line Above */}
+                                        {childIndex > 0 && (
+                                          <Box
+                                            sx={{
+                                              width: '2px',
+                                              height: '20px',
+                                              backgroundColor: theme.palette.divider,
+                                              position: 'absolute',
+                                              top: '-20px',
+                                            }}
+                                          />
+                                        )}
+                                        
+                                        {/* Circular Icon with Order Number */}
+                                        <Box
+                                          sx={{
+                                            width: '24px',
+                                            height: '24px',
+                                            borderRadius: '50%',
+                                            backgroundColor: childActive 
+                                              ? 'primary.main' 
+                                              : 'background.default',
+                                            border: `2px solid ${childActive 
+                                              ? 'primary.main' 
+                                              : theme.palette.divider}`,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 'bold',
+                                            color: childActive 
+                                              ? 'primary.contrastText' 
+                                              : 'text.secondary',
+                                            position: 'relative',
+                                            zIndex: 2,
+                                          }}
+                                        >
+                                          {child.order}
+                                        </Box>
+                                        
+                                        {/* Connecting Line Below */}
+                                        {!isLastChild && (
+                                          <Box
+                                            sx={{
+                                              width: '2px',
+                                              height: '20px',
+                                              backgroundColor: theme.palette.divider,
+                                              position: 'absolute',
+                                              top: '24px',
+                                            }}
+                                          />
+                                        )}
+                                      </Box>
+                                    )}
+                                    
                                     <ListItemIcon
                                       sx={{
                                         minWidth: mini ? 'auto' : 40,
                                         justifyContent: 'center',
                                         color: childActive ? 'primary.main' : 'text.secondary',
+                                        ...(isFlightWorkflow && { ml: 2 }),
                                       }}
                                     >
                                       {child.icon}

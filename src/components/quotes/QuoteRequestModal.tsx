@@ -216,15 +216,7 @@ const QuoteRequestModal: React.FC<QuoteRequestModalProps> = ({ open, onClose, re
         )}
         {error && <Alert severity="error">{error}</Alert>}
         {!loading && !error && request && (
-          <QuoteRequestDetails
-            request={request}
-            departureAirportDetails={departureAirport}
-            arrivalAirportDetails={arrivalAirport}
-            onAcceptOffer={handleAcceptOffer}
-            isAcceptingOffer={isAccepting}
-            isClientView={isClientView}
-            onSubmitOffer={handleOpenSubmitOfferModal}
-          />
+          <QuoteRequestDetails request={request} />
         )}
       </DialogContent>
       <SubmitOfferModal

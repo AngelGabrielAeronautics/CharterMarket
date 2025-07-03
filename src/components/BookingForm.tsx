@@ -816,7 +816,7 @@ export default function BookingForm() {
                 {/* From Airport */}
                 <Box
                   sx={{
-                    flex: 1,
+                    flex: 1.5,
                     minWidth: 0,
                     // Square right corners for the From field
                     '& .MuiOutlinedInput-root': {
@@ -839,7 +839,7 @@ export default function BookingForm() {
                 </Box>
 
                 {/* To Airport */}
-                <Box sx={{ flex: 1, minWidth: 0, '& .MuiOutlinedInput-root': { borderRadius: 0 } }}>
+                <Box sx={{ flex: 1.5, minWidth: 0, '& .MuiOutlinedInput-root': { borderRadius: 0 } }}>
                   <AirportSelect
                     label="To"
                     value={leg.to}
@@ -901,7 +901,7 @@ export default function BookingForm() {
                   index === 0 && (
                     <Box
                       sx={{
-                        flex: 1,
+                        flex: 0.7,
                         minWidth: 0,
                         // Square left corners of the passenger field
                         '& .MuiOutlinedInput-root': {
@@ -964,7 +964,7 @@ export default function BookingForm() {
                 {formState.flightType === 'multicity' && (
                   <Box
                     sx={{
-                      flex: 1,
+                      flex: 0.7,
                       minWidth: 0,
                       // Square left corners of the per-leg passenger field
                       '& .MuiOutlinedInput-root': {
@@ -1045,13 +1045,23 @@ export default function BookingForm() {
           <Collapse in={baseFieldsComplete} timeout="auto" unmountOnExit>
             {/* Additional Options */}
             <Box sx={{ mb: 3, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.04)
+                  }
+                }}
+                onClick={() => setShowAdditionalOptions((prev) => !prev)}
+              >
                 <Typography variant="h6" gutterBottom sx={{ fontFamily: 'inherit' }}>
                   Additional Options
                 </Typography>
                 <IconButton
                   size="small"
-                  onClick={() => setShowAdditionalOptions((prev) => !prev)}
                   sx={{ fontFamily: 'inherit' }}
                 >
                   {showAdditionalOptions ? <ExpandLessIcon /> : <ExpandMoreIcon />}

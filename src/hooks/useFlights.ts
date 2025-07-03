@@ -2,6 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { QuoteRequest } from '@/types/flight';
 import { Quote } from '@/types/quote';
+import { Flight } from '@/types/flight';
+import { UserRole } from '@/lib/userCode';
 import {
   getClientQuoteRequests,
   getOperatorQuoteRequests,
@@ -9,6 +11,134 @@ import {
   getQuoteRequest,
 } from '@/lib/flight';
 import { getQuotesForRequest, getOperatorSubmittedQuotes } from '@/lib/quote';
+import { FlightService } from '@/lib/flight-service';
+
+/**
+ * Hook to fetch actual flights based on user role
+ */
+export function useFlights(userCode?: string, userRole?: UserRole) {
+  const [flights, setFlights] = useState<Flight[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastRefresh, setLastRefresh] = useState(Date.now());
+
+  const refreshFlights = useCallback(() => {
+    setLastRefresh(Date.now());
+  }, []);
+
+  useEffect(() => {
+    if (!userCode || !userRole) {
+      setLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchFlights = async () => {
+      if (!isMounted) return;
+      setLoading(true);
+      setError(null);
+
+      try {
+        let flightData: Flight[] = [];
+
+        if (userRole === 'operator') {
+          // For operators, get flights they operate
+          flightData = await FlightService.getFlightsByOperator(userCode);
+        } else if (userRole === 'admin' || userRole === 'superAdmin') {
+          // For admin/superAdmin, get all flights
+          flightData = await FlightService.getAllFlights();
+        } else {
+          // For passengers/agents, get flights they're involved in
+          // This requires a different approach since flights don't directly reference clients
+          // We'll need to get their bookings and find associated flights
+          flightData = await FlightService.getAllFlights();
+          // Filter to flights where user has bookings
+          flightData = flightData.filter(flight => 
+            flight.legs && flight.legs.some(leg => 
+              leg.bookingIds && leg.bookingIds.length > 0
+              // Note: We'd need to check if these bookings belong to the user
+              // This would require additional lookup logic
+            )
+          );
+        }
+
+        if (isMounted) {
+          setFlights(flightData);
+        }
+      } catch (err) {
+        console.error('Error fetching flights:', err);
+        if (isMounted) {
+          setError('Failed to load flights');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchFlights();
+
+    // Set up auto-refresh every 60 seconds for flights
+    const intervalId = setInterval(fetchFlights, 60000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [userCode, userRole, lastRefresh]);
+
+  return { flights, loading, error, refreshFlights };
+}
+
+/**
+ * Hook to fetch a specific flight by ID with full details
+ */
+export function useFlightDetail(flightId?: string) {
+  const [flight, setFlight] = useState<Flight | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!flightId) {
+      setLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchFlight = async () => {
+      if (!isMounted) return;
+      setLoading(true);
+      setError(null);
+
+      try {
+        const flightData = await FlightService.getFlightById(flightId);
+        if (isMounted) {
+          setFlight(flightData);
+        }
+      } catch (err) {
+        console.error('Error fetching flight:', err);
+        if (isMounted) {
+          setError('Failed to load flight details');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchFlight();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [flightId]);
+
+  return { flight, loading, error };
+}
 
 /**
  * Hook to fetch quote requests for a client

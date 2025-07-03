@@ -23,6 +23,7 @@ import { PlusIcon, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useMemo } from 'react';
 import QuoteRequestModal from '@/components/quotes/QuoteRequestModal';
+import PageLayout from '@/components/ui/PageLayout';
 
 const getStatusColor = (
   status: string
@@ -74,14 +75,10 @@ export default function QuotesDashboardPage() {
   }, [quoteRequests]);
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 } }}>
-      <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
-        <Grid>
-          <Typography variant="h4" component="h1">
-            My Quote Requests
-          </Typography>
-        </Grid>
-        <Grid sx={{ display: 'flex', gap: 2 }}>
+    <PageLayout
+      title="My Quote Requests"
+      actions={
+        <Box sx={{ display: 'flex', gap: 2 }}>
           <Button variant="outlined" startIcon={<RefreshCw />} onClick={refreshRequests}>
             Refresh
           </Button>
@@ -92,9 +89,9 @@ export default function QuotesDashboardPage() {
           >
             New Request
           </Button>
-        </Grid>
-      </Grid>
-
+        </Box>
+      }
+    >
       {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
           <CircularProgress />
@@ -165,6 +162,6 @@ export default function QuotesDashboardPage() {
         onClose={handleCloseModal}
         requestId={selectedRequestId}
       />
-    </Box>
+    </PageLayout>
   );
 }

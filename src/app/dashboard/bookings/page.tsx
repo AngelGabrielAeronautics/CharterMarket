@@ -7,6 +7,7 @@ import { useClientBookings } from '@/hooks/useBookings';
 import { Booking } from '@/types/booking';
 import { format } from 'date-fns';
 import { Box, Paper, Typography, Stack, Alert } from '@mui/material';
+import PageLayout from '@/components/ui/PageLayout';
 
 // Helper to parse Firestore Timestamp or raw JSON into JS Date
 function toJsDate(value: any): Date {
@@ -27,35 +28,39 @@ export default function BookingsPage() {
   const { user } = useAuth();
   const { bookings, loading, error } = useClientBookings(user?.userCode);
 
-  if (loading)
+  if (loading) {
     return (
-      <Box sx={{ p: 8, textAlign: 'center' }}>
-        <Typography>Loading bookings...</Typography>
-      </Box>
+      <PageLayout title="My Flights">
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <Typography>Loading bookings...</Typography>
+        </Box>
+      </PageLayout>
     );
-  if (error)
+  }
+
+  if (error) {
     return (
-      <Box sx={{ p: 8, textAlign: 'center' }}>
+      <PageLayout title="My Flights">
         <Alert severity="error">{error}</Alert>
-      </Box>
+      </PageLayout>
     );
-  if (!bookings.length)
+  }
+
+  if (!bookings.length) {
     return (
-      <Box sx={{ p: 8, textAlign: 'center' }}>
+      <PageLayout title="My Flights">
         <Typography>No bookings found.</Typography>
-      </Box>
+      </PageLayout>
     );
+  }
 
   return (
-    <Box sx={{ width: '100%', maxWidth: 800, mx: 'auto', px: { xs: 2, sm: 4 }, py: 4 }}>
-      <Typography variant="h4" fontWeight="bold" color="primary.main" gutterBottom>
-        My Flights
-      </Typography>
+    <PageLayout title="My Flights">
       <Stack spacing={2} sx={{ mt: 2 }}>
         {bookings.map((b) => (
           <Paper
             key={b.id}
-            variant="outlined"
+            elevation={1}
             sx={{
               p: 2,
               borderRadius: 2,
@@ -93,6 +98,6 @@ export default function BookingsPage() {
           </Paper>
         ))}
       </Stack>
-    </Box>
+    </PageLayout>
   );
 }

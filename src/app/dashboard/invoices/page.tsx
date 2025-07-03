@@ -27,6 +27,7 @@ import {
 } from '@mui/material';
 import { EyeIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import PageLayout from '@/components/ui/PageLayout';
 
 // Helper to parse Firestore Timestamp, raw JSON object, or ISO string into JS Date
 const toJsDate = (value: any): Date => {
@@ -76,11 +77,7 @@ export default function ClientInvoicesPage() {
   }
 
   return (
-    <Box className="container mx-auto px-4 py-8">
-      <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" sx={{ mb: 3 }}>
-        My Invoices
-      </Typography>
-
+    <PageLayout title="My Invoices">
       {invoices.length === 0 ? (
         <Paper elevation={1} sx={{ p: 3, textAlign: 'center' }}>
           <Typography>You do not have any invoices yet.</Typography>
@@ -128,6 +125,6 @@ export default function ClientInvoicesPage() {
           </Table>
         </Paper>
       )}
-    </Box>
+    </PageLayout>
   );
 }
