@@ -15,6 +15,8 @@ import {
   ListItemText,
   Card,
   CardContent,
+  Dialog,
+  IconButton,
 } from '@mui/material';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -27,12 +29,16 @@ import {
   Security,
   Payment,
 } from '@mui/icons-material';
+import CloseIcon from '@mui/icons-material/Close';
+import { useRouter } from 'next/navigation';
 
 export default function DownloadPage() {
   const theme = useTheme();
+  const router = useRouter();
   const [isMobile, setIsMobile] = useState(false);
   const [showPwaInstall, setShowPwaInstall] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [open, setOpen] = useState(true);
 
   useEffect(() => {
     // Check if the device is mobile
@@ -76,8 +82,21 @@ export default function DownloadPage() {
     }
   };
 
-  return (
-    <Container maxWidth="lg">
+  const handleClose = () => {
+    setOpen(false);
+    router.back();
+  };
+
+  const content = (
+    <Container maxWidth="lg" sx={{ py: { xs: 4, md: 8 }, position: 'relative' }}>
+      {/* Close button */}
+      <IconButton
+        aria-label="Close"
+        onClick={handleClose}
+        sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}
+      >
+        <CloseIcon />
+      </IconButton>
       <Box sx={{ py: 8 }}>
         <Typography variant="h3" component="h1" fontWeight="bold" textAlign="center" gutterBottom>
           Download the Charter App
@@ -379,5 +398,23 @@ export default function DownloadPage() {
         </Grid>
       </Box>
     </Container>
+  );
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      fullWidth
+      maxWidth="md"
+      scroll="paper"
+      BackdropProps={{
+        sx: {
+          backdropFilter: 'blur(6px)',
+          backgroundColor: 'rgba(0,0,0,0.25)',
+        },
+      }}
+    >
+      {content}
+    </Dialog>
   );
 }

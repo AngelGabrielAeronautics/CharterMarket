@@ -24,6 +24,7 @@ import {
   Popper,
   Paper,
   Switch,
+  Avatar,
 } from '@mui/material';
 import Typography from '@mui/material/Typography';
 import ToggleButton from '@mui/material/ToggleButton';
@@ -63,6 +64,7 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Image from 'next/image';
 import Banner from '@/components/Banner';
 import tokens from '@/styles/tokens';
+import { createPortal } from 'react-dom';
 
 interface NavItem {
   name: string;
@@ -87,44 +89,17 @@ const navigation: NavItem[] = [
     roles: ['operator', 'agent'],
   },
   {
-    name: 'Passengers',
-    href: '/dashboard/passengers',
-    icon: <PeopleIcon />,
-    roles: ['passenger', 'agent', 'admin', 'superAdmin'],
-  },
-  {
     name: 'Flights',
     href: '/dashboard/flights',
     icon: <FlightIcon />,
     roles: ['passenger', 'operator', 'agent', 'admin', 'superAdmin'],
     children: [
       {
-        name: 'Quote Requests',
-        href: '/dashboard/quotes/request',
-        icon: <ListAltIcon />,
-        roles: ['passenger', 'agent', 'admin', 'superAdmin'],
-        order: '1',
-      },
-      {
-        name: 'Incoming Quote Requests',
-        href: '/dashboard/quotes/incoming',
-        icon: <ListAltIcon />,
-        roles: ['operator'],
-        order: '1',
-      },
-      {
-        name: 'Quotes',
-        href: '/dashboard/quotes',
-        icon: <ListAltIcon />,
-        roles: ['passenger', 'operator', 'agent', 'admin', 'superAdmin'],
-        order: '2',
-      },
-      {
-        name: 'My Submitted Quotes',
-        href: '/dashboard/my-quotes',
-        icon: <ListAltIcon />,
-        roles: ['operator'],
-        order: '2',
+        name: 'Invoices',
+        href: '/dashboard/invoices',
+        icon: <ReceiptIcon />,
+        roles: ['passenger', 'agent'],
+        order: '3a',
       },
       {
         name: 'Bookings',
@@ -141,13 +116,40 @@ const navigation: NavItem[] = [
         order: '3',
       },
       {
-        name: 'Invoices',
-        href: '/dashboard/invoices',
-        icon: <ReceiptIcon />,
-        roles: ['passenger', 'agent'],
-        order: '3a',
+        name: 'Quotes',
+        href: '/dashboard/quotes',
+        icon: <ListAltIcon />,
+        roles: ['passenger', 'operator', 'agent', 'admin', 'superAdmin'],
+        order: '2',
+      },
+      {
+        name: 'My Submitted Quotes',
+        href: '/dashboard/my-quotes',
+        icon: <ListAltIcon />,
+        roles: ['operator'],
+        order: '2',
+      },
+      {
+        name: 'Incoming Quote Requests',
+        href: '/dashboard/quotes/incoming',
+        icon: <ListAltIcon />,
+        roles: ['operator'],
+        order: '1',
+      },
+      {
+        name: 'Quote Requests',
+        href: '/dashboard/quotes/request',
+        icon: <ListAltIcon />,
+        roles: ['passenger', 'agent', 'admin', 'superAdmin'],
+        order: '1',
       },
     ],
+  },
+  {
+    name: 'Passengers',
+    href: '/dashboard/passengers',
+    icon: <PeopleIcon />,
+    roles: ['passenger', 'agent', 'admin', 'superAdmin'],
   },
   {
     name: 'Aircraft',
@@ -184,12 +186,6 @@ const navigation: NavItem[] = [
     href: '/dashboard/admin',
     icon: <ShieldIcon />,
     roles: ['superAdmin'],
-  },
-  {
-    name: 'Download App',
-    href: '/download',
-    icon: <PhoneIphoneIcon />,
-    roles: ['passenger', 'operator', 'agent', 'admin', 'superAdmin'],
   },
   {
     name: 'System Settings',
@@ -294,13 +290,7 @@ export default function SideNav({
         width: drawerWidthPx,
         bgcolor: 'background.paper',
         borderRadius: `${theme.shape.borderRadius}px`,
-        overflow: 'hidden',
-        boxShadow: 'none',
-        border: 'none',
-        position: 'relative',
-        overflowX: 'hidden',
-        borderRight: `1px solid ${theme.palette.divider}`,
-        overscrollBehavior: 'contain',
+        overflow: 'visible',
         boxSizing: 'border-box',
       }}
     >
@@ -325,20 +315,32 @@ export default function SideNav({
         }}
       >
         {mini ? (
-          <Image
-            src="/branding/favicon/Charter-favicon-32x32.png"
-            alt="Charter favicon"
-            width={20}
-            height={20}
-          />
+          <Tooltip
+            title="Go to Home"
+            placement="right"
+            arrow
+            componentsProps={{
+              tooltip: {
+                sx: {
+                  bgcolor: 'background.paper',
+                  color: 'text.primary',
+                  fontSize: '0.875rem',
+                  boxShadow: theme.shadows[1],
+                },
+              },
+              arrow: {
+                sx: { color: 'background.paper' },
+              },
+            }}
+          ><Box component={Link} href="/" sx={{ display: 'inline-flex', cursor: 'pointer' }}><Image src="/branding/favicon/Charter-favicon-32x32.png" alt="Charter favicon" width={26} height={26} /></Box></Tooltip>
         ) : (
-          <Tooltip title="Go to Home" arrow>
-            <Logo href="/" height={40} sx={{ cursor: 'pointer' }} />
-          </Tooltip>
+          <Box component="span" sx={{ display: 'inline-flex' }}>
+            <Logo href="/" height={48} sx={{ cursor: 'pointer' }} />
+          </Box>
         )}
       </Box>
 
-      {/* Header with user name and collapse toggle */}
+      {/* Header spacing box (no longer contains toggle button) */}
       <Box
         sx={{
           px: mini ? 0 : 2,
@@ -348,25 +350,7 @@ export default function SideNav({
           justifyContent: mini ? 'center' : 'space-between',
           mb: mini ? 0 : 1,
         }}
-      >
-        {!mini && profile && (
-          <Typography variant="subtitle1" fontWeight="bold">
-            {profile.firstName} {profile.lastName}
-          </Typography>
-        )}
-        <IconButton
-          onClick={onToggleMini}
-          size="small"
-          sx={{
-            color: 'text.primary',
-            ...(mini && {
-              padding: 0.5,
-            }),
-          }}
-        >
-          {mini ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon />}
-        </IconButton>
-      </Box>
+      />
 
       {/* Close button for mobile */}
       {isMobile && (
@@ -393,9 +377,10 @@ export default function SideNav({
       <Box
         sx={{
           flexGrow: 1,
-          pt: mini ? 0.5 : 3,
+          minHeight: 0,
+          pt: mini ? 9 : 3,
           pb: mini ? 0.5 : 2,
-          overflow: 'hidden', // Prevent internal scrolling
+          overflow: 'visible',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -424,7 +409,7 @@ export default function SideNav({
                     <Tooltip
                       title={item.name}
                       placement="right"
-                      disableHoverListener={!mini}
+                      disableHoverListener={!mini || !!item.children}
                       arrow
                       componentsProps={{
                         tooltip: {
@@ -706,7 +691,7 @@ export default function SideNav({
               sx={{
                 mt: 0.5,
                 borderRadius: `${theme.shape.borderRadius}px`,
-                overflow: 'hidden',
+                overflow: 'visible',
                 p: 0.25,
                 maxWidth: 'max-content',
               }}
@@ -716,42 +701,108 @@ export default function SideNav({
                 {navigation
                   .find((item) => item.name === submenuName)
                   ?.children?.filter((child) => child.roles.includes(userRole))
-                  .map((child) => (
-                    <ListItem key={child.name} disablePadding>
-                      <ListItemButton
-                        component={Link}
-                        href={child.href}
-                        onClick={isMobile ? onCloseMobile : undefined}
-                        sx={{
-                          py: 0.75,
-                          px: 1.5,
-                          justifyContent: 'flex-start',
-                          color: isPathActive(child.href, true) ? 'primary.main' : 'text.primary',
-                          minHeight: 32,
-                        }}
-                      >
-                        <ListItemIcon
+                  .map((child, childIndex, filteredChildren) => {
+                    const childActive = isPathActive(child.href, true);
+                    const isFlightWorkflow = submenuName === 'Flights';
+                    const isLastChild = childIndex === filteredChildren.length - 1;
+                    return (
+                      <ListItem key={child.name} disablePadding sx={{ position: 'relative' }}>
+                        {/* Progress indicator for Flight workflow */}
+                        {isFlightWorkflow && child.order && (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              left: 8,
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              zIndex: 1,
+                            }}
+                          >
+                            {/* Connecting line above */}
+                            {childIndex > 0 && (
+                              <Box
+                                sx={{
+                                  width: '2px',
+                                  height: '20px',
+                                  backgroundColor: theme.palette.divider,
+                                  position: 'absolute',
+                                  top: '-20px',
+                                }}
+                              />
+                            )}
+                            {/* Numbered circle */}
+                            <Box
+                              sx={{
+                                width: '24px',
+                                height: '24px',
+                                borderRadius: '50%',
+                                backgroundColor: childActive ? 'primary.main' : 'background.default',
+                                border: `2px solid ${childActive ? 'primary.main' : theme.palette.divider}`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '0.75rem',
+                                fontWeight: 'bold',
+                                color: childActive ? 'primary.contrastText' : 'text.secondary',
+                                position: 'relative',
+                                zIndex: 2,
+                              }}
+                            >
+                              {child.order}
+                            </Box>
+                            {/* Connecting line below */}
+                            {!isLastChild && (
+                              <Box
+                                sx={{
+                                  width: '2px',
+                                  height: '20px',
+                                  backgroundColor: theme.palette.divider,
+                                  position: 'absolute',
+                                  top: '24px',
+                                }}
+                              />
+                            )}
+                          </Box>
+                        )}
+
+                        <ListItemButton
+                          component={Link}
+                          href={child.href}
+                          onClick={isMobile ? onCloseMobile : undefined}
                           sx={{
-                            minWidth: 32,
-                            justifyContent: 'center',
-                            color: isPathActive(child.href, true)
-                              ? 'primary.main'
-                              : 'text.secondary',
+                            py: 0.75,
+                            pl: isFlightWorkflow ? 4 : 1.5,
+                            pr: 1.5,
+                            justifyContent: 'flex-start',
+                            color: childActive ? 'primary.main' : 'text.primary',
+                            minHeight: 32,
                           }}
                         >
-                          {child.icon}
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={child.name}
-                          primaryTypographyProps={{
-                            fontWeight: isPathActive(child.href, true) ? 'medium' : 'regular',
-                            variant: 'body2',
-                            fontSize: '0.875rem',
-                          }}
-                        />
-                      </ListItemButton>
-                    </ListItem>
-                  ))}
+                          <ListItemIcon
+                            sx={{
+                              minWidth: 32,
+                              justifyContent: 'center',
+                              color: childActive ? 'primary.main' : 'text.secondary',
+                              ...(isFlightWorkflow && { ml: 2 }),
+                            }}
+                          >
+                            {child.icon}
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={child.name}
+                            primaryTypographyProps={{
+                              fontWeight: childActive ? 'medium' : 'regular',
+                              variant: 'body2',
+                              fontSize: '0.875rem',
+                            }}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    );
+                  })}
               </List>
             </Paper>
           </Popper>
@@ -841,6 +892,50 @@ export default function SideNav({
               </span>
             </Tooltip>
           )}
+          {/* Download App link */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: mini ? 0.5 : 1 }}>
+            <Tooltip
+              title="Download App"
+              disableHoverListener={!mini}
+              placement="right"
+              arrow
+              componentsProps={{
+                tooltip: {
+                  sx: {
+                    bgcolor: 'background.paper',
+                    color: 'text.primary',
+                    fontSize: '0.875rem',
+                    boxShadow: theme.shadows[1],
+                  },
+                },
+                arrow: {
+                  sx: { color: 'background.paper' },
+                },
+              }}
+            >
+              <span>
+                <IconButton
+                  component={Link}
+                  href="/download"
+                  size="small"
+                  sx={{ color: 'text.secondary' }}
+                >
+                  <PhoneIphoneIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+            {!mini && (
+              <Button
+                component={Link}
+                href="/download"
+                variant="text"
+                size="small"
+                sx={{ color: 'text.primary', textTransform: 'none', pl: 0 }}
+              >
+                Download App
+              </Button>
+            )}
+          </Box>
         </Box>
 
         {/* Theme toggle section */}
@@ -987,6 +1082,40 @@ export default function SideNav({
     </Paper>
   );
 
+  // Toggle button rendered in a portal so it is not constrained by sidebar's bounding box
+  const toggleButton = (
+    <IconButton
+      onClick={onToggleMini}
+      size="small"
+      sx={(theme) => ({
+        position: 'fixed',
+        left: mini
+          ? `calc(${collapsedWidth} - 14px)`
+          : `calc(${drawerWidth} - 14px)`,
+        top: theme.spacing(14),
+        transform: 'translateY(-50%)',
+        border: '1px solid',
+        borderColor: 'divider',
+        bgcolor: 'background.paper',
+        width: 28,
+        height: 28,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: '50%',
+        zIndex: 2000,
+        boxShadow: 1,
+        transition: theme.transitions.create(['left'], {
+          easing: theme.transitions.easing.sharp,
+          duration: theme.transitions.duration.enteringScreen,
+        }),
+        '&:hover': { bgcolor: 'action.hover' },
+      })}
+    >
+      {mini ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}
+    </IconButton>
+  );
+
   // For mobile, we use the Drawer component; for desktop, we use a permanent drawer
   return isMobile ? (
     <Drawer
@@ -1009,11 +1138,11 @@ export default function SideNav({
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
-          borderRight: `1px solid ${theme.palette.divider}`,
         },
       }}
     >
       {content}
+      {typeof window !== 'undefined' && createPortal(toggleButton, document.body)}
     </Drawer>
   ) : (
     <Box
@@ -1028,7 +1157,7 @@ export default function SideNav({
           easing: theme.transitions.easing.sharp,
           duration: theme.transitions.duration.enteringScreen,
         }),
-        overflowX: 'hidden',
+        overflow: 'visible',
         position: 'relative',
         '& > div': {
           borderRadius: `${Number(theme.shape.borderRadius) * 2}px`,
@@ -1038,9 +1167,21 @@ export default function SideNav({
           flexDirection: 'column',
           position: 'relative',
         },
+        borderRight: `1px solid ${theme.palette.divider}`,
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: '1px',
+          backgroundColor: theme.palette.divider,
+          pointerEvents: 'none',
+        },
       }}
     >
       {content}
+      {typeof window !== 'undefined' && createPortal(toggleButton, document.body)}
     </Box>
   );
 }

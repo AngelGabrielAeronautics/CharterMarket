@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress, useTheme } from '@mui/material';
 import clsx from 'clsx';
 
 interface LoadingSpinnerProps {
@@ -14,7 +14,8 @@ export default function LoadingSpinner({
   className = '',
   fullscreen = true,
 }: LoadingSpinnerProps) {
-  const spinner = <CircularProgress size={size} sx={{ color: 'var(--charter-gold)' }} />;
+  const theme = useTheme();
+  const spinner = <CircularProgress size={size} sx={{ color: theme.palette.primary.main }} />;
 
   if (fullscreen) {
     return (
@@ -26,8 +27,8 @@ export default function LoadingSpinner({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: 'rgba(11, 55, 70, 0.8)',
-          backdropFilter: 'blur(4px)',
+          backgroundColor: theme.palette.background.paper,
+          opacity: 0.9,
         }}
         className={clsx(className)}
       >
