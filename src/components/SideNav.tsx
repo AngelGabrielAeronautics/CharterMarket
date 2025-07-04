@@ -19,7 +19,6 @@ import {
   Divider,
   IconButton,
   useTheme as useMuiTheme,
-  SvgIcon,
   Tooltip,
   Popper,
   Paper,
@@ -62,8 +61,6 @@ import Logo from './Logo';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Image from 'next/image';
-import Banner from '@/components/Banner';
-import tokens from '@/styles/tokens';
 import { createPortal } from 'react-dom';
 
 interface NavItem {
@@ -378,9 +375,10 @@ export default function SideNav({
         sx={{
           flexGrow: 1,
           minHeight: 0,
-          pt: mini ? 9 : 3,
+          pt: mini ? 2 : 3,
           pb: mini ? 0.5 : 2,
-          overflow: 'visible',
+          overflowX: 'visible',
+          overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
         }}

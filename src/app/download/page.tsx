@@ -6,7 +6,6 @@ import {
   Container,
   Typography,
   Grid,
-  Paper,
   Button,
   useTheme,
   List,
@@ -19,7 +18,6 @@ import {
   IconButton,
 } from '@mui/material';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   PhoneIphone,
   CheckCircle,
@@ -35,15 +33,11 @@ import { useRouter } from 'next/navigation';
 export default function DownloadPage() {
   const theme = useTheme();
   const router = useRouter();
-  const [isMobile, setIsMobile] = useState(false);
   const [showPwaInstall, setShowPwaInstall] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [open, setOpen] = useState(true);
 
   useEffect(() => {
-    // Check if the device is mobile
-    setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
-
     // Check if the app is already installed
     const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
 
