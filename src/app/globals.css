@@ -303,3 +303,77 @@ body {
   --muted-foreground: var(--color-secondary-foreground);
 }
 
+@media print {
+  /* Hide navigation, buttons, and other UI */
+  nav, .sidebar, button, a[href] {
+    display: none !important;
+  }
+  /* Show only the invoice container */
+  .invoice-container, .invoice-container * {
+    visibility: visible !important;
+  }
+  /* Make invoice full page */
+  .invoice-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+}
+
+/* Print styles for invoices */
+@media print {
+  /* Hide navigation and UI elements when printing */
+  header, nav, footer, .no-print {
+    display: none !important;
+  }
+  
+  /* Ensure the invoice takes up the full page */
+  .invoice-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  
+  /* Adjust page margins */
+  @page {
+    size: A4;
+    margin: 0.5cm;
+  }
+  
+  /* Ensure text is black for better printing */
+  body {
+    color: #000 !important;
+    background-color: #fff !important;
+  }
+  
+  /* Force background colors to show when printing */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Break pages appropriately */
+  .page-break-after {
+    page-break-after: always;
+  }
+  
+  .page-break-before {
+    page-break-before: always;
+  }
+  
+  /* Ensure tables render properly */
+  table {
+    page-break-inside: avoid;
+  }
+}
+
+/* Hide elements temporarily during PDF generation */
+.hidden-temp {
+  display: none !important;
+}
+
