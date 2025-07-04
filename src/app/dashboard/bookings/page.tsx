@@ -6,8 +6,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useClientBookings } from '@/hooks/useBookings';
 import { Booking } from '@/types/booking';
 import { format } from 'date-fns';
-import { Box, Paper, Typography, Stack, Alert } from '@mui/material';
-import PageLayout from '@/components/ui/PageLayout';
+import { Box, Paper, Typography, Stack, Alert, CircularProgress, Container } from '@mui/material';
+import { RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 // Helper to parse Firestore Timestamp or raw JSON into JS Date
 function toJsDate(value: any): Date {
@@ -26,78 +27,106 @@ function toJsDate(value: any): Date {
 
 export default function BookingsPage() {
   const { user } = useAuth();
-  const { bookings, loading, error } = useClientBookings(user?.userCode);
-
-  if (loading) {
-    return (
-      <PageLayout title="My Flights">
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <Typography>Loading bookings...</Typography>
-        </Box>
-      </PageLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <PageLayout title="My Flights">
-        <Alert severity="error">{error}</Alert>
-      </PageLayout>
-    );
-  }
-
-  if (!bookings.length) {
-    return (
-      <PageLayout title="My Flights">
-        <Typography>No bookings found.</Typography>
-      </PageLayout>
-    );
-  }
+  const { bookings, loading, error, refreshBookings } = useClientBookings(user?.userCode);
 
   return (
-    <PageLayout title="My Flights">
-      <Stack spacing={2} sx={{ mt: 2 }}>
-        {bookings.map((b) => (
-          <Paper
-            key={b.id}
-            elevation={1}
-            sx={{
-              p: 2,
-              borderRadius: 2,
-              bgcolor: 'background.paper',
-              '&:hover': { bgcolor: 'action.hover' },
-            }}
-          >
-            <Link
-              href={`/dashboard/bookings/${b.id}`}
-              style={{ textDecoration: 'none', color: 'inherit' }}
-            >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="subtitle1" fontWeight="medium" color="text.primary">
-                    Booking {b.bookingId}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {b.routing.departureAirport} → {b.routing.arrivalAirport} on{' '}
-                    {format(toJsDate(b.routing.departureDate), 'dd MMM yyyy')}
-                  </Typography>
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Status: <strong>{b.status}</strong>
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Total:{' '}
-                    <strong>
-                      ${((b as any).totalPrice || b.payment?.totalAmount || 0).toFixed(2)}
-                    </strong>
-                  </Typography>
-                </Box>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" component="h1" fontWeight="bold">
+          My Flights
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+          View and manage your booked flights
+        </Typography>
+      </Box>
+
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+        <Button variant="outlined" startIcon={<RefreshCw />} onClick={refreshBookings}>
+          Refresh
+        </Button>
+      </Box>
+
+      {loading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+      {!loading && !error && bookings.length === 0 ? (
+        <Paper 
+          elevation={1} 
+          sx={{ 
+            p: 4, 
+            textAlign: 'center',
+            borderRadius: 1,
+            mb: 2
+          }}
+        >
+          <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+            No flights found
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Your booked flights will appear here
+          </Typography>
+        </Paper>
+      ) : (
+        <Paper 
+          elevation={1}
+          sx={{
+            p: 0,
+            borderRadius: 1,
+            overflow: 'hidden',
+            mb: 2
+          }}
+        >
+          <Stack>
+            {bookings.map((b) => (
+              <Box
+                key={b.id}
+                sx={{
+                  p: 3,
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                  '&:last-child': {
+                    borderBottom: 'none'
+                  },
+                  '&:hover': { bgcolor: 'action.hover' },
+                }}
+              >
+                <Link
+                  href={`/dashboard/bookings/${b.id}`}
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box>
+                      <Typography variant="subtitle1" fontWeight="medium" color="text.primary">
+                        Booking {b.bookingId}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {b.routing.departureAirport} → {b.routing.arrivalAirport} on{' '}
+                        {format(toJsDate(b.routing.departureDate), 'dd MMM yyyy')}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Status: <strong>{b.status}</strong>
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Total:{' '}
+                        <strong>
+                          ${((b as any).totalPrice || b.payment?.totalAmount || 0).toFixed(2)}
+                        </strong>
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Link>
               </Box>
-            </Link>
-          </Paper>
-        ))}
-      </Stack>
-    </PageLayout>
+            ))}
+          </Stack>
+        </Paper>
+      )}
+    </Container>
   );
 }

@@ -18,7 +18,9 @@ import {
   Stack,
   Grid,
   Alert,
-  Chip
+  Chip,
+  Container,
+  CircularProgress,
 } from '@mui/material';
 
 interface Passenger {
@@ -211,17 +213,23 @@ export default function PassengersPage() {
     }
   };
 
-  if (loading) {
-    return <LoadingSpinner fullscreen />;
+  if (loading && passengers.length === 0) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+          <CircularProgress />
+        </Box>
+      </Container>
+    );
   }
 
   return (
-    <Box sx={{ width: '100%', maxWidth: 900, mx: 'auto', px: { xs: 2, sm: 4 }, py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold" color="primary.main" gutterBottom>
+        <Typography variant="h4" component="h1" fontWeight="bold">
           Passengers
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
           Manage your passenger list for bookings
         </Typography>
       </Box>
@@ -232,22 +240,22 @@ export default function PassengersPage() {
         </Alert>
       )}
 
-      <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h6" fontWeight="medium" color="text.primary">
-            Passenger List
-          </Typography>
-          <Button
-            variant={isAddingPassenger ? 'outlined' : 'contained'}
-            color="primary"
-            onClick={() => setIsAddingPassenger(!isAddingPassenger)}
-            sx={{ minWidth: 140 }}
-          >
-            {isAddingPassenger ? 'Cancel' : 'Add Passenger'}
-          </Button>
-        </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+        <Button
+          variant={isAddingPassenger ? 'outlined' : 'contained'}
+          color="primary"
+          onClick={() => setIsAddingPassenger(!isAddingPassenger)}
+          sx={{ minWidth: 140 }}
+        >
+          {isAddingPassenger ? 'Cancel' : 'Add Passenger'}
+        </Button>
+      </Box>
 
-        {isAddingPassenger ? (
+      {isAddingPassenger ? (
+        <Paper elevation={1} sx={{ p: 3, borderRadius: 1, mb: 3 }}>
+          <Typography variant="h6" fontWeight="medium" color="text.primary" sx={{ mb: 3 }}>
+            Add New Passenger
+          </Typography>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
             <div className="flex flex-wrap -mx-2">
               <div className="w-full sm:w-1/2 px-2 mb-4">
@@ -328,45 +336,84 @@ export default function PassengersPage() {
               </Button>
             </Box>
           </Box>
+        </Paper>
+      ) : (
+        passengers.length === 0 ? (
+          <Paper 
+            elevation={1} 
+            sx={{ 
+              p: 4, 
+              textAlign: 'center', 
+              borderRadius: 1,
+              mb: 2
+            }}
+          >
+            <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+              No passengers found
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Add passengers to manage your flight bookings
+            </Typography>
+          </Paper>
         ) : (
-          <Stack spacing={2} sx={{ mt: 2 }}>
-            {passengers.map((passenger) => (
-              <Paper key={passenger.id} variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: 'background.paper', '&:hover': { bgcolor: 'action.hover' } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <Box>
-                    <Typography variant="h6" component="h3" gutterBottom>
-                      {passenger.firstName} {passenger.lastName}
-                    </Typography>
-                    <div className="flex flex-wrap -mx-1 mt-1">
-                      <div className="w-full sm:w-1/2 px-1 mb-2">
-                        <Typography variant="body2" color="text.secondary"><b>Email:</b> {passenger.email}</Typography>
+          <Paper elevation={1} sx={{ borderRadius: 1, overflow: 'hidden' }}>
+            <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider' }}>
+              <Typography variant="h6" fontWeight="medium" color="text.primary">
+                Passenger List
+              </Typography>
+            </Box>
+            <Stack sx={{ p: 0 }}>
+              {passengers.map((passenger) => (
+                <Box 
+                  key={passenger.id} 
+                  sx={{ 
+                    p: 3, 
+                    borderBottom: '1px solid', 
+                    borderColor: 'divider',
+                    '&:last-child': { 
+                      borderBottom: 'none' 
+                    },
+                    '&:hover': { 
+                      bgcolor: 'action.hover' 
+                    } 
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Box>
+                      <Typography variant="h6" component="h3" gutterBottom>
+                        {passenger.firstName} {passenger.lastName}
+                      </Typography>
+                      <div className="flex flex-wrap -mx-1 mt-1">
+                        <div className="w-full sm:w-1/2 px-1 mb-2">
+                          <Typography variant="body2" color="text.secondary"><b>Email:</b> {passenger.email}</Typography>
+                        </div>
+                        <div className="w-full sm:w-1/2 px-1 mb-2">
+                          <Typography variant="body2" color="text.secondary"><b>Phone:</b> {passenger.phoneNumber || 'Not provided'}</Typography>
+                        </div>
+                        <div className="w-full sm:w-1/2 px-1 mb-2">
+                          <Typography variant="body2" color="text.secondary"><b>Passport:</b> {passenger.passportNumber || 'Not provided'}</Typography>
+                        </div>
+                        <div className="w-full sm:w-1/2 px-1 mb-2">
+                          <Typography variant="body2" color="text.secondary"><b>Nationality:</b> {passenger.nationality || 'Not provided'}</Typography>
+                        </div>
                       </div>
-                      <div className="w-full sm:w-1/2 px-1 mb-2">
-                        <Typography variant="body2" color="text.secondary"><b>Phone:</b> {passenger.phoneNumber || 'Not provided'}</Typography>
-                      </div>
-                      <div className="w-full sm:w-1/2 px-1 mb-2">
-                        <Typography variant="body2" color="text.secondary"><b>Passport:</b> {passenger.passportNumber || 'Not provided'}</Typography>
-                      </div>
-                      <div className="w-full sm:w-1/2 px-1 mb-2">
-                        <Typography variant="body2" color="text.secondary"><b>Nationality:</b> {passenger.nationality || 'Not provided'}</Typography>
-                      </div>
-                    </div>
+                    </Box>
+                    {!passenger.isDefault && (
+                      <Button
+                        color="error"
+                        onClick={() => handleDelete(passenger.id)}
+                        sx={{ minWidth: 80 }}
+                      >
+                        Delete
+                      </Button>
+                    )}
                   </Box>
-                  {!passenger.isDefault && (
-                    <Button
-                      color="error"
-                      onClick={() => handleDelete(passenger.id)}
-                      sx={{ minWidth: 80 }}
-                    >
-                      Delete
-                    </Button>
-                  )}
                 </Box>
-              </Paper>
-            ))}
-          </Stack>
-        )}
-      </Paper>
-    </Box>
+              ))}
+            </Stack>
+          </Paper>
+        )
+      )}
+    </Container>
   );
 } 

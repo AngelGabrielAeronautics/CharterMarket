@@ -23,6 +23,7 @@ import {
   Paper,
   Tabs,
   Tab,
+  Container,
 } from '@mui/material';
 import {
   People as UsersIcon,
@@ -196,7 +197,7 @@ const AdminSpecificContent: React.FC<AdminSpecificContentProps> = ({ userData })
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Paper elevation={0} sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+      <Paper elevation={1} sx={{ borderBottom: 1, borderColor: 'divider', mb: 2, borderRadius: 1 }}>
         <Tabs
           value={currentTab}
           onChange={handleTabChange}
@@ -358,8 +359,8 @@ export default function DashboardPage() {
 
   if (authLoading || dataLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-        <LoadingSpinner />
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', py: 5 }}>
+        <CircularProgress />
       </Box>
     );
   }
@@ -404,7 +405,7 @@ export default function DashboardPage() {
     }
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-        <LoadingSpinner />
+        <CircularProgress />
       </Box>
     );
   }
@@ -421,23 +422,77 @@ export default function DashboardPage() {
       <Grid container component="div" spacing={3}>
         {/* Welcome banner */}
         <Grid component="div" size={12}>
-          <Alert severity="info">
+          <Alert 
+            severity="info" 
+            icon={<Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>ℹ️</Box>}
+            sx={{ borderRadius: 1, mb: 3 }}
+          >
             Welcome back, {userData?.firstName || 'Traveler'}! Here's your flight overview.
           </Alert>
         </Grid>
 
-        {/* Upcoming flights & quick actions */}
-        <Grid component="div" size={{ xs: 12, md: 8 }}>
-          <UpcomingFlights userCode={userData?.userCode || ''} />
-        </Grid>
-        <Grid component="div" size={{ xs: 12, md: 4 }}>
-          <PassengerQuickActions />
+        {/* Flights section */}
+        <Grid component="div" size={12}>
+          <Paper 
+            elevation={1} 
+            sx={{ 
+              p: 3, 
+              borderRadius: 1, 
+              mb: 3,
+              backgroundColor: '#f9f9f9',
+              border: '1px solid #e0e0e0'
+            }}
+          >
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="h6" fontWeight="medium" gutterBottom>
+                My Flights
+              </Typography>
+              <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                <Tabs value={0}>
+                  <Tab label="Upcoming (0)" />
+                  <Tab label="Past (1)" />
+                </Tabs>
+              </Box>
+            </Box>
+
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              py: 6
+            }}>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                You don't have any upcoming flights
+              </Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                sx={{ 
+                  backgroundColor: '#607d8b',
+                  '&:hover': {
+                    backgroundColor: '#4b636e'
+                  }
+                }}
+              >
+                Book a Flight
+              </Button>
+            </Box>
+          </Paper>
         </Grid>
 
-        {/* Quote requests & weather */}
-        <Grid component="div" size={{ xs: 12, md: 8 }}>
-          <Paper sx={{ p: 3, borderRadius: 2 }}>
-            <Typography variant="h6" gutterBottom>
+        {/* Quote requests section */}
+        <Grid component="div" size={12}>
+          <Paper 
+            elevation={1} 
+            sx={{ 
+              p: 3, 
+              borderRadius: 1,
+              backgroundColor: '#f9f9f9',
+              border: '1px solid #e0e0e0'
+            }}
+          >
+            <Typography variant="h6" fontWeight="medium" gutterBottom>
               My Quote Requests
             </Typography>
 
@@ -448,11 +503,26 @@ export default function DashboardPage() {
             ) : clientRequestsError ? (
               <Alert severity="error">{clientRequestsError}</Alert>
             ) : clientQuoteRequests.length === 0 ? (
-              <Typography>No quote requests found.</Typography>
+              <Box sx={{ py: 3, textAlign: 'center' }}>
+                <Typography variant="body1" color="text.secondary">
+                  No quote requests found
+                </Typography>
+              </Box>
             ) : (
               <Stack spacing={2}>
                 {clientQuoteRequests.map((req) => (
-                  <Card key={req.id} variant="outlined" sx={{ cursor: 'pointer' }}>
+                  <Card 
+                    key={req.id} 
+                    variant="outlined" 
+                    sx={{ 
+                      cursor: 'pointer', 
+                      borderRadius: 1,
+                      backgroundColor: '#ffffff',
+                      '&:hover': {
+                        backgroundColor: '#f5f5f5'
+                      }
+                    }}
+                  >
                     <CardContent>
                       <Typography variant="subtitle1" fontWeight="medium">
                         Request #{req.id}
@@ -475,17 +545,7 @@ export default function DashboardPage() {
                 ))}
               </Stack>
             )}
-
-            <Box sx={{ mt: 3, textAlign: 'right' }}>
-              <Button component={Link} href="/dashboard/quotes" variant="outlined">
-                View All Quote Requests
-              </Button>
-            </Box>
           </Paper>
-        </Grid>
-
-        <Grid component="div" size={{ xs: 12, md: 4 }}>
-          <WeatherWidget departureAirport="" arrivalAirport="" departureDate={new Date()} />
         </Grid>
       </Grid>
     );
@@ -519,8 +579,8 @@ export default function DashboardPage() {
         </div>
 
         <div className="w-full md:w-2/3 px-3 mb-4">
-          <Paper sx={{ p: 3, borderRadius: 2 }}>
-            <Typography variant="h6" gutterBottom>
+          <Paper elevation={1} sx={{ p: 3, borderRadius: 1 }}>
+            <Typography variant="h6" fontWeight="medium" gutterBottom>
               Client Requests
             </Typography>
             {clientRequestsLoading ? (
@@ -532,7 +592,7 @@ export default function DashboardPage() {
             ) : (
               <Stack spacing={2}>
                 {clientQuoteRequests.map((req) => (
-                  <Card key={req.id}>
+                  <Card key={req.id} elevation={0} variant="outlined" sx={{ borderRadius: 1 }}>
                     <CardContent>
                       <Typography variant="subtitle1">Request #{req.id}</Typography>
                       <Typography variant="body2">Status: {req.status}</Typography>
@@ -576,7 +636,7 @@ export default function DashboardPage() {
             sx={{ mb: 2 }}
             action={
               <Button
-                href="/dashboard/operator/quotes"
+                href="/dashboard/quotes/incoming"
                 variant="contained"
                 size="small"
                 color="primary"
@@ -592,8 +652,8 @@ export default function DashboardPage() {
         </div>
 
         <div className="w-full md:w-1/2 px-3 mb-4">
-          <Paper sx={{ p: 3, borderRadius: 2 }}>
-            <Typography variant="h6" gutterBottom>
+          <Paper elevation={1} sx={{ p: 3, borderRadius: 1 }}>
+            <Typography variant="h6" fontWeight="medium" gutterBottom>
               Upcoming Flights
             </Typography>
             {/* Operator upcoming flights */}
@@ -601,8 +661,8 @@ export default function DashboardPage() {
         </div>
 
         <div className="w-full md:w-1/2 px-3 mb-4">
-          <Paper sx={{ p: 3, borderRadius: 2 }}>
-            <Typography variant="h6" gutterBottom>
+          <Paper elevation={1} sx={{ p: 3, borderRadius: 1 }}>
+            <Typography variant="h6" fontWeight="medium" gutterBottom>
               Fleet Status
             </Typography>
             {/* Fleet status content */}
@@ -613,31 +673,29 @@ export default function DashboardPage() {
   };
 
   return (
-    <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
-      <div className="flex flex-wrap -mx-3 items-center mb-3">
-        <div className="w-full md:w-2/3 px-3">
-          <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
-            {dashboardTitle}
+    <Box sx={{ py: 4, px: { xs: 2, sm: 3, md: 4 }, backgroundColor: '#f5f7fa' }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" component="h1" fontWeight="bold">
+          {dashboardTitle}
+        </Typography>
+        {userData && (
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+            Welcome back, {userData.firstName} {userData.lastName}!
           </Typography>
-          {userData && (
-            <Typography variant="body1" color="text.secondary">
-              Welcome back, {userData.firstName} {userData.lastName}!
-            </Typography>
-          )}
-        </div>
-        <div className="w-full md:w-1/3 px-3 flex justify-start md:justify-end">
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<RefreshIcon />}
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            size="small"
-          >
-            Refresh Data
-          </Button>
-        </div>
-      </div>
+        )}
+      </Box>
+
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+        <Button
+          variant="outlined"
+          color="primary"
+          startIcon={<RefreshIcon />}
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+        >
+          Refresh Data
+        </Button>
+      </Box>
 
       {indexError && (
         <Alert
@@ -651,7 +709,7 @@ export default function DashboardPage() {
               </Link>
             ) : null
           }
-          sx={{ mb: 2 }}
+          sx={{ mb: 3, borderRadius: 1 }}
         >
           {indexError}
           {useFallback && ' Displaying fallback data for quote requests.'}
@@ -661,7 +719,16 @@ export default function DashboardPage() {
       {/* Render Quick Actions if they exist for the role and it's not admin/superAdmin (as they have tabs) */}
       {quickActions.length > 0 && userData.role !== 'admin' && userData.role !== 'superAdmin' && (
         <Box sx={{ mb: 4 }}>
-          <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
+          <Paper 
+            elevation={1} 
+            sx={{ 
+              p: 3, 
+              borderRadius: 1, 
+              height: '100%',
+              backgroundColor: '#f9f9f9',
+              border: '1px solid #e0e0e0'
+            }}
+          >
             <Typography variant="h6" fontWeight="medium" gutterBottom>
               Quick Actions
             </Typography>
@@ -671,7 +738,13 @@ export default function DashboardPage() {
                   <Card
                     component={Paper}
                     elevation={1}
-                    sx={{ height: '100%', transition: 'all 0.3s', '&:hover': { boxShadow: 6 } }}
+                    sx={{ 
+                      height: '100%', 
+                      transition: 'all 0.3s', 
+                      '&:hover': { boxShadow: 6 }, 
+                      borderRadius: 1,
+                      backgroundColor: '#ffffff'
+                    }}
                   >
                     <CardContent>
                       <Stack direction="row" spacing={2} alignItems="flex-start" sx={{ mb: 2 }}>
@@ -731,7 +804,15 @@ export default function DashboardPage() {
             <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
               My Flight Calendar
             </Typography>
-            <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
+            <Paper 
+              elevation={1} 
+              sx={{ 
+                p: 2, 
+                borderRadius: 1,
+                backgroundColor: '#f9f9f9',
+                border: '1px solid #e0e0e0'
+              }}
+            >
               <Box sx={{ height: calendarExpanded ? 'auto' : 200, overflow: 'hidden' }}>
                 <DashboardCalendar flights={flights} userRole={userRole!} />
               </Box>

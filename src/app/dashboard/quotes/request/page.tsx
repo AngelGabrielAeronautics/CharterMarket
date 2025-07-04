@@ -27,7 +27,6 @@ import { Button } from '@/components/ui/Button';
 import { RefreshCw, PlusIcon, ListIcon } from 'lucide-react';
 import QuoteRequestModal from '@/components/quotes/QuoteRequestModal';
 import BookingForm from '@/components/BookingForm';
-import tokens from '@/styles/tokens';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -39,21 +38,22 @@ function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
 
   return (
-    <div
+    <Box
       role="tabpanel"
       hidden={value !== index}
-      id={`quote-requests-tabpanel-${index}`}
-      aria-labelledby={`quote-requests-tab-${index}`}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      sx={{ py: 3 }}
       {...other}
     >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
+      {value === index && <Box>{children}</Box>}
+    </Box>
   );
 }
 
-const getStatusColor = (
+function getStatusColor(
   status: string
-): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
+): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' {
   switch (status) {
     case 'submitted':
     case 'pending':
@@ -71,7 +71,16 @@ const getStatusColor = (
     default:
       return 'default';
   }
-};
+}
+
+// Helper to parse Firestore Timestamp into JS Date
+function toJsDate(value: any): Date {
+  if (!value) return new Date();
+  if (typeof value.toDate === 'function') {
+    return value.toDate();
+  }
+  return new Date(value);
+}
 
 export default function QuoteRequestsPage() {
   const { user } = useAuth();
@@ -106,8 +115,8 @@ export default function QuoteRequestsPage() {
   }, [quoteRequests]);
 
   return (
-    <Container maxWidth="lg" sx={{ py: tokens.spacing[4].value }}>
-      <Box sx={{ mb: tokens.spacing[4].value }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" fontWeight="bold">
           Quote Requests
         </Typography>
@@ -117,10 +126,11 @@ export default function QuoteRequestsPage() {
       </Box>
 
       <Paper
+        elevation={1}
         sx={{
-          borderRadius: tokens.borderRadius.md.value,
-          boxShadow: tokens.shadow.medium.value,
+          borderRadius: 1,
           overflow: 'hidden',
+          mb: 4,
         }}
       >
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -171,7 +181,7 @@ export default function QuoteRequestsPage() {
               </Box>
             )}
 
-            {error && <Alert severity="error">Failed to load quote requests: {error}</Alert>}
+            {error && <Alert severity="error" sx={{ mb: 3 }}>Failed to load quote requests: {error}</Alert>}
 
             {!loading && !error && (
               <>
@@ -193,42 +203,41 @@ export default function QuoteRequestsPage() {
                   </Box>
                 ) : (
                   <TableContainer>
-                    <Table stickyHeader aria-label="my quote requests table">
+                    <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell>Request Code</TableCell>
-                          <TableCell>Route</TableCell>
-                          <TableCell>Date</TableCell>
-                          <TableCell>Status</TableCell>
-                          <TableCell>Offers</TableCell>
+                          <TableCell sx={{ fontWeight: 'medium' }}>Request ID</TableCell>
+                          <TableCell sx={{ fontWeight: 'medium' }}>Route</TableCell>
+                          <TableCell sx={{ fontWeight: 'medium' }}>Date</TableCell>
+                          <TableCell sx={{ fontWeight: 'medium' }}>Status</TableCell>
+                          <TableCell sx={{ fontWeight: 'medium' }}>Offers</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {sortedRequests.map((request: QuoteRequest) => (
                           <TableRow
-                            hover
                             key={request.id}
+                            hover
                             onClick={() => handleViewDetails(request.id)}
                             sx={{ cursor: 'pointer' }}
                           >
                             <TableCell>
-                              <Typography variant="body2" color="primary" sx={{ fontWeight: 'bold' }}>
-                                {request.requestCode}
-                              </Typography>
+                              {request.requestCode || request.id.slice(0, 8)}
                             </TableCell>
                             <TableCell>
                               {request.routing.departureAirport} → {request.routing.arrivalAirport}
                             </TableCell>
                             <TableCell>
-                              {request.createdAt
-                                ? new Date(request.createdAt.toDate()).toLocaleDateString()
-                                : 'Invalid Date'}
+                              {request.routing.departureDate
+                                ? toJsDate(request.routing.departureDate).toLocaleDateString()
+                                : 'N/A'}
                             </TableCell>
                             <TableCell>
                               <Chip
-                                label={request.status}
+                                label={request.status || 'pending'}
                                 size="small"
-                                color={getStatusColor(request.status)}
+                                color={getStatusColor(request.status || 'pending')}
+                                variant="outlined"
                               />
                             </TableCell>
                             <TableCell>

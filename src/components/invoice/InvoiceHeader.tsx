@@ -26,8 +26,20 @@ export default function InvoiceHeader({ company, invoice }: InvoiceHeaderProps) 
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
       <Box>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Image src={company.logoUrl} alt={`${company.name} logo`} width={120} height={48} />
+        <Box sx={{ display: 'flex', alignItems: 'center', height: '50px' }}>
+          <Image 
+            src={company.logoUrl} 
+            alt={`${company.name} logo`} 
+            width={150} 
+            height={0} 
+            sizes="150px"
+            style={{
+              width: 'auto',
+              height: '100%',
+              maxHeight: '50px',
+              objectFit: 'contain'
+            }} 
+          />
         </Box>
         <Box sx={{ mt: 1 }}>
           <Typography variant="body2">{company.name}</Typography>

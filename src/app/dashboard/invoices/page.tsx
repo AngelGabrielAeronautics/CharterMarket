@@ -24,10 +24,11 @@ import {
   Tooltip,
   IconButton,
   Paper,
+  Container,
 } from '@mui/material';
-import { EyeIcon } from 'lucide-react';
+import { EyeIcon, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import PageLayout from '@/components/ui/PageLayout';
+import { Button } from '@/components/ui/Button';
 
 // Helper to parse Firestore Timestamp, raw JSON object, or ISO string into JS Date
 const toJsDate = (value: any): Date => {
@@ -54,36 +55,50 @@ export default function ClientInvoicesPage() {
   // Use user.userCode as clientId, assuming userCode is the correct identifier for clients
   const { invoices, loading, error } = useClientInvoices(user?.userCode);
 
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" sx={{ p: 4, height: '80vh' }}>
-        <CircularProgress />
-        <Typography sx={{ ml: 2 }}>Loading your invoices...</Typography>
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box sx={{ p: 4 }}>
-        <Alert severity="error">
-          <Typography gutterBottom>Error loading invoices: {error}</Typography>
-          <MuiButton variant="outlined" onClick={() => router.push('/dashboard')}>
-            Go to Dashboard
-          </MuiButton>
-        </Alert>
-      </Box>
-    );
-  }
-
   return (
-    <PageLayout title="My Invoices">
-      {invoices.length === 0 ? (
-        <Paper elevation={1} sx={{ p: 3, textAlign: 'center' }}>
-          <Typography>You do not have any invoices yet.</Typography>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" component="h1" fontWeight="bold">
+          My Invoices
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+          Manage and track your flight invoices
+        </Typography>
+      </Box>
+
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+        <Button variant="outlined" startIcon={<RefreshCw />} onClick={() => window.location.reload()}>
+          Refresh
+        </Button>
+      </Box>
+
+      {loading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+      {!loading && !error && invoices.length === 0 ? (
+        <Paper 
+          elevation={1} 
+          sx={{ 
+            p: 4, 
+            textAlign: 'center', 
+            borderRadius: 1,
+            mb: 2
+          }}
+        >
+          <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+            No invoices found
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Your invoices will appear here when generated
+          </Typography>
         </Paper>
       ) : (
-        <Paper elevation={1} sx={{ overflow: 'hidden', borderRadius: 2 }}>
+        <Paper elevation={1} sx={{ overflow: 'hidden', borderRadius: 1 }}>
           <Table>
             <TableHeader>
               <TableRow>
@@ -125,6 +140,6 @@ export default function ClientInvoicesPage() {
           </Table>
         </Paper>
       )}
-    </PageLayout>
+    </Container>
   );
 }
