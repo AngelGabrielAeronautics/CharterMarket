@@ -16,7 +16,6 @@ import {
   Tooltip,
   Alert,
   CircularProgress,
-  Grid,
   Container,
   Dialog,
   DialogTitle,
@@ -169,73 +168,77 @@ export default function FlightsPage() {
       )}
 
       {!loading && !error && filteredFlights.length > 0 && (
-        <Grid container spacing={2}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {filteredFlights.map((flight) => (
-            <Grid key={flight.id} item xs={12}>
-              <Paper 
-                elevation={1}
-                sx={{ 
-                  p: 3, 
-                  borderRadius: 1,
-                  '&:hover': { bgcolor: 'action.hover' },
-                  position: 'relative'
-                }}
-              >
-                <Grid container spacing={2} alignItems="center">
-                  {/* Flight Info */}
-                  <Grid item xs={12} sm={6}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <FlightIcon color="primary" sx={{ mr: 1 }} />
-                      <Typography variant="h6" component="h2">
-                        {flight.flightGroupId}
-                      </Typography>
-                    </Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Operator: {flight.operatorUserCode}
+            <Paper 
+              key={flight.id}
+              elevation={1}
+              sx={{ 
+                p: 3, 
+                borderRadius: 1,
+                '&:hover': { bgcolor: 'action.hover' },
+                position: 'relative'
+              }}
+            >
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                {/* Flight Info */}
+                <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <FlightIcon color="primary" sx={{ mr: 1 }} />
+                    <Typography variant="h6" component="h2">
+                      {flight.flightGroupId}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Created: {format(flight.createdAt.toDate(), 'MMM d, yyyy')}
-                    </Typography>
-                  </Grid>
-                  
-                  {/* Flight Status */}
-                  <Grid item xs={12} sm={4}>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      Status: <Chip 
-                        label={flight.status} 
-                        size="small" 
-                        color={getFlightStatusColor(flight.status)} 
-                      />
-                    </Typography>
-                    <Typography variant="body2">
-                      Legs: {flight.totalLegs}
-                    </Typography>
-                    <Typography variant="body2">
-                      Aircraft: {flight.aircraftId}
-                    </Typography>
-                  </Grid>
-                  
-                  {/* Actions */}
-                  <Grid item xs={12} sm={2} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <Tooltip title="View Details">
-                      <IconButton 
-                        color="primary" 
-                        onClick={() => handleOpenFlightDetails(flight.id)}
-                        sx={{ 
-                          position: { xs: 'absolute', sm: 'relative' }, 
-                          top: { xs: '10px', sm: 'auto' }, 
-                          right: { xs: '10px', sm: 'auto' } 
-                        }}
-                      >
-                        <OpenInNewIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Grid>
-                </Grid>
-              </Paper>
-            </Grid>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Operator: {flight.operatorUserCode}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Created: {format(flight.createdAt.toDate(), 'MMM d, yyyy')}
+                  </Typography>
+                </Box>
+                
+                {/* Flight Status */}
+                <Box sx={{ flex: '1 1 200px', minWidth: 0 }}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    Status: <Chip 
+                      label={flight.status} 
+                      size="small" 
+                      color={getFlightStatusColor(flight.status)} 
+                    />
+                  </Typography>
+                  <Typography variant="body2">
+                    Legs: {flight.totalLegs}
+                  </Typography>
+                  <Typography variant="body2">
+                    Aircraft: {flight.aircraftId}
+                  </Typography>
+                </Box>
+                
+                {/* Actions */}
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'flex-end',
+                  alignItems: 'flex-start',
+                  flex: '0 0 auto'
+                }}>
+                  <Tooltip title="View Details">
+                    <IconButton 
+                      color="primary" 
+                      onClick={() => handleOpenFlightDetails(flight.id)}
+                      sx={{ 
+                        position: { xs: 'absolute', sm: 'relative' }, 
+                        top: { xs: '10px', sm: 'auto' }, 
+                        right: { xs: '10px', sm: 'auto' } 
+                      }}
+                    >
+                      <OpenInNewIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </Box>
+            </Paper>
           ))}
-        </Grid>
+        </Box>
       )}
       
       <FlightDetailModal 

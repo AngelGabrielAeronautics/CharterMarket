@@ -7,6 +7,7 @@ import { Toaster } from 'react-hot-toast';
 import { CookiesProvider } from 'react-cookie';
 import Header from '@/components/Header';
 import { usePathname } from 'next/navigation';
+import { GoogleMapsProvider } from '@/components/Map/GoogleMapsProvider';
 
 export default function ClientLayout({
   children,
@@ -21,54 +22,56 @@ export default function ClientLayout({
     <CookiesProvider>
       <AuthProvider>
         <ModalProvider>
-          <Box
-            sx={{
-              minHeight: '100vh',
-              bgcolor: 'background.default',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            {!isSideNavPage && <Header />}
+          <GoogleMapsProvider>
             <Box
-              component="main"
               sx={{
-                width: '100%',
-                flexGrow: 1,
-                pt: !isSideNavPage ? 8 : 0,
+                minHeight: '100vh',
+                bgcolor: 'background.default',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
-              <Container maxWidth={false} disableGutters sx={{ py: 4 }}>
-                {children}
-              </Container>
+              {!isSideNavPage && <Header />}
+              <Box
+                component="main"
+                sx={{
+                  width: '100%',
+                  flexGrow: 1,
+                  pt: !isSideNavPage ? 8 : 0,
+                }}
+              >
+                <Container maxWidth={false} disableGutters sx={{ py: 4 }}>
+                  {children}
+                </Container>
+              </Box>
             </Box>
-          </Box>
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 8000,
-              success: {
+            <Toaster
+              position="top-right"
+              toastOptions={{
                 duration: 8000,
-                style: {
-                  background: '#10B981',
-                  color: 'white',
+                success: {
+                  duration: 8000,
+                  style: {
+                    background: '#10B981',
+                    color: 'white',
+                  },
                 },
-              },
-              error: {
-                duration: 10000,
-                style: {
-                  background: '#EF4444',
-                  color: 'white',
+                error: {
+                  duration: 10000,
+                  style: {
+                    background: '#EF4444',
+                    color: 'white',
+                  },
                 },
-              },
-              loading: {
-                style: {
-                  background: '#6B7280',
-                  color: 'white',
+                loading: {
+                  style: {
+                    background: '#6B7280',
+                    color: 'white',
+                  },
                 },
-              },
-            }}
-          />
+              }}
+            />
+          </GoogleMapsProvider>
         </ModalProvider>
       </AuthProvider>
     </CookiesProvider>

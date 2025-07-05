@@ -1,6 +1,9 @@
-import React, { useCallback, useState } from 'react';
-import { GoogleMap, LoadScript, Polyline, Marker, Libraries } from '@react-google-maps/api';
+"use client";
+
+import React, { useCallback } from 'react';
+import { GoogleMap, Polyline, Marker } from '@react-google-maps/api';
 import tokens from '@/styles/tokens';
+import { useGoogleMaps } from './GoogleMapsProvider';
 
 interface MapProps {
   departureLocation: {
@@ -32,16 +35,14 @@ const brandColors = {
   border: tokens.color.border.value, // #e6d2b4 - light tan
 };
 
-// Required libraries for the map
-const libraries: Libraries = ['geometry'];
-
 export default function Map({
   departureLocation,
   arrivalLocation,
   height = '300px',
   width = '100%',
 }: MapProps): React.ReactElement {
-  const [loadError, setLoadError] = useState<Error | null>(null);
+  // Get Google Maps loading state from context
+  const { isLoaded, loadError } = useGoogleMaps();
   
   // We calculate the center point between the two airports
   const center = {
@@ -72,15 +73,6 @@ export default function Map({
     // Logarithmic scale for zoom based on distance
     let zoom = 9 - Math.log(distance) / Math.log(2);
     return Math.min(Math.max(Math.round(zoom), 1), 10); // Constrain between 1 and 10
-  };
-
-  // Get the Google Maps API key from environment variables
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
-
-  // Handle API loading error
-  const handleLoadError = (error: Error) => {
-    console.error("Error loading Google Maps API:", error);
-    setLoadError(error);
   };
 
   // Create marker icons with proper anchor points
@@ -163,28 +155,6 @@ export default function Map({
     }
   ];
 
-  // If no API key, show a message instead
-  if (!apiKey) {
-    return (
-      <div 
-        style={{ 
-          width, 
-          height, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          backgroundColor: brandColors.backgroundLight,
-          border: `1px solid ${brandColors.border}`,
-          borderRadius: '4px',
-          padding: '16px',
-          textAlign: 'center',
-        }}
-      >
-        <p style={{ color: brandColors.primary }}>Google Maps API key not configured. Please add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to your .env.local file.</p>
-      </div>
-    );
-  }
-
   // If there was an error loading the API, show an error message
   if (loadError) {
     return (
@@ -216,62 +186,74 @@ export default function Map({
     );
   }
 
+  // If the script is still loading, show a loading indicator
+  if (!isLoaded) {
+    return (
+      <div 
+        style={{ 
+          width, 
+          height, 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          backgroundColor: brandColors.backgroundLight,
+          border: `1px solid ${brandColors.border}`,
+          borderRadius: '4px',
+        }}
+      >
+        <p style={{ color: brandColors.primary }}>Loading map...</p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ width, height }}>
-      <LoadScript
-        googleMapsApiKey={apiKey}
-        onError={handleLoadError}
-        libraries={libraries}
-        id="google-map-script"
-        language="en"
+      <GoogleMap
+        mapContainerStyle={mapContainerStyle}
+        center={center}
+        zoom={calculateZoomLevel()}
+        options={{
+          disableDefaultUI: true,
+          zoomControl: true,
+          styles: mapStyles
+        }}
       >
-        <GoogleMap
-          mapContainerStyle={mapContainerStyle}
-          center={center}
-          zoom={calculateZoomLevel()}
+        {/* Departure Marker */}
+        <Marker
+          position={{ lat: departureLocation.lat, lng: departureLocation.lng }}
+          icon={departureIcon}
+          title={departureLocation.name}
+        />
+
+        {/* Arrival Marker */}
+        <Marker
+          position={{ lat: arrivalLocation.lat, lng: arrivalLocation.lng }}
+          icon={arrivalIcon}
+          title={arrivalLocation.name}
+        />
+
+        {/* Flight Path */}
+        <Polyline
+          path={path}
           options={{
-            disableDefaultUI: true,
-            zoomControl: true,
-            styles: mapStyles
-          }}
-        >
-          {/* Departure Marker */}
-          <Marker
-            position={{ lat: departureLocation.lat, lng: departureLocation.lng }}
-            icon={departureIcon}
-            title={departureLocation.name}
-          />
-
-          {/* Arrival Marker */}
-          <Marker
-            position={{ lat: arrivalLocation.lat, lng: arrivalLocation.lng }}
-            icon={arrivalIcon}
-            title={arrivalLocation.name}
-          />
-
-          {/* Flight Path */}
-          <Polyline
-            path={path}
-            options={{
-              strokeColor: brandColors.primary,
-              strokeOpacity: 0.8,
-              strokeWeight: 3,
-              geodesic: true,
-              icons: [
-                {
-                  icon: {
-                    path: "M 0,0 0,1",
-                    strokeOpacity: 1,
-                    scale: 4,
-                  },
-                  offset: "0",
-                  repeat: "20px",
+            strokeColor: brandColors.primary,
+            strokeOpacity: 0.8,
+            strokeWeight: 3,
+            geodesic: true,
+            icons: [
+              {
+                icon: {
+                  path: "M 0,0 0,1",
+                  strokeOpacity: 1,
+                  scale: 4,
                 },
-              ],
-            }}
-          />
-        </GoogleMap>
-      </LoadScript>
+                offset: "0",
+                repeat: "20px",
+              },
+            ],
+          }}
+        />
+      </GoogleMap>
     </div>
   );
 } 
