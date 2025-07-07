@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClientQuoteRequests } from '@/hooks/useFlights';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { QuoteRequest } from '@/types/flight';
 import {
   Box,
@@ -84,6 +85,8 @@ function toJsDate(value: any): Date {
 
 export default function QuoteRequestsPage() {
   const { user } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [tabValue, setTabValue] = useState(0);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
 
@@ -93,6 +96,19 @@ export default function QuoteRequestsPage() {
     error,
     refreshRequests,
   } = useClientQuoteRequests(user?.userCode);
+
+  // Handle opening a specific request from URL parameter
+  useEffect(() => {
+    const openRequestId = searchParams.get('openRequest');
+    if (openRequestId && quoteRequests.length > 0) {
+      // Check if the request exists in the user's requests
+      const requestExists = quoteRequests.some(request => request.id === openRequestId);
+      if (requestExists) {
+        setSelectedRequestId(openRequestId);
+        setTabValue(0); // Switch to "My Requests" tab
+      }
+    }
+  }, [searchParams, quoteRequests]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -104,6 +120,10 @@ export default function QuoteRequestsPage() {
 
   const handleCloseModal = () => {
     setSelectedRequestId(null);
+    // Clear the URL parameter when closing the modal
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.delete('openRequest');
+    router.replace(currentUrl.pathname + currentUrl.search);
   };
 
   const sortedRequests = useMemo(() => {

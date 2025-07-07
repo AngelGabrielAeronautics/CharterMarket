@@ -194,7 +194,17 @@ const QuoteRequestModal: React.FC<QuoteRequestModalProps> = ({ open, onClose, re
       }}
     >
       <DialogTitle>
-        Quote Request Details
+        <Box sx={{ pr: 6 }}>
+          <Typography variant="h6" component="div" sx={{ fontWeight: 'normal' }}>
+            <Box component="span" sx={{ fontWeight: 'bold' }}>
+              Quote Request Details:
+            </Box>
+            {' '}
+            <Box component="span" sx={{ fontWeight: 'normal' }}>
+              {request?.requestCode || 'Loading...'}
+            </Box>
+          </Typography>
+        </Box>
         <IconButton
           aria-label="close"
           onClick={onClose}

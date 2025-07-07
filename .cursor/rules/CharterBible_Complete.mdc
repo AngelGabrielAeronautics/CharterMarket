@@ -191,3 +191,47 @@ Here is the basic flow of operations for the average flight booking:
 (9a) After the flight date, the flight is marked as complete on the platform. (9b) The client is asked to rate the service of the operator. (9c) The ratings are recorded in the platform.
 
 This concludes a flight in its most basic form.
+
+## 🛠️ Technical Stack
+- **Front-End**: Next.js (App Router), React, TypeScript
+- **Mobile**: React Native CLI (iOS) - Located in separate `~/CharterMobile` directory
+  - Shared utilities and types between web and mobile platforms
+  - React Navigation with bottom tab structure (Dashboard, QuoteRequest, Flights, Profile)
+  - Firebase authentication integration for mobile
+  - Native iOS deployment pipeline to TestFlight/App Store
+  - Project structure mirrors web app conventions with mobile-specific optimizations
+- **Database**: Firebase Firestore
+  - Separate projects/instances for dev, test, prod
+  - Local emulator for development
+  - Security rules in `firestore.rules`
+- **Back-End**: Python (Cloud Functions or serverless APIs)
+- **Search**: Elasticsearch (dev & prod indexes on Elastic.co)
+- **CI/CD & Hosting**: GitHub Actions → Vercel (Web), TestFlight/App Store (iOS)
+
+---
+
+## 📱 Mobile Platform Integration
+
+### **CharterMobile iOS App**
+- **Location**: `~/CharterMobile` directory (separate from web app)
+- **Framework**: React Native CLI (not Expo) for native iOS development
+- **Architecture**: Companion app to Charter web platform, not standalone
+- **Code Sharing**: Utilizes shared types and utilities from web app for consistency
+
+### **Mobile-Web Synchronization**
+- **Shared Resources**: Common TypeScript types, utility functions, and business logic
+- **Data Consistency**: Identical API contracts and data structures between platforms
+- **User Flow Parity**: Mobile app mirrors web app user flows (Quote Request → Offers → Booking → Payment)
+- **Authentication**: Unified Firebase auth system across web and mobile
+
+### **Development Considerations**
+- Mobile changes must be compatible with web app data structures
+- Web app serves as source of truth for business logic and API contracts
+- Mobile app focuses on optimized user experience for iOS platform
+- Both platforms maintain Charter branding and design consistency
+
+### **Path Requirements**
+- CharterMobile must be located in path without spaces (React Native/Xcode limitation)
+- Recommended location: `~/CharterMobile` for clean build process
+- Avoid paths with special characters or spaces that cause build failures
+

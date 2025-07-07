@@ -204,7 +204,7 @@ const navigation: NavItem[] = [
       },
       {
         name: 'Responsive Test',
-        href: '/responsive-test',
+        href: '/dashboard/responsive-test',
         icon: <ViewQuiltIcon />,
         roles: ['superAdmin'],
       },
@@ -1101,13 +1101,16 @@ export default function SideNav({
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: '50%',
-        zIndex: 2000,
+        zIndex: 1200,
         boxShadow: 1,
         transition: theme.transitions.create(['left'], {
           easing: theme.transitions.easing.sharp,
           duration: theme.transitions.duration.enteringScreen,
         }),
-        '&:hover': { bgcolor: 'action.hover' },
+        '&:hover': { 
+          bgcolor: theme.palette.mode === 'dark' ? 'grey.700' : 'grey.100',
+          borderColor: theme.palette.mode === 'dark' ? 'grey.600' : 'grey.300',
+        },
       })}
     >
       {mini ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}

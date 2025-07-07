@@ -658,7 +658,7 @@ export default function BookingForm() {
       const requestId = await createQuoteRequest(user.userCode, dataToSubmit);
       await submitQuoteRequest(requestId);
       toast.success('Quote request submitted!');
-      router.push('/dashboard/quotes?submitted=true');
+      router.push(`/dashboard/quotes/request?openRequest=${requestId}`);
     } catch (error: any) {
       console.error('Error submitting quote request:', error);
       toast.error(error.message || 'Failed to submit request');
