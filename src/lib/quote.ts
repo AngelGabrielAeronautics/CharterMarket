@@ -43,10 +43,12 @@ import {
   orderBy,
   arrayUnion,
   setDoc,
+  and,
 } from 'firebase/firestore';
 import { generateQuoteId } from '@/lib/serials';
 import { QuoteFormData } from '@/types/quote';
 import { Offer, OfferStatus, QuoteRequest, FlightStatus, User } from '@/types/flight';
+import { uploadMultipleQuoteAttachments } from '@/lib/aircraft';
 
 /**
  * Submit an operator's offer for a specific quote request.
@@ -70,6 +72,30 @@ export const createQuote = async (
   try {
     let finalQuoteData: any;
     let finalEmbeddedOffer: any;
+    let aircraftDetails: any = null;
+
+    // Fetch aircraft details if aircraftId is provided
+    if (data.aircraftId) {
+      try {
+        const aircraftRef = doc(db, 'operators', operatorUserCode, 'aircraft', data.aircraftId);
+        const aircraftSnap = await getDoc(aircraftRef);
+        
+        if (aircraftSnap.exists()) {
+          const aircraftData = aircraftSnap.data();
+          aircraftDetails = {
+            id: aircraftSnap.id,
+            registration: aircraftData.registration,
+            make: aircraftData.make,
+            model: aircraftData.model,
+            type: aircraftData.type,
+            maxPassengers: aircraftData.specifications?.maxPassengers || 0,
+          };
+        }
+      } catch (error) {
+        console.warn('Failed to fetch aircraft details:', error);
+        // Continue with quote submission even if aircraft details fail
+      }
+    }
 
     await runTransaction(db, async (transaction) => {
       const quoteRequestSnap = await transaction.get(quoteRequestRef);
@@ -113,6 +139,11 @@ export const createQuote = async (
       // Extract clientUserCode from the quote request
       const clientUserCode = quoteRequestData.clientUserCode;
 
+      // Calculate response time (time from request creation to quote submission)
+      const currentTime = Timestamp.now();
+      const requestCreationTime = quoteRequestData.createdAt;
+      const responseTimeMinutes = Math.round((currentTime.toMillis() - requestCreationTime.toMillis()) / (1000 * 60));
+
       // Full quote document for the quotes collection
       finalQuoteData = {
         offerId,
@@ -122,9 +153,20 @@ export const createQuote = async (
         price: data.price,
         commission,
         totalPrice,
-        currency: 'USD', // Default currency
+        currency: data.currency || 'USD', // Use provided currency or default to USD
+        notes: data.notes || null, // Include operator notes
+        attachments: data.attachments ? data.attachments.map(att => ({
+          url: att.url,
+          fileName: att.fileName,
+          uploadedAt: Timestamp.fromDate(att.uploadedAt)
+        })) : [], // New multiple attachments array
+        // Legacy fields for backward compatibility
+        attachmentUrl: data.attachmentUrl || null, // Include PDF attachment URL
+        attachmentFileName: data.attachmentFileName || null, // Include original filename
+        // Aircraft selection
+        aircraftId: data.aircraftId || null,
+        aircraftDetails,
         validUntil: null, // Can be updated later
-        notes: null, // Can be updated later
         aircraftType: null, // Can be updated later
         aircraftRegistration: null, // Can be updated later
         departureTime: null, // Can be updated later
@@ -136,6 +178,7 @@ export const createQuote = async (
         offerStatus: 'pending-client-acceptance' as OfferStatus,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
+        responseTimeMinutes,
       };
 
       // Simplified offer object for embedded reference in quoteRequest
@@ -146,9 +189,23 @@ export const createQuote = async (
         price: data.price,
         commission,
         totalPrice,
+        currency: data.currency || 'USD', // Include currency in embedded offer
+        notes: data.notes || null, // Include notes in embedded offer
+        attachments: data.attachments ? data.attachments.map(att => ({
+          url: att.url,
+          fileName: att.fileName,
+          uploadedAt: Timestamp.fromDate(att.uploadedAt)
+        })) : [], // New multiple attachments array
+        // Legacy fields for backward compatibility
+        attachmentUrl: data.attachmentUrl || null, // Include attachment info
+        attachmentFileName: data.attachmentFileName || null,
+        // Aircraft selection
+        aircraftId: data.aircraftId || null,
+        aircraftDetails,
         offerStatus: 'pending-client-acceptance' as OfferStatus,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
+        responseTimeMinutes,
       };
 
       // 1. Create the standalone quote document
@@ -319,6 +376,77 @@ export const acceptOperatorQuote = async (
       throw new Error(`Failed to accept offer: ${error.message}`);
     }
     throw new Error('Failed to accept offer due to an unexpected error.');
+  }
+};
+
+/**
+ * Handles a client rejecting a specific operator's quote.
+ * Updates the rejected Offer's status within the QuoteRequest.
+ */
+export const rejectOperatorQuote = async (
+  requestId: string,
+  rejectedOfferId: string
+): Promise<void> => {
+  const quoteRequestRef = doc(db, 'quoteRequests', requestId);
+
+  try {
+    await runTransaction(db, async (transaction) => {
+      const quoteRequestSnap = await transaction.get(quoteRequestRef);
+      if (!quoteRequestSnap.exists()) {
+        throw new Error(`QuoteRequest with ID ${requestId} not found.`);
+      }
+      const quoteRequestData = quoteRequestSnap.data() as QuoteRequest;
+
+      if (
+        quoteRequestData.status === 'booked' ||
+        quoteRequestData.status === 'accepted' ||
+        quoteRequestData.status === 'cancelled'
+      ) {
+        throw new Error(
+          `QuoteRequest ${requestId} has already been booked/accepted or is cancelled.`
+        );
+      }
+
+      let rejectedOperatorUserCode: string | undefined = undefined;
+      let offerFoundAndPending = false;
+
+      const updatedOffers = quoteRequestData.offers?.map((offer) => {
+        if (offer.offerId === rejectedOfferId) {
+          if (offer.offerStatus !== 'pending-client-acceptance') {
+            throw new Error(
+              `Offer ${rejectedOfferId} is not in 'pending-client-acceptance' state (current: ${offer.offerStatus}).`
+            );
+          }
+          rejectedOperatorUserCode = offer.operatorUserCode;
+          offerFoundAndPending = true;
+          return {
+            ...offer,
+            offerStatus: 'rejected-by-client' as OfferStatus,
+            updatedAt: Timestamp.now(),
+          };
+        }
+        return offer;
+      });
+
+      if (!offerFoundAndPending) {
+        throw new Error(
+          `Offer with ID ${rejectedOfferId} not found or not in a state to be rejected in QuoteRequest ${requestId}.`
+        );
+      }
+
+      transaction.update(quoteRequestRef, {
+        offers: updatedOffers,
+        updatedAt: Timestamp.now(),
+      });
+    });
+
+    console.log(`Successfully rejected Offer ${rejectedOfferId} within QuoteRequest ${requestId}.`);
+  } catch (error) {
+    console.error('Error in rejectOperatorQuote transaction:', error);
+    if (error instanceof Error) {
+      throw new Error(`Failed to reject offer: ${error.message}`);
+    }
+    throw new Error('Failed to reject offer due to an unexpected error.');
   }
 };
 
@@ -530,7 +658,14 @@ export const updateQuoteDetails = async (
 export const submitOffer = async (
   request: QuoteRequest,
   operator: User,
-  price: number
+  price: number,
+  currency?: string,
+  notes?: string,
+  attachments?: { url: string; fileName: string; uploadedAt: Date }[],
+  aircraftId?: string, // Selected aircraft from operator's fleet
+  // Legacy parameters for backward compatibility
+  attachmentUrl?: string,
+  attachmentFileName?: string
 ): Promise<string> => {
   if (!request || !operator || !price) {
     throw new Error('Missing required arguments to submit an offer.');
@@ -538,7 +673,13 @@ export const submitOffer = async (
 
   const quoteData: QuoteFormData = {
     price,
-    // Add any other default or required fields for QuoteFormData here
+    currency,
+    notes,
+    attachments,
+    aircraftId,
+    // Legacy fields for backward compatibility
+    attachmentUrl,
+    attachmentFileName,
   };
 
   try {

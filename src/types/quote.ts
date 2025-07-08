@@ -21,8 +21,18 @@ import { Timestamp } from 'firebase/firestore';
  */
 export interface QuoteFormData {
   price: number;
+  currency?: string; // Quote currency
+  notes?: string; // Additional notes from operator
+  attachments?: { // Array of uploaded PDF attachments (up to 5)
+    url: string;
+    fileName: string;
+    uploadedAt: Date;
+  }[];
+  // Legacy fields for backward compatibility
+  attachmentUrl?: string; // @deprecated - use attachments array instead
+  attachmentFileName?: string; // @deprecated - use attachments array instead
   // Potentially other fields an operator might submit for an offer,
   // like aircraft details or specific notes for this offer.
   // aircraftDetails?: string;
-  // notes?: string;
+  aircraftId?: string; // Selected aircraft from operator's fleet
 }

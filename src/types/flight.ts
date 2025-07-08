@@ -50,9 +50,30 @@ export interface Offer {
   price: number;
   commission: number;
   totalPrice: number;
+  currency?: string; // Quote currency (defaults to operator's preferred currency or USD)
+  notes?: string; // Additional notes from operator
+  attachments?: { // Array of PDF attachments (up to 5, visible to operator and admin only)
+    url: string;
+    fileName: string;
+    uploadedAt: Timestamp;
+  }[];
+  // Legacy fields for backward compatibility
+  attachmentUrl?: string; // @deprecated - use attachments array instead
+  attachmentFileName?: string; // @deprecated - use attachments array instead
   offerStatus: OfferStatus; // Status of this specific offer
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  responseTimeMinutes?: number; // Time taken to respond to the quote request (in minutes)
+  // Aircraft selection
+  aircraftId?: string; // ID of the selected aircraft from operator's fleet
+  aircraftDetails?: {
+    id: string;
+    registration: string;
+    make: string;
+    model: string;
+    type: string;
+    maxPassengers: number;
+  };
 }
 
 export interface QuoteRequest {

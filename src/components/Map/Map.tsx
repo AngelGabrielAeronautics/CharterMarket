@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useMemo } from 'react';
 import { GoogleMap, Polyline, Marker, useGoogleMap } from '@react-google-maps/api';
 import tokens from '@/styles/tokens';
 import { useGoogleMaps } from './GoogleMapsProvider';
@@ -55,7 +55,32 @@ const brandColors = {
   border: tokens.color.border.value, // #e6d2b4 - light tan
 };
 
-export default function Map({
+// Helper function for deep comparison of location objects
+const locationsEqual = (
+  loc1: { lat: number; lng: number; name: string } | undefined,
+  loc2: { lat: number; lng: number; name: string } | undefined
+): boolean => {
+  if (!loc1 && !loc2) return true;
+  if (!loc1 || !loc2) return false;
+  return loc1.lat === loc2.lat && loc1.lng === loc2.lng && loc1.name === loc2.name;
+};
+
+// Helper function for comparing multi-city locations
+const multiCityLocationsEqual = (
+  locs1: { lat: number; lng: number; name: string }[] | undefined,
+  locs2: { lat: number; lng: number; name: string }[] | undefined
+): boolean => {
+  if (!locs1 && !locs2) return true;
+  if (!locs1 || !locs2) return false;
+  if (locs1.length !== locs2.length) return false;
+  
+  return locs1.every((loc1, index) => {
+    const loc2 = locs2[index];
+    return loc1.lat === loc2.lat && loc1.lng === loc2.lng && loc1.name === loc2.name;
+  });
+};
+
+function Map({
   departureLocation,
   arrivalLocation,
   returnLocation,
@@ -70,6 +95,40 @@ export default function Map({
   const { isLoaded, loadError } = useGoogleMaps();
   const mapRef = useRef<google.maps.Map | null>(null);
   
+  // Store previous location data to prevent unnecessary fitBounds calls
+  const prevLocationsRef = useRef({
+    departure: departureLocation,
+    arrival: arrivalLocation,
+    return: returnLocation,
+    multiCity: multiCityLocations,
+    isReturn,
+    isMultiCity
+  });
+
+  // Check if locations have actually changed
+  const locationsChanged = useMemo(() => {
+    const prev = prevLocationsRef.current;
+    const changed = !locationsEqual(prev.departure, departureLocation) ||
+                   !locationsEqual(prev.arrival, arrivalLocation) ||
+                   !locationsEqual(prev.return, returnLocation) ||
+                   !multiCityLocationsEqual(prev.multiCity, multiCityLocations) ||
+                   prev.isReturn !== isReturn ||
+                   prev.isMultiCity !== isMultiCity;
+    
+    if (changed) {
+      prevLocationsRef.current = {
+        departure: departureLocation,
+        arrival: arrivalLocation,
+        return: returnLocation,
+        multiCity: multiCityLocations,
+        isReturn,
+        isMultiCity
+      };
+    }
+    
+    return changed;
+  }, [departureLocation, arrivalLocation, returnLocation, multiCityLocations, isReturn, isMultiCity]);
+
   // Calculate the center point between all locations with better weighting
   const center = (() => {
     // For multi-city routes, consider all points
@@ -151,25 +210,21 @@ export default function Map({
 
   // Handle map load
   const onMapLoad = useCallback((map: google.maps.Map) => {
-    console.log("Map loaded, initializing...");
     mapRef.current = map;
     // Slight delay to ensure map is fully loaded
     setTimeout(() => {
-      console.log("Fitting bounds after map load");
       fitBounds();
     }, 300); // Increased timeout for better reliability
   }, [fitBounds]);
 
   useEffect(() => {
-    console.log("Map component mounted/updated", { isMultiCity, multiCityLocations });
-    // If map is already loaded, refit bounds when props change
-    if (mapRef.current) {
-      console.log("Map already loaded, refitting bounds after prop change");
+    // Only refit bounds if map is already loaded AND locations have actually changed
+    if (mapRef.current && locationsChanged) {
       setTimeout(() => {
         fitBounds();
       }, 300);
     }
-  }, [departureLocation, arrivalLocation, returnLocation, isReturn, isMultiCity, multiCityLocations, fitBounds]);
+  }, [locationsChanged, fitBounds]); // Only depend on whether locations changed
 
   // Handle window resize
   useEffect(() => {
@@ -242,50 +297,129 @@ export default function Map({
 
   // Calculate appropriate zoom level based on distance
   const calculateZoomLevel = () => {
-    // Get the maximum distance between any two points
-    let maxDistance = 0;
+    // Calculate bounds for all locations
+    const bounds = new google.maps.LatLngBounds();
     
-    // Calculate distance between departure and arrival
-    const R = 6371e3; // Earth's radius in meters
-    const φ1 = (departureLocation.lat * Math.PI) / 180;
-    const φ2 = (arrivalLocation.lat * Math.PI) / 180;
-    const Δφ = ((arrivalLocation.lat - departureLocation.lat) * Math.PI) / 180;
-    const Δλ = ((arrivalLocation.lng - departureLocation.lng) * Math.PI) / 180;
-
-    const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    maxDistance = R * c / 1000; // distance in km
+    // Add all relevant locations to bounds
+    bounds.extend(new google.maps.LatLng(departureLocation.lat, departureLocation.lng));
+    bounds.extend(new google.maps.LatLng(arrivalLocation.lat, arrivalLocation.lng));
     
-    // If there's a return leg, consider its distance too
     if (isReturn && returnLocation) {
-      const φ3 = (returnLocation.lat * Math.PI) / 180;
-      const Δφ2 = ((returnLocation.lat - arrivalLocation.lat) * Math.PI) / 180;
-      const Δλ2 = ((returnLocation.lng - arrivalLocation.lng) * Math.PI) / 180;
-      
-      const a2 =
-        Math.sin(Δφ2 / 2) * Math.sin(Δφ2 / 2) +
-        Math.cos(φ2) * Math.cos(φ3) * Math.sin(Δλ2 / 2) * Math.sin(Δλ2 / 2);
-      const c2 = 2 * Math.atan2(Math.sqrt(a2), Math.sqrt(1 - a2));
-      const returnDistance = R * c2 / 1000;
-      
-      maxDistance = Math.max(maxDistance, returnDistance);
+      bounds.extend(new google.maps.LatLng(returnLocation.lat, returnLocation.lng));
     }
+    
+    if (isMultiCity && multiCityLocations && multiCityLocations.length > 0) {
+      multiCityLocations.forEach(location => {
+        bounds.extend(new google.maps.LatLng(location.lat, location.lng));
+      });
+    }
+    
+    // Calculate zoom level based on bounds
+    const GLOBE_WIDTH = 256; // a constant in Google's map projection
+    const ZOOM_MAX = 18;
+    
+    const latRad = (bounds.getNorthEast().lat() - bounds.getSouthWest().lat()) * Math.PI / 180;
+    const lngRad = (bounds.getNorthEast().lng() - bounds.getSouthWest().lng()) * Math.PI / 180;
+    
+    const latZoom = Math.floor(Math.log(400 / (GLOBE_WIDTH * latRad)) / Math.LN2);
+    const lngZoom = Math.floor(Math.log(600 / (GLOBE_WIDTH * lngRad)) / Math.LN2);
+    
+    const zoom = Math.min(Math.min(latZoom, lngZoom), ZOOM_MAX);
+    
+    // Set reasonable minimum and maximum zoom levels
+    return Math.max(Math.min(zoom, 16), 3);
+  };
 
-    // Improved zoom calculation with better scaling for different distances
-    // For shorter distances, zoom in more
-    if (maxDistance < 500) {
-      return 6;
-    } else if (maxDistance < 1000) {
-      return 5;
-    } else if (maxDistance < 2000) {
-      return 4;
-    } else if (maxDistance < 5000) {
-      return 3;
-    } else {
-      return 2;
-    }
+  // Create a combined dropper icon for multiple route letters
+  const createCombinedDropperIcon = (fillColor: string, letters: string[], strokeColor: string = '#FFFFFF', strokeWeight: number = 2) => {
+    const multiLetterText = letters.join(',');
+    const isMultiLetter = letters.length > 1;
+    
+    return {
+      // Slightly larger dropper for multiple letters
+      path: isMultiLetter 
+        ? "M 0,0 C -8,-15 -15,-22 -15,-28 C -15,-36 -8,-43 0,-43 C 8,-43 15,-36 15,-28 C 15,-22 8,-15 0,0 Z"
+        : "M 0,0 C -6,-12 -12,-18 -12,-24 C -12,-30 -6,-36 0,-36 C 6,-36 12,-30 12,-24 C 12,-18 6,-12 0,0 Z",
+      fillColor: fillColor,
+      fillOpacity: 1,
+      strokeColor: strokeColor,
+      strokeWeight: strokeWeight,
+      scale: isMultiLetter ? 0.9 : 0.8,
+      rotation: 0,
+      anchor: new google.maps.Point(0, 0),
+      labelOrigin: new google.maps.Point(0, isMultiLetter ? -28 : -24),
+    };
+  };
+
+  // Function to group locations that are at the same coordinates
+  const groupLocations = (locations: Array<{lat: number, lng: number, name: string, letter: string, color: string}>) => {
+    const groups: Array<{
+      lat: number;
+      lng: number;
+      name: string;
+      letters: string[];
+      colors: string[];
+      isGrouped: boolean;
+    }> = [];
+
+    locations.forEach((location) => {
+      // Find if there's already a group at this exact location (very precise threshold)
+      const existingGroup = groups.find(group => 
+        Math.abs(group.lat - location.lat) < 0.0001 && 
+        Math.abs(group.lng - location.lng) < 0.0001
+      );
+
+      if (existingGroup) {
+        // Add to existing group
+        existingGroup.letters.push(location.letter);
+        existingGroup.colors.push(location.color);
+        existingGroup.isGrouped = true;
+      } else {
+        // Create new group
+        groups.push({
+          lat: location.lat,
+          lng: location.lng,
+          name: location.name,
+          letters: [location.letter],
+          colors: [location.color],
+          isGrouped: false
+        });
+      }
+    });
+
+    return groups;
+  };
+
+  // Function to create small visual clusters for closely located (but not identical) pins
+  const createVisualCluster = (groups: Array<any>) => {
+    const clusteredGroups = [...groups];
+    const clusterRadius = 0.001; // Very small radius for visual clustering only (~100m)
+    
+    groups.forEach((group, index) => {
+      if (group.isGrouped) return; // Skip already grouped pins
+      
+      // Check for nearby groups (close but not identical)
+      groups.forEach((otherGroup, otherIndex) => {
+        if (index === otherIndex || otherGroup.isGrouped) return;
+        
+        const distance = Math.sqrt(
+          Math.pow(group.lat - otherGroup.lat, 2) + 
+          Math.pow(group.lng - otherGroup.lng, 2)
+        );
+        
+        // If close but not identical, apply small visual offset
+        if (distance > 0.0001 && distance < 0.01) {
+          const angle = (otherIndex - index) * (Math.PI / 3); // 60-degree separation
+          clusteredGroups[otherIndex] = {
+            ...otherGroup,
+            lat: otherGroup.lat + clusterRadius * Math.sin(angle),
+            lng: otherGroup.lng + clusterRadius * Math.cos(angle),
+          };
+        }
+      });
+    });
+    
+    return clusteredGroups;
   };
 
   // Custom map styles using brand colors
@@ -352,82 +486,6 @@ export default function Map({
       ]
     }
   ];
-
-  // Function to check if two locations are very close to each other
-  const areLocationsClose = (loc1: {lat: number, lng: number}, loc2: {lat: number, lng: number}, threshold = 0.1) => {
-    const latDiff = Math.abs(loc1.lat - loc2.lat);
-    const lngDiff = Math.abs(loc1.lng - loc2.lng);
-    console.log(`Checking distance between points: ${latDiff},${lngDiff} vs threshold ${threshold}`);
-    return latDiff < threshold && lngDiff < threshold;
-  };
-  
-  // Function to slightly offset a location if it's too close to another one
-  const getOffsetLocation = (location: {lat: number, lng: number}, index: number, allLocations: {lat: number, lng: number}[]) => {
-    // Never offset the very first marker (A)
-    if (index === 0) {
-      return location;
-    }
-
-    // Check if this location is close to any previous location
-    let needsOffset = false;
-    let closestPointIndex = -1;
-    
-    for (let i = 0; i < allLocations.length; i++) {
-      if (i !== index && areLocationsClose(location, allLocations[i])) {
-        needsOffset = true;
-        closestPointIndex = i;
-        break;
-      }
-    }
-    
-    if (needsOffset) {
-      // Use a larger offset if this point is EXACTLY the same as the previous one (distance == 0)
-      const baseOffset = 0.05; // default offset ~5-6 km
-      const offsetFactor = closestPointIndex >= 0 && areLocationsClose(location, allLocations[closestPointIndex], 0.00001)
-        ? 0.15 // identical point – move ~15-20 km
-        : baseOffset;
-      
-      // If we found a specific close point, offset away from it
-      if (closestPointIndex >= 0) {
-        const closePoint = allLocations[closestPointIndex];
-        
-        // Calculate direction away from close point
-        const latDiff = location.lat - closePoint.lat;
-        const lngDiff = location.lng - closePoint.lng;
-        
-        // Normalize the direction
-        const distance = Math.sqrt(latDiff * latDiff + lngDiff * lngDiff);
-        
-        if (distance > 0) {
-          // Offset in the direction away from the close point
-          const offsetLat = location.lat + (latDiff / distance) * offsetFactor;
-          const offsetLng = location.lng + (lngDiff / distance) * offsetFactor;
-          
-          console.log(`Offsetting marker ${index} from ${location.lat},${location.lng} to ${offsetLat},${offsetLng}`);
-          
-          return {
-            lat: offsetLat,
-            lng: offsetLng
-          };
-        }
-      }
-      
-      // Fallback: use angle-based offset if we can't calculate direction
-      const angle = (index * Math.PI / 3); // Distribute in different directions
-      const offsetLat = location.lat + offsetFactor * Math.sin(angle);
-      const offsetLng = location.lng + offsetFactor * Math.cos(angle);
-      
-      console.log(`Angle-offsetting marker ${index} from ${location.lat},${location.lng} to ${offsetLat},${offsetLng}`);
-      
-      return {
-        lat: offsetLat,
-        lng: offsetLng
-      };
-    }
-    
-    // No close locations found, return original
-    return location;
-  };
 
   // If there was an error loading the API, show an error message
   if (loadError) {
@@ -500,57 +558,53 @@ export default function Map({
         {isMultiCity && multiCityLocations && multiCityLocations.length > 0 ? (
           // Multi-city route markers and paths
           <>
-            {multiCityLocations.map((location, index) => {
-              // Use letters A, B, C, etc. for markers
-              const label = String.fromCharCode(65 + index); // ASCII 'A' starts at 65
-              
-              // Different colors for different points
-              let fillColor;
-              if (index === 0) fillColor = brandColors.primary; // First point (A)
-              else if (index === multiCityLocations.length - 1) fillColor = brandColors.primaryDark; // Last point
-              else fillColor = brandColors.primaryLight; // Middle points
-              
-              // Get potentially offset position to avoid overlap
-              const markerPosition = getOffsetLocation(location, index, multiCityLocations);
-              
-              return (
-                <Marker
-                  key={`marker-${index}`}
-                  position={{ lat: markerPosition.lat, lng: markerPosition.lng }}
-                  icon={{
-                    path: "M -10,0 A 10,10 0 1,1 10,0 A 10,10 0 1,1 -10,0", // Simple circle
-                    fillColor: fillColor,
-                    fillOpacity: 1,
-                    strokeColor: '#FFFFFF',
-                    strokeWeight: 2,
-                    scale: 1.5,
-                    rotation: 0,
-                    // Anchor in the center of the circle
-                    anchor: new google.maps.Point(0, 0),
-                  }}
-                  title={location.name}
-                  label={{
-                    text: label,
-                    color: "#FFFFFF",
-                    fontWeight: "bold",
-                    fontSize: "14px"
-                  }}
-                  // Slightly offset markers that might overlap
-                  options={{
-                    zIndex: 1000 - index // Higher index = lower z-index to prioritize first markers
-                  }}
-                />
-              );
-            })}
+            {(() => {
+              // Prepare locations with letters and colors
+              const locations = multiCityLocations.map((location, index) => ({
+                lat: location.lat,
+                lng: location.lng,
+                name: location.name,
+                letter: String.fromCharCode(65 + index), // A, B, C, etc.
+                color: index === 0 ? brandColors.primary : 
+                       index === multiCityLocations.length - 1 ? brandColors.primaryDark : 
+                       brandColors.primaryLight
+              }));
+
+              // Group overlapping locations
+              const groups = groupLocations(locations);
+              const clusteredGroups = createVisualCluster(groups);
+
+              return clusteredGroups.map((group, groupIndex) => {
+                const primaryColor = group.colors[0]; // Use first color for grouped pins
+                const labelText = group.letters.join(',');
+                
+                return (
+                  <Marker
+                    key={`grouped-marker-${groupIndex}`}
+                    position={{ lat: group.lat, lng: group.lng }}
+                    icon={createCombinedDropperIcon(primaryColor, group.letters)}
+                    title={group.name}
+                    label={{
+                      text: labelText,
+                      color: "#FFFFFF",
+                      fontWeight: "bold",
+                      fontSize: group.letters.length > 1 ? "12px" : "14px"
+                    }}
+                    options={{
+                      zIndex: 1000 - groupIndex
+                    }}
+                  />
+                );
+              });
+            })()}
             
             {/* Create paths between consecutive points */}
             {(() => {
-              // Create adjusted paths with offset positions
               const adjustedPaths = [];
               
               for (let i = 0; i < multiCityLocations.length - 1; i++) {
-                const startPos = getOffsetLocation(multiCityLocations[i], i, multiCityLocations);
-                const endPos = getOffsetLocation(multiCityLocations[i + 1], i + 1, multiCityLocations);
+                const startPos = multiCityLocations[i];
+                const endPos = multiCityLocations[i + 1];
                 adjustedPaths.push(createFlightPath(startPos, endPos));
               }
               
@@ -582,86 +636,73 @@ export default function Map({
         ) : (
           // Regular route (one-way or return)
           <>
-            {/* Create an array of all locations for offset calculation */}
             {(() => {
-              const allLocations = [departureLocation];
-              if (arrivalLocation) allLocations.push(arrivalLocation);
-              if (isReturn && returnLocation) allLocations.push(returnLocation);
+              // Prepare all locations with letters and colors
+              const locations = [];
               
-              // Departure Marker - Circle with A
-              const departurePos = getOffsetLocation(departureLocation, 0, allLocations);
-              return (
-                <Marker
-                  position={{ lat: departurePos.lat, lng: departurePos.lng }}
-                  icon={{
-                    path: "M -10,0 A 10,10 0 1,1 10,0 A 10,10 0 1,1 -10,0", // Simple circle
-                    fillColor: brandColors.primary,
-                    fillOpacity: 1,
-                    strokeColor: '#FFFFFF',
-                    strokeWeight: 2,
-                    scale: 1.5,
-                    rotation: 0,
-                    // Anchor in the center of the circle
-                    anchor: new google.maps.Point(0, 0),
-                  }}
-                  title={departureLocation.name}
-                  label={{
-                    text: "A",
-                    color: "#FFFFFF",
-                    fontWeight: "bold",
-                    fontSize: "14px"
-                  }}
-                  options={{
-                    zIndex: 1000 // Highest z-index for departure
-                  }}
-                />
-              );
-            })()}
+              // Add departure (A)
+              locations.push({
+                lat: departureLocation.lat,
+                lng: departureLocation.lng,
+                name: departureLocation.name,
+                letter: "A",
+                color: brandColors.primary
+              });
+              
+              // Add arrival (B)
+              locations.push({
+                lat: arrivalLocation.lat,
+                lng: arrivalLocation.lng,
+                name: arrivalLocation.name,
+                letter: "B",
+                color: brandColors.primaryLight
+              });
+              
+              // Add return (C) if it exists
+              if (isReturn && returnLocation) {
+                locations.push({
+                  lat: returnLocation.lat,
+                  lng: returnLocation.lng,
+                  name: returnLocation.name,
+                  letter: "C",
+                  color: brandColors.primaryDark
+                });
+              }
 
-            {/* Arrival Marker - Circle with B */}
-            {(() => {
-              const allLocations = [departureLocation, arrivalLocation];
-              if (isReturn && returnLocation) allLocations.push(returnLocation);
-              
-              const arrivalPos = getOffsetLocation(arrivalLocation, 1, allLocations);
-              return (
-                <Marker
-                  position={{ lat: arrivalPos.lat, lng: arrivalPos.lng }}
-                  icon={{
-                    path: "M -10,0 A 10,10 0 1,1 10,0 A 10,10 0 1,1 -10,0", // Simple circle
-                    fillColor: brandColors.primaryLight,
-                    fillOpacity: 1,
-                    strokeColor: '#FFFFFF',
-                    strokeWeight: 2,
-                    scale: 1.5,
-                    rotation: 0,
-                    // Anchor in the center of the circle
-                    anchor: new google.maps.Point(0, 0),
-                  }}
-                  title={arrivalLocation.name}
-                  label={{
-                    text: "B",
-                    color: "#FFFFFF",
-                    fontWeight: "bold",
-                    fontSize: "14px"
-                  }}
-                  options={{
-                    zIndex: 999 // Lower z-index than departure
-                  }}
-                />
-              );
+              // Group overlapping locations and create visual clusters
+              const groups = groupLocations(locations);
+              const clusteredGroups = createVisualCluster(groups);
+
+              return clusteredGroups.map((group, groupIndex) => {
+                const primaryColor = group.colors[0]; // Use first color for grouped pins
+                const labelText = group.letters.join(',');
+                
+                return (
+                  <Marker
+                    key={`grouped-marker-${groupIndex}`}
+                    position={{ lat: group.lat, lng: group.lng }}
+                    icon={createCombinedDropperIcon(primaryColor, group.letters)}
+                    title={group.name}
+                    label={{
+                      text: labelText,
+                      color: "#FFFFFF",
+                      fontWeight: "bold",
+                      fontSize: group.letters.length > 1 ? "12px" : "14px"
+                    }}
+                    options={{
+                      zIndex: 1000 - groupIndex
+                    }}
+                  />
+                );
+              });
             })()}
 
             {/* Flight Path */}
             {(() => {
-              const allLocations = [departureLocation];
-              if (arrivalLocation) allLocations.push(arrivalLocation);
-              if (isReturn && returnLocation) allLocations.push(returnLocation);
+              const departurePos = departureLocation;
+              const arrivalPos = arrivalLocation;
               
-              const departurePos = getOffsetLocation(departureLocation, 0, allLocations);
-              const arrivalPos = getOffsetLocation(arrivalLocation, 1, allLocations);
-              
-              // Create path with offset positions
+              // Create path with original positions
               const adjustedPath = createFlightPath(departurePos, arrivalPos);
               
               return (
@@ -692,62 +733,33 @@ export default function Map({
             {isReturn && returnLocation && (
               <>
                 {(() => {
-                  const allLocations = [departureLocation, arrivalLocation, returnLocation];
-                  const arrivalPos = getOffsetLocation(arrivalLocation, 1, allLocations);
-                  const returnPos = getOffsetLocation(returnLocation, 2, allLocations);
+                  const arrivalPos = arrivalLocation;
+                  const returnPos = returnLocation;
                   
-                  // Create return path with offset positions
+                  // Create return path with original positions
                   const adjustedReturnPath = createFlightPath(arrivalPos, returnPos);
                   
                   return (
-                    <>
-                      <Polyline
-                        path={adjustedReturnPath}
-                        options={{
-                          strokeColor: brandColors.primaryLight,
-                          strokeOpacity: 0.8,
-                          strokeWeight: 3,
-                          geodesic: true,
-                          icons: [
-                            {
-                              icon: {
-                                path: "M 0,0 0,1",
-                                strokeOpacity: 1,
-                                scale: 4,
-                              },
-                              offset: "0",
-                              repeat: "20px",
+                    <Polyline
+                      path={adjustedReturnPath}
+                      options={{
+                        strokeColor: brandColors.primaryLight,
+                        strokeOpacity: 0.8,
+                        strokeWeight: 3,
+                        geodesic: true,
+                        icons: [
+                          {
+                            icon: {
+                              path: "M 0,0 0,1",
+                              strokeOpacity: 1,
+                              scale: 4,
                             },
-                          ],
-                        }}
-                      />
-
-                      {/* Return Marker - Circle with C */}
-                      <Marker
-                        position={{ lat: returnPos.lat, lng: returnPos.lng }}
-                        icon={{
-                          path: "M -10,0 A 10,10 0 1,1 10,0 A 10,10 0 1,1 -10,0", // Simple circle
-                          fillColor: brandColors.primaryDark,
-                          fillOpacity: 1,
-                          strokeColor: '#FFFFFF',
-                          strokeWeight: 2,
-                          scale: 1.5,
-                          rotation: 0,
-                          // Anchor in the center of the circle
-                          anchor: new google.maps.Point(0, 0),
-                        }}
-                        title={returnLocation.name}
-                        label={{
-                          text: "C",
-                          color: "#FFFFFF",
-                          fontWeight: "bold",
-                          fontSize: "14px"
-                        }}
-                        options={{
-                          zIndex: 1001 // Ensure return marker is on top if overlapping
-                        }}
-                      />
-                    </>
+                            offset: "0",
+                            repeat: "20px",
+                          },
+                        ],
+                      }}
+                    />
                   );
                 })()}
               </>
@@ -758,3 +770,6 @@ export default function Map({
     </div>
   );
 } 
+
+// Memoized Map component export to prevent unnecessary re-renders
+export default React.memo(Map); 

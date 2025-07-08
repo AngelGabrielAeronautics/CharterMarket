@@ -1,0 +1,12 @@
+rules_version = '2';
+
+// Temporarily permissive Firebase Storage Security Rules for testing
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Temporarily allow all authenticated users to upload/download
+    // TODO: Make more restrictive after testing
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+} 

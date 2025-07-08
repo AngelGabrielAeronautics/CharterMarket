@@ -1,5 +1,6 @@
 import { User as FirebaseUser } from 'firebase/auth';
 import { UserRole } from '@/lib/userCode';
+import { Timestamp } from 'firebase/firestore';
 
 export type UserStatus = 'active' | 'dormant' | 'suspended' | 'incomplete';
 
@@ -21,6 +22,7 @@ export interface UserProfile {
   dormantDate: Date | null;
   photoURL?: string | null;
   companyName?: string | null;
+  defaultCurrency?: string;
 }
 
 export interface User extends FirebaseUser {
@@ -29,6 +31,11 @@ export interface User extends FirebaseUser {
   firstName?: string;
   profile?: UserProfile;
   emailVerified: boolean;
+  defaultCurrency?: string;
+  profileImageUrl?: string;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+  profileIncompleteDate?: Timestamp | null;
 }
 
 export interface OnboardingFormData {

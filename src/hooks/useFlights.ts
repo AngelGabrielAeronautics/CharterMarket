@@ -183,8 +183,8 @@ export function useClientQuoteRequests(clientUserCode?: string) {
 
     fetchClientRequests();
 
-    // Set up auto-refresh every 30 seconds
-    const intervalId = setInterval(fetchClientRequests, 30000);
+    // Set up auto-refresh every 2 minutes (reduced from 30 seconds)
+    const intervalId = setInterval(fetchClientRequests, 120000);
 
     return () => {
       isMounted = false;
@@ -318,12 +318,12 @@ export function useOperatorQuoteRequests(operatorCode?: string) {
     setLoading(true);
     fetchRequests();
 
-    // Setup refresh interval (every 30 seconds)
-    // If there was an index error, try less frequently (every 2 minutes)
-    // After 3 retries with index errors, back off to 5 minutes
-    let intervalTime = 30000; // Default 30 seconds
+    // Setup refresh interval (every 2 minutes instead of 30 seconds)
+    // If there was an index error, try less frequently (every 5 minutes)
+    // After 3 retries with index errors, back off to 10 minutes
+    let intervalTime = 120000; // Default 2 minutes (reduced from 30 seconds)
     if (indexError) {
-      intervalTime = retryCount > 3 ? 300000 : 120000; // 5 minutes or 2 minutes
+      intervalTime = retryCount > 3 ? 600000 : 300000; // 10 minutes or 5 minutes
     }
 
     const intervalId = setInterval(() => {
