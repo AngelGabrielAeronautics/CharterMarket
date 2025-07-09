@@ -8,6 +8,7 @@ import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import { Box, Typography, Grid, CircularProgress, Alert } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { getNextImageUrl } from '@/utils/image-utils';
 
 interface AircraftImageGalleryProps {
   aircraftId: string;
@@ -136,7 +137,7 @@ export default function AircraftImageGallery({
                 {' '}
                 {/* 16:9 aspect ratio */}
                 <Image
-                  src={image.url}
+                  src={getNextImageUrl(image.url)}
                   alt={`${image.type} view`}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

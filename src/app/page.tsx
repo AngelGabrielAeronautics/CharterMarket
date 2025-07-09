@@ -536,10 +536,11 @@ export default function Home() {
             <GridItem xs={12} sm={6} md={3}>
               <Box sx={{ mb: { xs: 2, sm: 3 } }}>
                 <Image
-                  src={`${PLACEHOLDER_BASE}/240x80/${BRAND_COLORS.gold}/FFFFFF?text=CHARTER`}
+                  src="/branding/logos/light/charter logo - dark mode.png"
                   alt="Charter Logo"
                   width={120}
                   height={40}
+                  priority
                 />
               </Box>
               <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>

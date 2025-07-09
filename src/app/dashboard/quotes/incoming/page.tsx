@@ -686,14 +686,15 @@ export default function AllOperatorQuoteRequestsPage() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: 40,
-                    height: 40,
+                    width: 52,
+                    height: 52,
                     backgroundColor: getResponseTimeColor(avgResponseData.average),
                     color: '#ffffff',
                     borderRadius: '50%',
-                    fontSize: '0.75rem',
+                    fontSize: '0.7rem',
                     fontWeight: 'bold',
-                    textAlign: 'center'
+                    textAlign: 'center',
+                    padding: '4px'
                   }}
                 >
                   {formatResponseTime(avgResponseData.average)}
@@ -871,7 +872,7 @@ export default function AllOperatorQuoteRequestsPage() {
                           Request / Status
                         </TableSortLabel>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ width: '140px', minWidth: '140px' }}>
                         <TableSortLabel
                           active={sortColumn === 'responseTime'}
                           direction={sortColumn === 'responseTime' ? sortDirection : 'desc'}
@@ -880,7 +881,7 @@ export default function AllOperatorQuoteRequestsPage() {
                           Your Response Time
                         </TableSortLabel>
                       </TableCell>
-                      <TableCell align="center">
+                      <TableCell align="center" sx={{ width: '120px', minWidth: '120px' }}>
                         Competitors have Quoted
                       </TableCell>
                   </TableRow>
@@ -909,9 +910,12 @@ export default function AllOperatorQuoteRequestsPage() {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ maxWidth: '200px' }}>
+                        <Box>
                           {formatCompleteRouteLegs(request).map((leg, index) => (
-                            <Box key={index} sx={{ mb: index < formatCompleteRouteLegs(request).length - 1 ? 0.5 : 0 }}>
+                            <Box key={index} sx={{ 
+                              mb: index < formatCompleteRouteLegs(request).length - 1 ? 0.5 : 0,
+                              whiteSpace: 'nowrap'
+                            }}>
                               <Typography
                                 component="span"
                                 variant="body2"
@@ -1007,7 +1011,7 @@ export default function AllOperatorQuoteRequestsPage() {
                           );
                         })()}
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ width: '140px', minWidth: '140px' }}>
                         {(() => {
                           const responseTime = getOperatorResponseTime(request, user?.userCode);
                           if (responseTime === null) {
@@ -1038,7 +1042,7 @@ export default function AllOperatorQuoteRequestsPage() {
                           );
                         })()}
                       </TableCell>
-                      <TableCell align="center">
+                      <TableCell align="center" sx={{ width: '120px', minWidth: '120px' }}>
                         {(() => {
                           const competitorCount = getCompetitorCount(request, user?.userCode);
                           return (
@@ -1086,6 +1090,7 @@ export default function AllOperatorQuoteRequestsPage() {
           open={!!selectedRequestId}
           onClose={handleCloseModal}
           requestId={selectedRequestId}
+          onQuoteSubmitted={refreshRequests}
         />
         <ResponseTimeAnalyticsModal
           open={isAnalyticsModalOpen}

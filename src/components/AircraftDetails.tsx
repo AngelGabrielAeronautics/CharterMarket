@@ -152,14 +152,16 @@ export default function AircraftDetails({ aircraft }: AircraftDetailsProps) {
         <Typography variant="h6" fontWeight="medium" mb={2}>Aircraft Images</Typography>
         <AircraftImageGallery
           aircraftId={aircraft.id}
-          images={aircraft.images.map((url, index) => ({
-            id: `${index}`,
-            url,
-            type: index === 0 ? 'exterior' : 'interior',
-            fileName: url.split('/').pop() || '',
-            isPrimary: index === 0,
-            uploadedAt: aircraft.updatedAt.toDate().toISOString(),
-          }))}
+          images={aircraft.images
+            .filter((url): url is string => typeof url === 'string')
+            .map((url, index) => ({
+              id: `${index}`,
+              url,
+              type: index === 0 ? 'exterior' : 'interior',
+              fileName: url.split('/').pop() || '',
+              isPrimary: index === 0,
+              uploadedAt: aircraft.updatedAt.toDate().toISOString(),
+            }))}
           type="exterior"
           onImagesUpdate={() => {}}
         />

@@ -21,7 +21,8 @@
     "find-console-logs": "node scripts/remove-console-logs.js",
     "remove-console-logs": "node scripts/remove-console-logs.js --fix",
     "build:tokens": "style-dictionary build --config style-dictionary/config.json",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "generate-test-data": "ts-node scripts/generate-test-data.ts"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",

@@ -32,9 +32,10 @@ interface QuoteRequestModalProps {
   open: boolean;
   onClose: () => void;
   requestId: string | null;
+  onQuoteSubmitted?: () => void;
 }
 
-const QuoteRequestModal: React.FC<QuoteRequestModalProps> = ({ open, onClose, requestId }) => {
+const QuoteRequestModal: React.FC<QuoteRequestModalProps> = ({ open, onClose, requestId, onQuoteSubmitted }) => {
   const { user } = useAuth();
   const router = useRouter();
   const [request, setRequest] = useState<QuoteRequest | null>(null);
@@ -188,6 +189,11 @@ const QuoteRequestModal: React.FC<QuoteRequestModalProps> = ({ open, onClose, re
       // Force refresh to get updated request data with new offer
       await forceRefreshRequest();
 
+      // Refresh the main page data
+      if (onQuoteSubmitted) {
+        onQuoteSubmitted();
+      }
+
       setIsSubmitOfferModalOpen(false);
       onClose(); // Close the main modal as well
     } catch (error: any) {
@@ -340,7 +346,10 @@ const QuoteRequestModal: React.FC<QuoteRequestModalProps> = ({ open, onClose, re
             request={memoizedRequest} 
             onAcceptOffer={handleAcceptOffer}
             onRejectOffer={handleRejectOffer}
-            onQuoteSubmitted={onClose}
+            onQuoteSubmitted={() => {
+              if (onQuoteSubmitted) onQuoteSubmitted();
+              onClose();
+            }}
             isAccepting={isAccepting}
             isRejecting={isRejecting}
           />

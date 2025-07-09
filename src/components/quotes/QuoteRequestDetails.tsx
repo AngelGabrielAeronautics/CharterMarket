@@ -32,7 +32,10 @@ import {
   Button,
   IconButton,
   TextField,
-  Alert
+  Alert,
+  Grid,
+  Tooltip,
+  InputAdornment
 } from '@mui/material';
 import { getAirportByICAO } from '@/lib/airport';
 import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
@@ -68,6 +71,7 @@ import NotesIcon from '@mui/icons-material/Notes';
 
 import { getOperatorAircraft } from '@/lib/aircraft';
 import { Aircraft } from '@/types/aircraft';
+import { getImageUrl } from '@/utils/image-utils';
 
 // Define brand colors from tokens
 const brandColors = {
@@ -454,10 +458,14 @@ const OperatorQuoteForm: React.FC<OperatorQuoteFormProps> = ({ request, onSucces
 
         toast.success('Quote submitted successfully!');
         
+        // Set submitted state first
+        setSubmitted(true);
+        
+        // Then call success callback with a small delay to ensure UI updates
         if (onSuccess) {
-          onSuccess();
-        } else {
-          setSubmitted(true);
+          setTimeout(() => {
+            onSuccess();
+          }, 500);
         }
       } catch (quoteError: any) {
         console.error('Error submitting quote to database:', quoteError);
@@ -664,9 +672,25 @@ const OperatorQuoteForm: React.FC<OperatorQuoteFormProps> = ({ request, onSucces
                   </MenuItem>
                   {aircraft.map((ac) => (
                     <MenuItem key={ac.id} value={ac.id}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
-                        <AirplanemodeActiveIcon fontSize="small" color="primary" />
-                        <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1, width: '100%' }}>
+                        {/* Aircraft Thumbnail */}
+                        <Avatar
+                          src={ac.images && ac.images.length > 0 && typeof ac.images[0] === 'string' ? getImageUrl(ac.images[0]) : undefined}
+                          alt={`${ac.make} ${ac.model}`}
+                          variant="rounded"
+                          sx={{ 
+                            width: 48, 
+                            height: 48, 
+                            bgcolor: 'primary.light',
+                            border: '1px solid',
+                            borderColor: 'divider'
+                          }}
+                        >
+                          <AirplanemodeActiveIcon fontSize="small" />
+                        </Avatar>
+                        
+                        {/* Aircraft Details */}
+                        <Box sx={{ flex: 1 }}>
                           <Typography variant="body2" fontWeight="medium">
                             {ac.registration} - {ac.make} {ac.model}
                           </Typography>

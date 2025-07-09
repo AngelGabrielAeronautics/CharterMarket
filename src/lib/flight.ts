@@ -336,8 +336,8 @@ export const getOperatorQuoteRequests = async (
     );
 
     // Status categories for different visibility rules
-    const openStatuses = ['submitted', 'under-operator-review', 'under-offer'];
-    const activeStatuses = [...openStatuses, 'accepted', 'booked'];
+    const openStatuses = ['submitted', 'quote-received', 'quotes-viewed'];
+    const activeStatuses = [...openStatuses, 'accepted', 'rejected', 'expired'];
 
     let combinedRequests: QuoteRequest[] = [];
 
@@ -484,7 +484,7 @@ export const getOperatorQuoteRequestsFallback = async (
     console.log(`Using fallback method to fetch quote requests for operator: ${operatorUserCode}`);
 
     // Simpler queries for fallback
-    const openStatuses = ['submitted', 'under-operator-review', 'under-offer'];
+    const openStatuses = ['submitted', 'quote-received', 'quotes-viewed'];
 
     // Query all relevant requests without complex ordering
     const [openQ, offeredQ, wonQ] = [
@@ -580,10 +580,10 @@ export const markQuoteRequestAsViewed = async (requestId: string): Promise<void>
     // Only update status if it's still in 'submitted' status
     if (requestData.status === 'submitted') {
       await updateDoc(requestRef, {
-        status: 'under-operator-review' as FlightStatus,
+        status: 'quotes-viewed' as FlightStatus,
         updatedAt: Timestamp.now(),
       });
-      console.log(`Quote request ${requestId} marked as under operator review`);
+      console.log(`Quote request ${requestId} marked as quotes viewed`);
     }
   } catch (error) {
     console.error('Error marking quote request as viewed:', error);
@@ -605,10 +605,8 @@ export const expireOldQuoteRequests = async (): Promise<void> => {
     // Query for requests that haven't been accepted and have flight dates in the past
     const expirableStatuses = [
       'submitted',
-      'under-operator-review',
-      'under-offer',
-      'quoted',
-      'pending',
+      'quote-received',
+      'quotes-viewed',
     ];
 
     const expiredQuery = query(
@@ -737,7 +735,7 @@ export const getOperatorQuoteRequestStats = async (operatorUserCode: string) => 
 
       // New opportunities (can still submit offers)
       if (
-        ['submitted', 'under-operator-review', 'under-offer'].includes(request.status) &&
+        ['submitted', 'quote-received', 'quotes-viewed'].includes(request.status) &&
         !hasOffered
       ) {
         stats.newOpportunities++;
@@ -804,9 +802,9 @@ export const fixQuoteRequestDataConsistency = async (): Promise<void> => {
 
       // Ensure status consistency
       if (data.offers && data.offers.length > 0 && data.status === 'submitted') {
-        updates.status = 'under-offer';
+        updates.status = 'quote-received';
         needsUpdate = true;
-        console.log(`Fixed status for request ${doc.id}: submitted -> under-offer`);
+        console.log(`Fixed status for request ${doc.id}: submitted -> quote-received`);
       }
 
       // Update if needed

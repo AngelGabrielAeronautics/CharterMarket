@@ -52,7 +52,7 @@ export interface AircraftFormData {
     hasApu: boolean;
     blurb?: string;
   };
-  images: string[];
+  images: (string | File)[];
 }
 
 export interface Aircraft extends AircraftFormData {

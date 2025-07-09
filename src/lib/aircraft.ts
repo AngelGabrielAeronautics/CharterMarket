@@ -51,16 +51,34 @@ export const createAircraft = async (data: AircraftFormData, operatorCode: strin
       throw new Error('An aircraft with this registration already exists');
     }
 
+    // Separate images from other data for processing
+    const { images, ...aircraftData } = data;
+
     const formattedData = {
-      ...data,
+      ...aircraftData,
       registration: data.registration.toUpperCase(),
       operatorCode,
+      images: [], // Initialize with empty array
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
+    // Create aircraft first
     const aircraftRef = doc(collection(db, 'operators', operatorCode, 'aircraft'));
     await setDoc(aircraftRef, formattedData);
+
+    // Process images if they exist
+    if (images && images.length > 0) {
+      console.log('Processing images for new aircraft...');
+      const processedImages = await processImagesForSave(aircraftRef.id, images);
+      
+      // Update aircraft with processed images
+      await updateDoc(aircraftRef, {
+        images: processedImages,
+        updatedAt: Timestamp.now(),
+      });
+      console.log('Images processed and saved successfully');
+    }
 
     // Log the aircraft creation event
     await logEvent({
@@ -90,15 +108,78 @@ export const createAircraft = async (data: AircraftFormData, operatorCode: strin
   }
 };
 
+// Helper function to process images before saving to database
+export const processImagesForSave = async (
+  aircraftId: string,
+  images: (string | File)[]
+): Promise<string[]> => {
+  try {
+    const processedImages: string[] = [];
+    
+    for (let i = 0; i < images.length; i++) {
+      const image = images[i];
+      
+      if (typeof image === 'string') {
+        // Already a URL, keep as is
+        processedImages.push(image);
+      } else {
+        // It's a File object, upload it to Firebase Storage
+        console.log(`Uploading image ${i + 1}/${images.length}:`, image.name);
+        
+        // Determine image type based on filename or use 'exterior' as default
+        const imageType: 'exterior' | 'interior' | 'layout' | 'cockpit' = 'exterior';
+        const isPrimary = i === 0; // First image is primary
+        
+        const uploadedImage = await uploadAircraftImage(
+          aircraftId,
+          image,
+          imageType,
+          isPrimary
+        );
+        
+        processedImages.push(uploadedImage.url);
+        console.log(`Successfully uploaded image:`, uploadedImage.url);
+      }
+    }
+    
+    return processedImages;
+  } catch (error) {
+    console.error('Error processing images for save:', error);
+    throw new Error('Failed to upload images');
+  }
+};
+
 export const updateAircraft = async (
   id: string,
-  data: Partial<AircraftFormData>
+  data: Partial<AircraftFormData>,
+  operatorCode: string
 ): Promise<void> => {
   try {
-    const aircraftRef = doc(db, 'aircraft', id);
+    if (!operatorCode) {
+      throw new Error('Operator code is required');
+    }
+
+    // Process images if they exist
+    let processedData = { ...data };
+    if (data.images && data.images.length > 0) {
+      console.log('Processing images before save...');
+      processedData.images = await processImagesForSave(id, data.images);
+      console.log('Images processed successfully');
+    }
+
+    // Update aircraft in operator's subcollection
+    const aircraftRef = doc(db, 'operators', operatorCode, 'aircraft', id);
+    
     await updateDoc(aircraftRef, {
-      ...data,
+      ...processedData,
       updatedAt: Timestamp.now(),
+    });
+
+    // Log the update for audit purposes
+    console.log('Aircraft updated successfully:', {
+      aircraftId: id,
+      operatorCode,
+      updatedFields: Object.keys(processedData),
     });
   } catch (error) {
     console.error('Error updating aircraft:', error);
@@ -121,6 +202,33 @@ export const getAircraft = async (id: string): Promise<Aircraft | null> => {
     } as Aircraft;
   } catch (error) {
     console.error('Error getting aircraft:', error);
+    throw new Error('Failed to get aircraft');
+  }
+};
+
+// Get single aircraft from operator's subcollection
+export const getSingleOperatorAircraft = async (
+  aircraftId: string,
+  operatorCode: string
+): Promise<Aircraft | null> => {
+  try {
+    if (!operatorCode || !aircraftId) {
+      throw new Error('Operator code and aircraft ID are required');
+    }
+
+    const aircraftRef = doc(db, 'operators', operatorCode, 'aircraft', aircraftId);
+    const aircraftDoc = await getDoc(aircraftRef);
+
+    if (!aircraftDoc.exists()) {
+      return null;
+    }
+
+    return {
+      id: aircraftDoc.id,
+      ...aircraftDoc.data(),
+    } as Aircraft;
+  } catch (error) {
+    console.error('Error getting operator aircraft:', error);
     throw new Error('Failed to get aircraft');
   }
 };

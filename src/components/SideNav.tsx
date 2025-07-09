@@ -188,8 +188,14 @@ const navigation: NavItem[] = [
     name: 'System Settings',
     href: '/dashboard/settings',
     icon: <SettingsIcon />,
-    roles: ['admin', 'superAdmin'],
+    roles: ['superAdmin'],
     children: [
+      {
+        name: 'Test Data Generator',
+        href: '/dashboard/settings/test-data',
+        icon: <WidgetsIcon />,
+        roles: ['superAdmin'],
+      },
       {
         name: 'Style Guide',
         href: '/admin/dashboard/style-guide',
@@ -329,7 +335,17 @@ export default function SideNav({
                 sx: { color: 'background.paper' },
               },
             }}
-          ><Box component={Link} href="/" sx={{ display: 'inline-flex', cursor: 'pointer' }}><Image src="/branding/favicon/Charter-favicon-32x32.png" alt="Charter favicon" width={26} height={26} /></Box></Tooltip>
+          >
+            <Box component={Link} href="/" sx={{ display: 'inline-flex', cursor: 'pointer' }}>
+              <Image 
+                src="/branding/favicon/Charter-favicon-32x32.png" 
+                alt="Charter favicon" 
+                width={26} 
+                height={26}
+                priority
+              />
+            </Box>
+          </Tooltip>
         ) : (
           <Box component="span" sx={{ display: 'inline-flex' }}>
             <Logo href="/" height={48} sx={{ cursor: 'pointer' }} />

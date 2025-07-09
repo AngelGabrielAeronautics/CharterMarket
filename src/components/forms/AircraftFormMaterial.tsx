@@ -31,7 +31,7 @@ import {
 } from '@mui/material';
 import { Save, Close, Add } from '@mui/icons-material';
 import { AircraftFormData, AircraftType } from '@/types/aircraft';
-import AircraftImageGallery from '@/components/AircraftImageGallery';
+import ImprovedAircraftImageUpload from './ImprovedAircraftImageUpload';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { checkRegistrationExists } from '@/lib/aircraft';
@@ -117,7 +117,7 @@ const aircraftSchema = z.object({
     hasApu: z.boolean(),
     blurb: z.string().max(500).optional(),
   }),
-  images: z.array(z.string()),
+  images: z.array(z.union([z.string(), z.instanceof(File)])),
 });
 
 type AircraftFormSchema = z.infer<typeof aircraftSchema>;
@@ -930,47 +930,13 @@ export default function AircraftFormMaterial({ initialData, onSubmit, onClose, a
 
       <Divider sx={{ my: 3 }} />
 
-      <Paper elevation={0} sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>Images</Typography>
-        <CustomGrid container spacing={3}>
-          <CustomGrid item xs={12} sm={6}>
-            <Typography variant="subtitle1" gutterBottom>Exterior</Typography>
-            <AircraftImageGallery
-              aircraftId={aircraftId || 'new'}
-              images={[]}
-              onImagesUpdate={() => {}}
-              type="exterior"
-            />
-          </CustomGrid>
-          <CustomGrid item xs={12} sm={6}>
-            <Typography variant="subtitle1" gutterBottom>Interior</Typography>
-            <AircraftImageGallery
-              aircraftId={aircraftId || 'new'}
-              images={[]}
-              onImagesUpdate={() => {}}
-              type="interior"
-            />
-          </CustomGrid>
-          <CustomGrid item xs={12} sm={6}>
-            <Typography variant="subtitle1" gutterBottom>Cabin Layout</Typography>
-            <AircraftImageGallery
-              aircraftId={aircraftId || 'new'}
-              images={[]}
-              onImagesUpdate={() => {}}
-              type="layout"
-            />
-          </CustomGrid>
-          <CustomGrid item xs={12} sm={6}>
-            <Typography variant="subtitle1" gutterBottom>Cockpit</Typography>
-            <AircraftImageGallery
-              aircraftId={aircraftId || 'new'}
-              images={[]}
-              onImagesUpdate={() => {}}
-              type="cockpit"
-            />
-          </CustomGrid>
-        </CustomGrid>
-      </Paper>
+      <ImprovedAircraftImageUpload
+        aircraftId={aircraftId}
+        disabled={isSubmitting}
+        control={control}
+        setValue={setValue}
+        images={(watch('images') || []) as (string | File)[]}
+      />
 
       {submissionError && (
         <Box sx={{ color: 'error.main', mb: 2 }}>

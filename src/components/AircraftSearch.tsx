@@ -22,6 +22,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import TuneIcon from '@mui/icons-material/Tune';
 import CloseIcon from '@mui/icons-material/Close';
 import ImageIcon from '@mui/icons-material/Image';
+import { getImageUrl } from '@/utils/image-utils';
 
 // Simplified aircraft data for search component
 interface ExtendedAircraft {
@@ -284,10 +285,10 @@ export default function AircraftSearch({ aircraft, onSearch }: AircraftSearchPro
               }}
             >
               <Box sx={{ position: 'relative', paddingTop: '56.25%' }}> {/* 16:9 aspect ratio */}
-                {aircraft.images[0] ? (
+                {aircraft.images[0] && typeof aircraft.images[0] === 'string' ? (
                   <CardMedia
                     component="img"
-                    image={aircraft.images[0]}
+                    image={getImageUrl(aircraft.images[0])}
                     alt={`${aircraft.manufacturer} ${aircraft.model}`}
                     sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                   />

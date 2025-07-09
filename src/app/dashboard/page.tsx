@@ -41,6 +41,7 @@ import {
   Business as BusinessAdminIcon,
   BarChart as BarChartIcon,
   Security as SecurityIcon,
+  AttachMoney as MoneyIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -53,12 +54,87 @@ import BookingForm from '@/components/BookingForm';
 import DashboardCalendar from '@/components/calendar/DashboardCalendar';
 import { generateMockFlights } from '@/lib/mockFlightData';
 import { CalendarFlight } from '@/components/calendar/FlightCalendar';
+import StatusBadge from '@/components/ui/StatusBadge';
+import OperatorKPIs from '@/components/operator/OperatorKPIs';
+import OperatorOnboardingBanner from '@/components/OperatorOnboardingBanner';
+import { formatDistanceToNow } from 'date-fns';
+import { UserStatus } from '@/types/user';
 
 // Admin specific components (assuming they are in these paths)
 import FlightOverview from '@/components/admin/FlightOverview';
 import SalesKPI from '@/components/admin/SalesKPI';
 // Panel can be replaced with Paper or Box for now if not crucial
 // import { Panel } from '@/components/admin/Panel';
+
+// Mock data for operator dashboard - would be replaced with real data from API
+const mockQuoteRequests = [
+  {
+    id: 'req1',
+    route: 'FAJS → FACT',
+    date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    passengers: 4,
+    status: 'pending',
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+  },
+  {
+    id: 'req2',
+    route: 'FACT → FALE',
+    date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+    passengers: 6,
+    status: 'pending',
+    createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+  },
+  {
+    id: 'req3',
+    route: 'FALE → FAJS',
+    date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+    passengers: 2,
+    status: 'pending',
+    createdAt: new Date(Date.now() - 30 * 60 * 1000),
+  },
+];
+
+const mockOperatorFlights = [
+  {
+    id: 'flight1',
+    bookingId: 'FLT-OP-JETS-20230601-1234',
+    route: 'FAJS → FACT',
+    date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+    passengers: 4,
+    status: 'confirmed',
+    isPaid: true,
+    client: 'ABC Travel Agency',
+  },
+  {
+    id: 'flight2',
+    bookingId: 'FLT-OP-JETS-20230610-5678',
+    route: 'FALE → FBSK',
+    date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+    passengers: 3,
+    status: 'pending',
+    isPaid: false,
+    client: 'John Smith',
+  },
+];
+
+const mockAircraft = [
+  {
+    id: 'aircraft1',
+    registration: 'ZS-ABC',
+    type: 'LIGHT_JET',
+    status: 'ACTIVE',
+    make: 'CESSNA',
+    model: 'CITATION XLS',
+  },
+  {
+    id: 'aircraft2',
+    registration: 'ZS-XYZ',
+    type: 'MIDSIZE_JET',
+    status: 'MAINTENANCE',
+    make: 'BOMBARDIER',
+    model: 'CHALLENGER 350',
+  },
+];
 
 interface QuickAction {
   name: string;
@@ -323,8 +399,9 @@ export default function DashboardPage() {
   const [flights, setFlights] = useState<CalendarFlight[]>([]);
   const [calendarLoading, setCalendarLoading] = useState(true);
   const [calendarExpanded, setCalendarExpanded] = useState(false);
+  const [operatorActiveTab, setOperatorActiveTab] = useState(0);
 
-  const pendingRequests = quoteRequests?.filter((req) => req.status === 'pending') || [];
+  const pendingRequests = quoteRequests?.filter((req) => req.status === 'submitted') || [];
 
   // Load calendar flights
   useEffect(() => {
@@ -355,6 +432,10 @@ export default function DashboardPage() {
   const handleForceReload = () => {
     // Force a full page reload to clear any caching
     window.location.reload();
+  };
+
+  const handleOperatorTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setOperatorActiveTab(newValue);
   };
 
   if (authLoading || dataLoading) {
@@ -527,9 +608,15 @@ export default function DashboardPage() {
                       <Typography variant="subtitle1" fontWeight="medium">
                         Request #{req.id}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Status: {req.status}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Status:
+                        </Typography>
+                        <StatusBadge 
+                          status={req.status}
+                          perspective="passenger"
+                        />
+                      </Box>
                     </CardContent>
                     <CardActions>
                       <Button
@@ -595,7 +682,15 @@ export default function DashboardPage() {
                   <Card key={req.id} elevation={0} variant="outlined" sx={{ borderRadius: 1 }}>
                     <CardContent>
                       <Typography variant="subtitle1">Request #{req.id}</Typography>
-                      <Typography variant="body2">Status: {req.status}</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Status:
+                        </Typography>
+                        <StatusBadge 
+                          status={req.status}
+                          perspective="passenger"
+                        />
+                      </Box>
                     </CardContent>
                     <CardActions>
                       <Button component={Link} href={`/dashboard/quotes/${req.id}`}>
@@ -622,53 +717,322 @@ export default function DashboardPage() {
   };
 
   const renderOperatorDashboard = () => {
+    // Mock data for operator profile
+    const operatorProfile = {
+      status: (user?.emailVerified ? 'active' : 'pending') as UserStatus,
+      isProfileComplete: true,
+      hasAircraft: mockAircraft.length > 0,
+    };
+
     return (
-      <div className="flex flex-wrap -mx-3">
-        <div className="w-full px-3 mb-4">
-          <Typography variant="h5" gutterBottom>
-            Operator Dashboard
-          </Typography>
-        </div>
+      <>
+        <OperatorOnboardingBanner profile={operatorProfile} isEmailVerified={user?.emailVerified || false} />
 
-        <div className="w-full px-3 mb-4">
-          <Alert
-            severity="info"
-            sx={{ mb: 2 }}
-            action={
-              <Button
-                href="/dashboard/quotes/incoming"
-                variant="contained"
-                size="small"
-                color="primary"
+        <Grid container spacing={3}>
+          <Grid size={12}>
+            <Paper sx={{ mb: 3, borderRadius: 2, overflow: 'hidden' }}>
+              <Tabs
+                value={operatorActiveTab}
+                onChange={handleOperatorTabChange}
+                variant="fullWidth"
+                sx={{
+                  '& .MuiTab-root': {
+                    py: 2,
+                  },
+                }}
               >
-                View Quote Requests
-              </Button>
-            }
-          >
-            <Typography variant="body1">
-              You have new quote requests waiting for your response.
-            </Typography>
-          </Alert>
-        </div>
+                <Tab
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <PlaneIcon sx={{ mr: 1 }} />
+                      <Typography>Flight Management</Typography>
+                    </Box>
+                  }
+                />
+                <Tab
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <PlaneIcon sx={{ mr: 1 }} />
+                      <Typography>Fleet & Equipment</Typography>
+                    </Box>
+                  }
+                />
+                <Tab
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <MoneyIcon sx={{ mr: 1 }} />
+                      <Typography>Financial</Typography>
+                    </Box>
+                  }
+                />
+              </Tabs>
+            </Paper>
+          </Grid>
 
-        <div className="w-full md:w-1/2 px-3 mb-4">
-          <Paper elevation={1} sx={{ p: 3, borderRadius: 1 }}>
-            <Typography variant="h6" fontWeight="medium" gutterBottom>
-              Upcoming Flights
-            </Typography>
-            {/* Operator upcoming flights */}
-          </Paper>
-        </div>
+          {/* Tab Content */}
+          <Grid size={12}>
+            <Box role="tabpanel" hidden={operatorActiveTab !== 0}>
+              {operatorActiveTab === 0 && (
+                <Grid container spacing={3}>
+                  {/* Add calendar component */}
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    {calendarLoading ? (
+                      <Paper
+                        sx={{
+                          p: 3,
+                          borderRadius: 2,
+                          height: '100%',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <CircularProgress />
+                      </Paper>
+                    ) : (
+                      <DashboardCalendar
+                        flights={flights}
+                        userRole={userRole!}
+                        title="Flight Schedule"
+                      />
+                    )}
+                  </Grid>
 
-        <div className="w-full md:w-1/2 px-3 mb-4">
-          <Paper elevation={1} sx={{ p: 3, borderRadius: 1 }}>
-            <Typography variant="h6" fontWeight="medium" gutterBottom>
-              Fleet Status
-            </Typography>
-            {/* Fleet status content */}
-          </Paper>
-        </div>
-      </div>
+                  {/* Move flight metrics next to calendar */}
+                  <Grid size={{ xs: 12, md: 8 }}>
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <Paper sx={{ p: 2, borderRadius: 2, textAlign: 'center' }}>
+                          <Typography variant="h4" fontWeight="bold" color="primary.main">
+                            {mockOperatorFlights.length}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Total Flights
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <Paper sx={{ p: 2, borderRadius: 2, textAlign: 'center' }}>
+                          <Typography variant="h4" fontWeight="bold" color="success.main">
+                            {mockOperatorFlights.filter(f => f.status === 'confirmed').length}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Confirmed
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <Paper sx={{ p: 2, borderRadius: 2, textAlign: 'center' }}>
+                          <Typography variant="h4" fontWeight="bold" color="warning.main">
+                            {mockQuoteRequests.length}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Pending Quotes
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <Paper sx={{ p: 2, borderRadius: 2, textAlign: 'center' }}>
+                          <Typography variant="h4" fontWeight="bold" color="info.main">
+                            {mockAircraft.filter(a => a.status === 'ACTIVE').length}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Active Aircraft
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
+                      <Typography variant="h6" fontWeight="medium" gutterBottom>
+                        Quote Requests
+                      </Typography>
+
+                      {mockQuoteRequests.length > 0 ? (
+                        <Stack spacing={2} sx={{ mt: 2 }}>
+                          {mockQuoteRequests.map((request) => (
+                            <Box
+                              key={request.id}
+                              sx={{
+                                p: 2,
+                                borderRadius: 1,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                cursor: 'pointer',
+                                '&:hover': {
+                                  bgcolor: 'action.hover',
+                                },
+                              }}
+                            >
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                <Typography variant="body2" fontWeight="medium">
+                                  {request.route}
+                                </Typography>
+                                <Chip
+                                  label={request.status}
+                                  color="warning"
+                                  size="small"
+                                  variant="outlined"
+                                />
+                              </Box>
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                {request.date.toLocaleDateString()} | {request.passengers} passengers
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                Received {formatDistanceToNow(request.createdAt, { addSuffix: true })}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Stack>
+                      ) : (
+                        <Box sx={{ textAlign: 'center', p: 4 }}>
+                          <Typography color="text.secondary">No pending quote requests</Typography>
+                        </Box>
+                      )}
+
+                      <Box sx={{ mt: 3 }}>
+                        <Button
+                          component={Link}
+                          href="/dashboard/quotes/incoming"
+                          variant="outlined"
+                          fullWidth
+                        >
+                          View All Requests
+                        </Button>
+                      </Box>
+                    </Paper>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
+                      <Typography variant="h6" fontWeight="medium" gutterBottom>
+                        Upcoming Flights
+                      </Typography>
+
+                      {mockOperatorFlights.length > 0 ? (
+                        <Stack spacing={2} sx={{ mt: 2 }}>
+                          {mockOperatorFlights.map((flight) => (
+                            <Box
+                              key={flight.id}
+                              sx={{
+                                p: 1.5,
+                                borderRadius: 1,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                cursor: 'pointer',
+                                '&:hover': {
+                                  bgcolor: 'action.hover',
+                                },
+                              }}
+                            >
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                <Typography variant="body2" fontWeight="medium">
+                                  {flight.route}
+                                </Typography>
+                                <Chip
+                                  label={flight.status}
+                                  color={flight.status === 'confirmed' ? 'success' : 'warning'}
+                                  size="small"
+                                  variant="outlined"
+                                />
+                              </Box>
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                {flight.date.toLocaleDateString()} | {flight.passengers} passengers
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                Client: {flight.client}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                fontFamily="monospace"
+                                color="text.secondary"
+                                sx={{ mt: 1, display: 'block' }}
+                              >
+                                {flight.bookingId}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Stack>
+                      ) : (
+                        <Box sx={{ textAlign: 'center', p: 4 }}>
+                          <Typography color="text.secondary">No upcoming flights</Typography>
+                        </Box>
+                      )}
+
+                      <Box sx={{ mt: 3 }}>
+                        <Button
+                          component={Link}
+                          href="/dashboard/bookings/operator"
+                          variant="contained"
+                          color="primary"
+                          fullWidth
+                        >
+                          View All Flights
+                        </Button>
+                      </Box>
+                    </Paper>
+                  </Grid>
+                </Grid>
+              )}
+            </Box>
+
+            <Box role="tabpanel" hidden={operatorActiveTab !== 1}>
+              {operatorActiveTab === 1 && (
+                <Grid container spacing={3}>
+                  <Grid size={12}>
+                    <Paper sx={{ p: 3, borderRadius: 2 }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          mb: 3,
+                        }}
+                      >
+                        <Typography variant="h6" fontWeight="medium">
+                          Fleet & Equipment
+                        </Typography>
+                      </Box>
+
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <Paper sx={{ p: 3, borderRadius: 2 }}>
+                            <Typography variant="h6" fontWeight="medium" gutterBottom>
+                              Aircraft
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {mockAircraft.length} aircraft
+                            </Typography>
+                          </Paper>
+                        </Grid>
+
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <Paper sx={{ p: 3, borderRadius: 2 }}>
+                            <Typography variant="h6" fontWeight="medium" gutterBottom>
+                              Aircraft Types
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {Array.from(new Set(mockAircraft.map((a) => a.type))).join(', ')}
+                            </Typography>
+                          </Paper>
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                  </Grid>
+                </Grid>
+              )}
+            </Box>
+
+            <Box role="tabpanel" hidden={operatorActiveTab !== 2}>
+              {operatorActiveTab === 2 && user?.userCode && (
+                <OperatorKPIs operatorUserCode={user.userCode} />
+              )}
+            </Box>
+          </Grid>
+        </Grid>
+      </>
     );
   };
 

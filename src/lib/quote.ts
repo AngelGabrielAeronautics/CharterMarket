@@ -108,10 +108,8 @@ export const createQuote = async (
       // Updated status check for new flow
       const allowedStatuses = [
         'submitted',
-        'under-operator-review',
-        'under-offer',
-        'pending',
-        'quoted',
+        'quote-received',
+        'quotes-viewed',
       ];
       if (!allowedStatuses.includes(quoteRequestData.status)) {
         throw new Error(
@@ -215,7 +213,7 @@ export const createQuote = async (
       transaction.update(quoteRequestRef, {
         offers: arrayUnion(finalEmbeddedOffer),
         operatorUserCodesWhoHaveQuoted: arrayUnion(operatorUserCode),
-        status: 'under-offer' as FlightStatus,
+        status: 'quote-received' as FlightStatus,
         updatedAt: Timestamp.now(),
       });
     });

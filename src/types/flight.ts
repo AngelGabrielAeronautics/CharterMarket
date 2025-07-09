@@ -2,18 +2,12 @@ import { Timestamp } from 'firebase/firestore';
 
 export type TripType = 'oneWay' | 'return' | 'multiCity';
 export type FlightStatus =
-  // New quote request statuses
-  | 'submitted' // Initial status when quote request is created
-  | 'under-operator-review' // When any operator has viewed the request
-  | 'under-offer' // When any operator has submitted an offer
-  | 'accepted' // When user accepts an offer
-  // Legacy statuses (for backward compatibility)
-  | 'pending'
-  | 'quoted'
-  | 'booked'
-  | 'cancelled'
-  | 'expired'
-  | 'draft';
+  | 'submitted' // Default status when quote request is created
+  | 'quote-received' // When first operator submits a quote (passenger hasn't viewed yet)  
+  | 'quotes-viewed' // When passenger has viewed all available quotes
+  | 'accepted' // When passenger accepts a quote
+  | 'rejected' // When passenger rejects operator quotes
+  | 'expired'; // When flight date passes without passenger decision
 
 export type CabinClass = 'standard' | 'premium' | 'vip';
 

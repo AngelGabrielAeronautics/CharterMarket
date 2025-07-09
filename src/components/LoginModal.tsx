@@ -365,11 +365,13 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
               backgroundColor: 'transparent',
             }}
           >
-            <Box
-              component="img"
+            <Image
               src="/branding/logos/light/charter logo - dark mode.png"
               alt="Charter Logo"
-              sx={{ mb: 3, width: 180, height: 'auto' }}
+              width={180}
+              height={60}
+              style={{ marginBottom: 24 }}
+              priority
             />
             <Typography
               variant="h4"

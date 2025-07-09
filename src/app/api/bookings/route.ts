@@ -93,8 +93,29 @@ export async function GET(req: NextRequest) {
         console.log(`[API] Found ${data.length} bookings for clientId: ${clientId}`, data);
       }
     } else if (operatorUserCode) {
-      console.log(`Retrieving bookings for operator: ${operatorUserCode}`);
-      data = await getOperatorBookings(operatorUserCode);
+      console.log(`[API] Retrieving bookings for operator (server-side with Admin SDK): ${operatorUserCode}`);
+
+      // Use Firebase Admin SDK on the server to bypass security-rule auth issues
+      const adminDb = getAdminDb();
+      if (!adminDb) {
+        console.error('[API] Firebase Admin DB not available');
+        return NextResponse.json({ error: 'Server database unavailable' }, { status: 500 });
+      }
+
+      console.log(`[API] Querying bookings collection where "operator.operatorUserCode" == "${operatorUserCode}"`);
+      const snapshot = await adminDb
+        .collection('bookings')
+        .where('operator.operatorUserCode', '==', operatorUserCode)
+        .orderBy('createdAt', 'desc')
+        .get();
+
+      if (snapshot.empty) {
+        console.log(`[API] No bookings found for operatorUserCode: ${operatorUserCode}`);
+        data = [];
+      } else {
+        data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        console.log(`[API] Found ${data.length} bookings for operatorUserCode: ${operatorUserCode}`, data);
+      }
     } else {
       return NextResponse.json(
         { error: 'Missing required parameter: clientId, operatorUserCode, bookingId, or docId' },

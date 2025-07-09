@@ -85,7 +85,7 @@ async function fetchAircraftDetails(
           make: aircraftData.make,
           model: aircraftData.model,
           year: aircraftData.year,
-          maxPassengers: aircraftData.maxPassengers,
+          maxPassengers: aircraftData.specifications?.maxPassengers || aircraftData.maxPassengers || 0,
           category: aircraftData.category,
           homeBase: aircraftData.homeBase,
           specifications: aircraftData.specifications,
@@ -99,8 +99,11 @@ async function fetchAircraftDetails(
       registration: 'TBD',
       make: 'TBD',
       model: 'TBD',
+      year: new Date().getFullYear(),
       maxPassengers: 0,
       category: 'TBD',
+      homeBase: 'TBD',
+      specifications: {},
     };
   } catch (error) {
     console.error('Error fetching aircraft details:', error);
@@ -109,8 +112,11 @@ async function fetchAircraftDetails(
       registration: 'TBD',
       make: 'TBD',
       model: 'TBD',
+      year: new Date().getFullYear(),
       maxPassengers: 0,
       category: 'TBD',
+      homeBase: 'TBD',
+      specifications: {},
     };
   }
 }

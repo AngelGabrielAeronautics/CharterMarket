@@ -25,7 +25,7 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import { Close as CloseIcon, TrendingUp, TrendingDown, Timeline, Compare, ThumbUp, ThumbDown, Balance } from '@mui/icons-material';
+import { Close as CloseIcon, TrendingUp, TrendingDown, Timeline, Compare, ThumbUp, ThumbDown, Balance, CancelOutlined, PersonRemove } from '@mui/icons-material';
 import { QuoteRequest, Offer } from '@/types/flight';
 import ResponseTimeGauge from './ResponseTimeGauge';
 
@@ -41,6 +41,8 @@ type TimePeriod = 'all' | '12m' | '6m' | '3m';
 interface AnalyticsData {
   averageResponseTime: number;
   totalSubmissions: number;
+  missedOpportunities: number;
+  lostToCompetitors: number;
   submissions: Array<{
     requestCode: string;
     submittedDate: Date;
@@ -85,14 +87,28 @@ const ResponseTimeAnalyticsModal: React.FC<ResponseTimeAnalyticsModalProps> = ({
     return 'No route specified';
   };
 
-  // Helper function to get status
+  // Helper function to get status from operator perspective
   const getStatus = (request: QuoteRequest): string => {
-    if (!operatorUserCode || !request.offers) return 'No response';
+    if (!operatorUserCode) return 'No response';
     
-    const operatorOffer = request.offers.find((offer: Offer) => offer.operatorUserCode === operatorUserCode);
-    if (!operatorOffer) return 'No response';
+    const hasOperatorQuoted = request.operatorUserCodesWhoHaveQuoted?.includes(operatorUserCode) || false;
+    const operatorWon = request.acceptedOperatorUserCode === operatorUserCode;
     
-    return operatorOffer.offerStatus || 'submitted';
+    switch (request.status) {
+      case 'submitted':
+        return hasOperatorQuoted ? 'Quote Submitted' : 'New Request';
+      case 'quote-received':
+      case 'quotes-viewed':
+        return hasOperatorQuoted ? 'Quote Submitted' : 'Available to Quote';
+      case 'accepted':
+        return operatorWon ? 'Quote Accepted' : 'Won by Competitor';
+      case 'rejected':
+        return 'Client Rejected';
+      case 'expired':
+        return 'Expired';
+      default:
+        return hasOperatorQuoted ? 'Quote Submitted' : 'No Response';
+    }
   };
 
   // Calculate analytics data for different time periods
@@ -106,10 +122,10 @@ const ResponseTimeAnalyticsModal: React.FC<ResponseTimeAnalyticsModalProps> = ({
     };
 
     const result: Record<TimePeriod, AnalyticsData> = {
-      all: { averageResponseTime: 0, totalSubmissions: 0, submissions: [] },
-      '12m': { averageResponseTime: 0, totalSubmissions: 0, submissions: [] },
-      '6m': { averageResponseTime: 0, totalSubmissions: 0, submissions: [] },
-      '3m': { averageResponseTime: 0, totalSubmissions: 0, submissions: [] },
+      all: { averageResponseTime: 0, totalSubmissions: 0, missedOpportunities: 0, lostToCompetitors: 0, submissions: [] },
+      '12m': { averageResponseTime: 0, totalSubmissions: 0, missedOpportunities: 0, lostToCompetitors: 0, submissions: [] },
+      '6m': { averageResponseTime: 0, totalSubmissions: 0, missedOpportunities: 0, lostToCompetitors: 0, submissions: [] },
+      '3m': { averageResponseTime: 0, totalSubmissions: 0, missedOpportunities: 0, lostToCompetitors: 0, submissions: [] },
     };
 
     (Object.keys(periods) as TimePeriod[]).forEach(period => {
@@ -124,9 +140,35 @@ const ResponseTimeAnalyticsModal: React.FC<ResponseTimeAnalyticsModalProps> = ({
 
       const submissions: AnalyticsData['submissions'] = [];
       const responseTimes: number[] = [];
+      let missedOpportunities = 0;
+      let lostToCompetitors = 0;
 
       filteredRequests.forEach(request => {
         const responseTime = getOperatorResponseTime(request);
+        const now = new Date();
+        
+        // Check for missed opportunities (expired requests without response from operator)
+        if (!operatorUserCode) return; // Skip if no operator code provided
+        
+        // Check if operator never responded to this request
+        const operatorNeverResponded = !request.operatorUserCodesWhoHaveQuoted?.includes(operatorUserCode);
+        
+        // Count expired requests where operator never quoted as missed opportunities
+        if (request.status === 'expired' && operatorNeverResponded) {
+          missedOpportunities++;
+        }
+        
+        // Check for lost to competitors (operator quoted but another operator won)
+        const hasOperatorQuoted = request.operatorUserCodesWhoHaveQuoted?.includes(operatorUserCode) || false;
+        const operatorLost = request.status === 'accepted' && 
+                            request.acceptedOperatorUserCode !== operatorUserCode && 
+                            hasOperatorQuoted;
+        
+        if (operatorLost) {
+          lostToCompetitors++;
+        }
+        
+        // Process submissions data
         if (responseTime !== null && request.createdAt) {
           const submittedDate = new Date(request.createdAt.toMillis());
           submissions.push({
@@ -148,6 +190,8 @@ const ResponseTimeAnalyticsModal: React.FC<ResponseTimeAnalyticsModalProps> = ({
           ? Math.round(responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length)
           : 0,
         totalSubmissions: submissions.length,
+        missedOpportunities,
+        lostToCompetitors,
         submissions,
       };
     });
@@ -310,10 +354,12 @@ const ResponseTimeAnalyticsModal: React.FC<ResponseTimeAnalyticsModalProps> = ({
         height: { xs: '95vh', sm: '90vh', md: '85vh' },
         bgcolor: 'background.paper',
         borderRadius: 2,
-        boxShadow: 24,
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
+        outline: 'none',
+        border: 'none',
       }}>
         {/* Header */}
         <Box sx={{ 
@@ -324,7 +370,7 @@ const ResponseTimeAnalyticsModal: React.FC<ResponseTimeAnalyticsModalProps> = ({
           borderBottom: '1px solid #e0e0e0' 
         }}>
           <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1a2b3c' }}>
-            Response Time Analytics
+            Response Performance Analytics
           </Typography>
           <IconButton onClick={onClose} sx={{ color: '#666' }}>
             <CloseIcon />
@@ -387,7 +433,7 @@ const ResponseTimeAnalyticsModal: React.FC<ResponseTimeAnalyticsModalProps> = ({
         <Box sx={{ p: 3, pt: 0 }}>
           <Box sx={{ 
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '2fr 1fr 1fr 1fr' },
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '2fr 1fr 1fr 1fr 1fr 1fr' },
             gap: 3 
           }}>
             <Box>
@@ -418,7 +464,7 @@ const ResponseTimeAnalyticsModal: React.FC<ResponseTimeAnalyticsModalProps> = ({
                     {currentData.totalSubmissions}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Total Submissions
+                    Total Quotes Submitted
                   </Typography>
                 </CardContent>
               </Card>
@@ -482,6 +528,36 @@ const ResponseTimeAnalyticsModal: React.FC<ResponseTimeAnalyticsModalProps> = ({
                 </CardContent>
               </Card>
             </Box>
+            <Box>
+              <Card>
+                <CardContent sx={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                  <CancelOutlined sx={{ color: '#f97316', fontSize: '2rem' }} />
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f97316' }}>
+                      {currentData.missedOpportunities}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Missed Opportunities
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
+            <Box>
+              <Card>
+                <CardContent sx={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                  <PersonRemove sx={{ color: '#ef4444', fontSize: '2rem' }} />
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#ef4444' }}>
+                      {currentData.lostToCompetitors}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Lost to Competitors
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
           </Box>
           
           {/* Market Comparison Text */}
@@ -502,6 +578,20 @@ const ResponseTimeAnalyticsModal: React.FC<ResponseTimeAnalyticsModalProps> = ({
                   `⚠️ You respond ${marketComparison.percentageDiff}% slower than the market average of ${formatResponseTime(marketAnalyticsData[selectedPeriod].averageResponseTime)}.`}
                 {marketComparison.status === 'much-worse' && 
                   `🚨 Consider improving: You respond ${marketComparison.percentageDiff}% slower than the market average of ${formatResponseTime(marketAnalyticsData[selectedPeriod].averageResponseTime)}.`}
+              </Typography>
+            </Box>
+          )}
+          
+          {/* New Metrics Explanation */}
+          {(currentData.missedOpportunities > 0 || currentData.lostToCompetitors > 0) && (
+            <Box sx={{ mt: 2, p: 2, backgroundColor: '#fef3c7', borderRadius: 1, borderLeft: '4px solid #f59e0b' }}>
+              <Typography variant="body2" sx={{ color: '#374151', fontWeight: 'medium' }}>
+                {currentData.missedOpportunities > 0 && currentData.lostToCompetitors > 0 && 
+                  `⚠️ You missed ${currentData.missedOpportunities} opportunities where requests expired without a response, and lost ${currentData.lostToCompetitors} quotes to competitors. Consider improving response times to capture more business.`}
+                {currentData.missedOpportunities > 0 && currentData.lostToCompetitors === 0 && 
+                  `⚠️ You missed ${currentData.missedOpportunities} opportunities where requests expired without a response. Faster responses could help you capture more business.`}
+                {currentData.missedOpportunities === 0 && currentData.lostToCompetitors > 0 && 
+                  `📊 You lost ${currentData.lostToCompetitors} quotes to competitors. Even though you're responding, consider competitive pricing or faster response times.`}
               </Typography>
             </Box>
           )}
