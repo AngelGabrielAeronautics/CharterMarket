@@ -578,8 +578,10 @@ export default function Home() {
               {/* Search Flight Form (remains below the two-column text) */}
               <Box sx={{ 
                 mt: { xs: 2, sm: 3, md: 4 }, // Add top margin for spacing from text
+                mb: { xs: 4, sm: 6, md: 8 }, // Add bottom margin for mobile scrolling
                 '@media (max-width: 380px)': {
                   mt: 1.5, // Smaller margin for very small screens
+                  mb: 3, // Ensure mobile has enough bottom space
                 }
               }}>
                 <BookingForm />

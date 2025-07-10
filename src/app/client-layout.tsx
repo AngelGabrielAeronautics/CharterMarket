@@ -44,6 +44,9 @@ export default function ClientLayout({
                   flexGrow: 1,
                   pt: !isSideNavPage ? { xs: 8, sm: 10, md: 12 } : 0,
                   overflowY: isSideNavPage ? 'hidden' : 'auto',
+                  // Enhanced mobile scrolling for dynamic content
+                  WebkitOverflowScrolling: 'touch',
+                  scrollBehavior: 'smooth',
                 }}
               >
                 <Container 

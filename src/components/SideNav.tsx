@@ -302,7 +302,7 @@ export default function SideNav({
         height: '100%',
         width: drawerWidthPx,
         bgcolor: 'background.paper',
-        borderRadius: `${theme.shape.borderRadius}px`,
+        borderRadius: isMobile ? '8px' : `${theme.shape.borderRadius}px`,
         overflow: 'visible',
         boxSizing: 'border-box',
       }}
@@ -1132,16 +1132,16 @@ export default function SideNav({
       sx={(theme) => ({
         position: 'fixed',
         left: mini
-          ? `calc(${collapsedWidth} - 14px)`
-          : `calc(${drawerWidth} - 14px)`,
+          ? collapsedWidth 
+          : drawerWidth,
         top: theme.spacing(14),
-        transform: 'translateY(-50%)',
+        transform: 'translateX(-50%) translateY(-50%)',
         border: '1px solid',
         borderColor: 'divider',
         bgcolor: 'background.paper',
         width: 28,
         height: 28,
-        display: 'flex',
+        display: { xs: 'none', lg: 'flex' }, // Hide on mobile, show on desktop
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: '50%',
@@ -1173,7 +1173,7 @@ export default function SideNav({
         '& .MuiDrawer-paper': {
           width: drawerWidth,
           boxSizing: 'border-box',
-          borderRadius: theme.shape.borderRadius,
+          borderRadius: '8px', // Reduced from theme.shape.borderRadius for mobile
           overflow: 'hidden',
           boxShadow: 'none',
           border: 'none',
@@ -1187,7 +1187,7 @@ export default function SideNav({
       }}
     >
       {content}
-      {typeof window !== 'undefined' && createPortal(toggleButton, document.body)}
+      {/* No toggle button on mobile - use hamburger menu instead */}
     </Drawer>
   ) : (
     <Box
@@ -1226,6 +1226,7 @@ export default function SideNav({
       }}
     >
       {content}
+      {/* Toggle button hidden on mobile via CSS */}
       {typeof window !== 'undefined' && createPortal(toggleButton, document.body)}
     </Box>
   );
