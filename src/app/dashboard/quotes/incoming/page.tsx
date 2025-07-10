@@ -830,9 +830,23 @@ export default function AllOperatorQuoteRequestsPage() {
               <Table stickyHeader aria-label="all operator quote requests table">
                 <MuiTableHead>
                   <TableRow sx={{ 
-                    backgroundColor: '#e0e0e0 !important',
+                    backgroundColor: '#e9e7e0 !important',
                     '& .MuiTableCell-root': {
-                      backgroundColor: '#e0e0e0 !important'
+                      backgroundColor: '#e9e7e0 !important',
+                      color: '#333333 !important',
+                      fontWeight: 600,
+                      '& .MuiTableSortLabel-root': {
+                        color: '#333333 !important',
+                        '&:hover': {
+                          color: '#000000 !important'
+                        },
+                        '&.Mui-active': {
+                          color: '#000000 !important'
+                        }
+                      },
+                      '& .MuiTableSortLabel-icon': {
+                        color: '#333333 !important'
+                      }
                     }
                   }}>
                                           <TableCell>

@@ -237,9 +237,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   onClick={() => window.open(attachment.url, '_blank')}
                 >
                   {attachment.fileType.startsWith('image/') ? (
-                    <Image fontSize="small" />
+                    <Image fontSize="small" aria-label="Image file" />
                   ) : (
-                    <Description fontSize="small" />
+                    <Description fontSize="small" aria-label="Document file" />
                   )}
                   
                   <Box sx={{ flex: 1, minWidth: 0 }}>

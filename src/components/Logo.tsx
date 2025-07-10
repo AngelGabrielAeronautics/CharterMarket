@@ -36,13 +36,9 @@ export default function Logo({ href, height = 40, sx = {}, srcOverride }: LogoPr
           src={logoSrc}
           alt="Charter Logo"
           height={height}
-          width={0}
-          sizes={`${height * 3.5}px`}
+          width={height * 3.5}
           style={{ 
-            width: 'auto', 
-            height: `${height}px`, 
             objectFit: 'contain',
-            maxWidth: `${height * 4}px` 
           }}
           priority
           onError={() => setImageError(true)}

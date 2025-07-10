@@ -12,6 +12,8 @@ import { UserRole } from '@/lib/userCode';
 import { UserStatus } from '@/types/user';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Box, Container, IconButton, Tooltip } from '@mui/material';
+import ProgressNav from '@/components/dashboard/ProgressNav';
+import { usePathname } from 'next/navigation';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
 import { markEmailVerified } from '@/lib/user';
@@ -34,6 +36,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSideNavMini, setIsSideNavMini] = useState(false);
+
+  const pathname = usePathname();
   // Width of the sidebar drawer (to offset content when open on mobile)
   const expandedSideNavWidth = muiTheme.spacing(32); // 256px
   const collapsedSideNavWidth = muiTheme.spacing(6); // 48px - ultra compact
@@ -148,8 +152,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100vh',
         bgcolor: 'background.default',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {/* Mobile Menu Button - only visible on small screens */}
@@ -246,6 +253,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             position: 'relative',
             ml: { lg: isSideNavMini ? collapsedSideNavWidth : expandedSideNavWidth },
             pt: { xs: muiTheme.spacing(8), lg: muiTheme.spacing(4) },
+            height: '100%',
+            overflowY: 'auto',
           }}
         >
           <Container
@@ -264,6 +273,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Box sx={{ mb: 2 }}>
               <AppDownloadBanner variant="compact" persistentId="dashboard-app-download" />
             </Box>
+
+            {/* Progress navigation removed from layout; now included per-page header */}
 
             {children}
           </Container>

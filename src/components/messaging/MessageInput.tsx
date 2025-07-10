@@ -276,7 +276,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
             {attachedFiles.map((file, index) => (
               <Chip
                 key={index}
-                icon={isImageFile(file) ? <Image /> : <Description />}
+                icon={isImageFile(file) ? <Image aria-label="Image file" /> : <Description aria-label="Document file" />}
                 label={`${file.name} (${formatFileSize(file.size)})`}
                 onDelete={() => handleRemoveFile(index)}
                 variant="outlined"

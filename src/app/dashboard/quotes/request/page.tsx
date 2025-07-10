@@ -27,6 +27,7 @@ import {
   TablePagination,
   Container,
 } from '@mui/material';
+import ProgressNav from '@/components/dashboard/ProgressNav';
 import { Button } from '@/components/ui/Button';
 import { RefreshCw, PlusIcon, ListIcon, Search, X } from 'lucide-react';
 import QuoteRequestModal from '@/components/quotes/QuoteRequestModal';
@@ -353,13 +354,16 @@ export default function QuoteRequestsPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" fontWeight="bold">
-          Quote Requests
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-          View your existing quote requests or submit a new one
-        </Typography>
+      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+          <Typography variant="h4" component="h1" fontWeight="bold">
+            Quote Requests
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+            View your existing quote requests or submit a new one
+          </Typography>
+        </Box>
+        <ProgressNav sx={{ maxWidth: 600 }} />
       </Box>
 
       <Paper
@@ -403,31 +407,29 @@ export default function QuoteRequestsPage() {
             display: 'flex',
             flexDirection: { xs: 'column', md: 'row' },
             alignItems: { xs: 'flex-start', md: 'center' },
-            justifyContent: 'space-between',
+            justifyContent: 'flex-end',
             gap: 2,
             mb: 4 
           }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Typography variant="h6" component="h2" fontWeight="bold">
-                  My Quote Requests
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                  (Auto-refreshes every 60 seconds)
-                </Typography>
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.7rem', fontStyle: 'italic' }}>
-                Last updated: {lastRefreshed.toLocaleTimeString()}
-              </Typography>
-
-            </Box>
-            <Box sx={{ flex: 1, maxWidth: { xs: '100%', md: '300px' } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <TextField
-                fullWidth
                 placeholder="Search requests..."
                 value={searchTerm}
                 onChange={handleSearchChange}
                 size="small"
+                sx={{ 
+                  width: { xs: '100%', md: '300px' },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    border: '1px solid #e0e0e0',
+                    '&:hover': {
+                      borderColor: '#b0b0b0',
+                    },
+                    '&.Mui-focused': {
+                      borderColor: '#1976d2',
+                    },
+                  },
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -451,21 +453,7 @@ export default function QuoteRequestsPage() {
                     </InputAdornment>
                   ),
                 }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    border: '1px solid #e0e0e0',
-                    '&:hover': {
-                      borderColor: '#b0b0b0',
-                    },
-                    '&.Mui-focused': {
-                      borderColor: '#1976d2',
-                    },
-                  },
-                }}
               />
-            </Box>
-            <Box>
               <Button variant="outlined" startIcon={<RefreshCw />} onClick={refreshRequests}>
                 Refresh
               </Button>
@@ -540,7 +528,7 @@ export default function QuoteRequestsPage() {
             </Box>
           )}
 
-          <Box sx={{ px: { xs: 2, md: 4 } }}>
+          <Box sx={{ px: { xs: 2, md: 4 }, pb: 4 }}>
             {loading && (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
                 <CircularProgress />
@@ -573,9 +561,23 @@ export default function QuoteRequestsPage() {
                       <Table stickyHeader aria-label="quote requests table">
                         <MuiTableHead>
                           <TableRow sx={{ 
-                            backgroundColor: '#e0e0e0 !important',
+                            backgroundColor: '#e9e7e0 !important',
                             '& .MuiTableCell-root': {
-                              backgroundColor: '#e0e0e0 !important'
+                              backgroundColor: '#e9e7e0 !important',
+                              color: '#333333 !important',
+                              fontWeight: 600,
+                              '& .MuiTableSortLabel-root': {
+                                color: '#333333 !important',
+                                '&:hover': {
+                                  color: '#000000 !important'
+                                },
+                                '&.Mui-active': {
+                                  color: '#000000 !important'
+                                }
+                              },
+                              '& .MuiTableSortLabel-icon': {
+                                color: '#333333 !important'
+                              }
                             }
                           }}>
                             <TableCell>
@@ -757,7 +759,7 @@ export default function QuoteRequestsPage() {
 
         <TabPanel value={tabValue} index={1}>
           {/* Submit New Request Tab */}
-          <Box sx={{ px: 3 }}>
+          <Box sx={{ px: 3, pb: 4 }}>
             <Typography variant="h6" component="h2" sx={{ mb: 3 }}>
               Submit New Quote Request
             </Typography>

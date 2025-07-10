@@ -507,17 +507,32 @@ export const getQuoteById = async (quoteId: string) => {
 
 /**
  * Get all quotes from the quotes collection (with optional filtering)
+ * SECURITY: This function enforces strict user-based filtering to prevent data leaks
  */
 export const getAllQuotes = async (filters?: {
   operatorUserCode?: string;
+  clientUserCode?: string;
   requestId?: string;
   status?: OfferStatus;
 }) => {
   try {
+    // SECURITY CHECK: At least one user-specific filter must be provided
+    if (!filters?.operatorUserCode && !filters?.clientUserCode && !filters?.requestId) {
+      console.error('SECURITY ERROR: getAllQuotes called without user-specific filters');
+      throw new Error('Invalid request: User-specific filtering is required');
+    }
+
     let q = query(collection(db, 'quotes'), orderBy('createdAt', 'desc'));
 
+    // Apply user-specific filters first (SECURITY CRITICAL)
     if (filters?.operatorUserCode) {
+      console.log(`[SECURITY] Filtering quotes for operator: ${filters.operatorUserCode}`);
       q = query(q, where('operatorUserCode', '==', filters.operatorUserCode));
+    }
+
+    if (filters?.clientUserCode) {
+      console.log(`[SECURITY] Filtering quotes for client: ${filters.clientUserCode}`);
+      q = query(q, where('clientUserCode', '==', filters.clientUserCode));
     }
 
     if (filters?.requestId) {
@@ -529,10 +544,26 @@ export const getAllQuotes = async (filters?: {
     }
 
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => ({
+    const results = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
+
+    // ADDITIONAL SECURITY CHECK: Double-verify results on client side
+    const filteredResults = results.filter(quote => {
+      if (filters?.operatorUserCode && quote.operatorUserCode !== filters.operatorUserCode) {
+        console.error(`[SECURITY VIOLATION] Quote ${quote.id} operator mismatch: expected ${filters.operatorUserCode}, got ${quote.operatorUserCode}`);
+        return false;
+      }
+      if (filters?.clientUserCode && quote.clientUserCode !== filters.clientUserCode) {
+        console.error(`[SECURITY VIOLATION] Quote ${quote.id} client mismatch: expected ${filters.clientUserCode}, got ${quote.clientUserCode}`);
+        return false;
+      }
+      return true;
+    });
+
+    console.log(`[SECURITY] getAllQuotes returned ${filteredResults.length} quotes for filters:`, filters);
+    return filteredResults;
   } catch (error) {
     console.error('Error fetching quotes:', error);
     throw new Error('Failed to fetch quotes');

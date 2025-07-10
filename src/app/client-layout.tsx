@@ -25,7 +25,8 @@ export default function ClientLayout({
           <GoogleMapsProvider>
             <Box
               sx={{
-                minHeight: '100vh',
+                height: '100vh',
+                overflow: 'hidden',
                 bgcolor: 'background.default',
                 display: 'flex',
                 flexDirection: 'column',
@@ -38,6 +39,7 @@ export default function ClientLayout({
                   width: '100%',
                   flexGrow: 1,
                   pt: !isSideNavPage ? 8 : 0,
+                  overflowY: isSideNavPage ? 'hidden' : 'auto',
                 }}
               >
                 <Container maxWidth={false} disableGutters sx={{ py: 4 }}>
