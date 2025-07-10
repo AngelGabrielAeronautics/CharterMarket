@@ -238,6 +238,126 @@ service cloud.firestore {
                        (isOwnerByUserCode(resource.data.createdByUserCode) || isSuperAdmin());
     }
 
+    // MESSAGING SYSTEM COLLECTIONS
+    
+    // Helper function to check if user is participant in conversation
+    function isParticipant(participantUserCodes) {
+      return request.auth != null && 
+             request.auth.token.userCode in participantUserCodes;
+    }
+    
+    // Conversations collection - main conversation documents
+    match /conversations/{conversationId} {
+      // Allow read if user is a participant or is admin
+      allow read: if request.auth != null && 
+                     (isParticipant(resource.data.participantUserCodes) || isAdmin());
+      
+      // Allow create for authenticated users (conversation initiation)
+      allow create: if request.auth != null && 
+                       isParticipant(request.resource.data.participantUserCodes);
+      
+      // Allow update if user is participant or admin (for last message updates, etc.)
+      allow update: if request.auth != null && 
+                       (isParticipant(resource.data.participantUserCodes) || isAdmin()) &&
+                       (!isLocked(resource.data) || isSuperAdmin());
+      
+      // Allow delete only for admins or conversation creator
+      allow delete: if request.auth != null && 
+                       (isAdmin() || isOwnerByUserCode(resource.data.createdBy));
+    }
+    
+    // Messages subcollection - individual messages within conversations
+    match /conversations/{conversationId}/messages/{messageId} {
+      // Allow read if user is participant in the conversation or admin
+      allow read: if request.auth != null && 
+                     (isOwnerByUserCode(resource.data.senderId) || 
+                      exists(/databases/$(database)/documents/conversations/$(conversationId)) &&
+                      isParticipant(get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantUserCodes) ||
+                      isAdmin());
+      
+      // Allow create if user is participant in conversation
+      allow create: if request.auth != null && 
+                       request.auth.token.userCode == request.resource.data.senderId &&
+                       exists(/databases/$(database)/documents/conversations/$(conversationId)) &&
+                       isParticipant(get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantUserCodes);
+      
+      // Allow update if user is sender (for editing/read receipts) or admin
+      allow update: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.senderId) || isAdmin());
+      
+      // Allow delete if user is sender or admin (soft delete only)
+      allow delete: if request.auth != null && 
+                       (isOwnerByUserCode(resource.data.senderId) || isAdmin());
+    }
+    
+    // Conversation participant settings subcollection
+    match /conversations/{conversationId}/participants/{userCode} {
+      // Allow read if user owns the settings or is admin
+      allow read: if request.auth != null && 
+                     (isOwnerByUserCode(userCode) || isAdmin());
+      
+      // Allow create/update if user owns the settings
+      allow create, update: if request.auth != null && 
+                               isOwnerByUserCode(userCode);
+      
+      // Allow delete if user owns the settings or is admin
+      allow delete: if request.auth != null && 
+                       (isOwnerByUserCode(userCode) || isAdmin());
+    }
+    
+    // Typing indicators subcollection (temporary documents)
+    match /conversations/{conversationId}/typing/{userCode} {
+      // Allow read for all participants in the conversation
+      allow read: if request.auth != null && 
+                     exists(/databases/$(database)/documents/conversations/$(conversationId)) &&
+                     isParticipant(get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantUserCodes);
+      
+      // Allow create/update/delete if user owns the typing indicator
+      allow create, update, delete: if request.auth != null && 
+                                       isOwnerByUserCode(userCode);
+    }
+    
+    // Conversation summaries - denormalized data for user conversation lists
+    match /conversationSummaries/{userCode} {
+      // Allow read if user owns the summary or is admin
+      allow read: if request.auth != null && 
+                     (isOwnerByUserCode(userCode) || isAdmin());
+      
+      // Allow create/update for the user or system processes
+      allow create, update: if request.auth != null && 
+                               (isOwnerByUserCode(userCode) || isAdmin());
+      
+      // Allow delete only for admins
+      allow delete: if isAdmin();
+    }
+    
+    // External messages - email/WhatsApp integration tracking
+    match /externalMessages/{externalMessageId} {
+      // Allow read for admins and system processes
+      allow read: if isAdmin();
+      
+      // Allow create for system processes (webhook handlers)
+      allow create: if request.auth != null;
+      
+      // Allow update/delete for admins only
+      allow update, delete: if isAdmin();
+    }
+    
+    // Message attachments - file upload metadata
+    match /messageAttachments/{attachmentId} {
+      // Allow read if user has access to the related conversation
+      allow read: if request.auth != null && 
+                     (isOwnerByUserCode(resource.data.uploadedBy) || isAdmin());
+      
+      // Allow create if user is uploading the attachment
+      allow create: if request.auth != null && 
+                       request.auth.token.userCode == request.resource.data.uploadedBy;
+      
+      // Allow update/delete if user owns the attachment or is admin
+      allow update, delete: if request.auth != null && 
+                               (isOwnerByUserCode(resource.data.uploadedBy) || isAdmin());
+    }
+
     // All other documents - require authentication
     match /{document=**} {
       // Allow read/write if authenticated (fallback for any missed collections)

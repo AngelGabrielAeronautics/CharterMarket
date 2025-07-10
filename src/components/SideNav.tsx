@@ -55,6 +55,7 @@ import ReceiptIcon from '@mui/icons-material/Receipt';
 import PaymentIcon from '@mui/icons-material/Payment';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
+import MessageIcon from '@mui/icons-material/Message';
 import NotificationDropdown from './NotificationDropdown';
 import AccountDropdown from './AccountDropdown';
 import Logo from './Logo';
@@ -62,6 +63,8 @@ import Brightness7Icon from '@mui/icons-material/Brightness7';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Image from 'next/image';
 import { createPortal } from 'react-dom';
+import { useUnreadCount } from '@/hooks/useMessaging';
+import { Badge } from '@mui/material';
 
 interface NavItem {
   name: string;
@@ -141,6 +144,12 @@ const navigation: NavItem[] = [
         order: '1',
       },
     ],
+  },
+  {
+    name: 'Messages',
+    href: '/dashboard/messages',
+    icon: <MessageIcon />,
+    roles: ['passenger', 'operator', 'agent', 'admin', 'superAdmin'],
   },
   {
     name: 'Passengers',
@@ -258,6 +267,7 @@ export default function SideNav({
   const theme = useMuiTheme();
   const { isDarkMode, toggleTheme } = useTheme();
   const { logout, user, profile } = useAuth();
+  const { totalUnreadCount } = useUnreadCount();
   const activeItemRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -497,7 +507,25 @@ export default function SideNav({
                               : {}),
                           }}
                         >
-                          {item.icon}
+                          {item.name === 'Messages' && totalUnreadCount > 0 ? (
+                            <Badge
+                              badgeContent={totalUnreadCount > 99 ? '99+' : totalUnreadCount}
+                              color="error"
+                              max={99}
+                              sx={{
+                                '& .MuiBadge-badge': {
+                                  fontSize: '0.6rem',
+                                  height: '16px',
+                                  minWidth: '16px',
+                                  borderRadius: '8px',
+                                }
+                              }}
+                            >
+                              {item.icon}
+                            </Badge>
+                          ) : (
+                            item.icon
+                          )}
                         </ListItemIcon>
                         {!mini && (
                           <ListItemText

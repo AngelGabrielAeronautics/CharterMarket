@@ -5,7 +5,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 export interface EmailNotification {
   userId: string;
   userCode: string;
-  type: 'verification' | 'welcome' | 'password_reset' | 'quote_request' | 'booking_confirmation' | 'admin_invitation' | 'admin_approval' | 'admin_suspension' | 'admin_permissions' | 'admin_notification' | 'registration_reminder';
+  type: 'verification' | 'welcome' | 'password_reset' | 'quote_request' | 'booking_confirmation' | 'admin_invitation' | 'admin_approval' | 'admin_suspension' | 'admin_permissions' | 'admin_notification' | 'registration_reminder' | 'message_notification' | 'conversation_started' | 'message_digest';
   emailType: string;
   sentTo: string;
   sentAt: Date;

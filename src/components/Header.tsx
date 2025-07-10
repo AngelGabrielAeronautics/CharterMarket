@@ -20,6 +20,7 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
+  Badge,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
@@ -29,10 +30,12 @@ import PersonIcon from '@mui/icons-material/Person';
 import SettingsIcon from '@mui/icons-material/Settings';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import LogoutIcon from '@mui/icons-material/Logout';
+import MessageIcon from '@mui/icons-material/Message';
 import { useTheme as useCharterTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { useModal } from '@/contexts/ModalContext';
+import { useUnreadCount } from '@/hooks/useMessaging';
 import Logo from './Logo';
 
 export default function Header() {
@@ -41,6 +44,7 @@ export default function Header() {
   const { openRegisterModal, openLoginModal } = useModal();
   const { isDarkMode, toggleTheme } = useCharterTheme();
   const { user, profile, logout, loading } = useAuth();
+  const { totalUnreadCount } = useUnreadCount();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
@@ -119,18 +123,32 @@ export default function Header() {
           {!loading && profile ? (
             <>
               {/* Direct link to the user's dashboard */}
-              <Button
-                component={Link}
-                href="/dashboard"
-                color="inherit"
-                startIcon={<DashboardIcon />}
+              <Badge
+                badgeContent={totalUnreadCount > 0 ? totalUnreadCount : undefined}
+                color="error"
+                max={99}
                 sx={{
-                  textTransform: 'none',
-                  color: pathname === '/' && !isScrolled ? 'common.white' : 'inherit',
+                  '& .MuiBadge-badge': {
+                    fontSize: '0.6rem',
+                    height: '16px',
+                    minWidth: '16px',
+                    borderRadius: '8px',
+                  }
                 }}
               >
-                Dashboard
-              </Button>
+                <Button
+                  component={Link}
+                  href="/dashboard"
+                  color="inherit"
+                  startIcon={<DashboardIcon />}
+                  sx={{
+                    textTransform: 'none',
+                    color: pathname === '/' && !isScrolled ? 'common.white' : 'inherit',
+                  }}
+                >
+                  Dashboard
+                </Button>
+              </Badge>
               <Button
                 ref={anchorRef}
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -293,6 +311,42 @@ export default function Header() {
                               </ListItemIcon>
                               <ListItemText
                                 primary="User Profile"
+                                primaryTypographyProps={{
+                                  variant: 'body2',
+                                  color: 'text.primary',
+                                }}
+                              />
+                            </ListItem>
+                            
+                            <ListItem
+                              component={Link}
+                              href="/dashboard/messages"
+                              onClick={() => setIsDropdownOpen(false)}
+                              sx={{
+                                px: 2,
+                                py: 1.5,
+                                '&:hover': { bgcolor: 'action.hover' },
+                              }}
+                            >
+                              <ListItemIcon sx={{ minWidth: 40 }}>
+                                <Badge
+                                  badgeContent={totalUnreadCount > 0 ? totalUnreadCount : undefined}
+                                  color="error"
+                                  max={99}
+                                  sx={{
+                                    '& .MuiBadge-badge': {
+                                      fontSize: '0.5rem',
+                                      height: '14px',
+                                      minWidth: '14px',
+                                      borderRadius: '7px',
+                                    }
+                                  }}
+                                >
+                                  <MessageIcon fontSize="small" />
+                                </Badge>
+                              </ListItemIcon>
+                              <ListItemText
+                                primary="Messages"
                                 primaryTypographyProps={{
                                   variant: 'body2',
                                   color: 'text.primary',
