@@ -1962,14 +1962,28 @@ const QuoteRequestDetails: React.FC<QuoteRequestDetailsProps> = ({
               Aircraft Options
             </Typography>
             
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ ml: 1 }}>
-              <Box sx={{ width: { xs: '100%', sm: '33%' } }}>
+            <Stack 
+              direction={{ xs: 'column', sm: 'row' }} 
+              spacing={{ xs: 1, sm: 2 }} 
+              sx={{ 
+                ml: { xs: 0, sm: 1 },
+                gap: { xs: 1, sm: 2 }
+              }}
+            >
+              <Box sx={{ 
+                width: { xs: '100%', sm: '33%' },
+                minHeight: { xs: '44px', sm: 'auto' },
+                display: 'flex',
+                alignItems: 'center'
+              }}>
                 <Box sx={{ 
                   display: 'flex', 
                   alignItems: 'center', 
-                  gap: 1,
+                  gap: 1.5,
                   opacity: request.twinEngineMin ? 1 : 0.5,
-                  transition: 'opacity 0.2s ease'
+                  transition: 'opacity 0.2s ease',
+                  p: { xs: 1, sm: 0 },
+                  width: '100%'
                 }}>
                   {request.twinEngineMin ? (
                     <CheckCircleIcon sx={{ color: brandColors.primary }} fontSize="small" />
@@ -1991,13 +2005,20 @@ const QuoteRequestDetails: React.FC<QuoteRequestDetailsProps> = ({
                 </Box>
               </Box>
               
-              <Box sx={{ width: { xs: '100%', sm: '33%' } }}>
+              <Box sx={{ 
+                width: { xs: '100%', sm: '33%' },
+                minHeight: { xs: '44px', sm: 'auto' },
+                display: 'flex',
+                alignItems: 'center'
+              }}>
                 <Box sx={{ 
                   display: 'flex', 
                   alignItems: 'center', 
-                  gap: 1,
+                  gap: 1.5,
                   opacity: request.pressurisedCabin ? 1 : 0.5,
-                  transition: 'opacity 0.2s ease'
+                  transition: 'opacity 0.2s ease',
+                  p: { xs: 1, sm: 0 },
+                  width: '100%'
                 }}>
                   {request.pressurisedCabin ? (
                     <CheckCircleIcon sx={{ color: brandColors.primary }} fontSize="small" />
@@ -2019,13 +2040,20 @@ const QuoteRequestDetails: React.FC<QuoteRequestDetailsProps> = ({
                 </Box>
               </Box>
               
-              <Box sx={{ width: { xs: '100%', sm: '33%' } }}>
+              <Box sx={{ 
+                width: { xs: '100%', sm: '33%' },
+                minHeight: { xs: '44px', sm: 'auto' },
+                display: 'flex',
+                alignItems: 'center'
+              }}>
                 <Box sx={{ 
                   display: 'flex', 
                   alignItems: 'center', 
-                  gap: 1,
+                  gap: 1.5,
                   opacity: request.twoCrewMin ? 1 : 0.5,
-                  transition: 'opacity 0.2s ease'
+                  transition: 'opacity 0.2s ease',
+                  p: { xs: 1, sm: 0 },
+                  width: '100%'
                 }}>
                   {request.twoCrewMin ? (
                     <CheckCircleIcon sx={{ color: brandColors.primary }} fontSize="small" />

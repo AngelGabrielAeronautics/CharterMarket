@@ -10,63 +10,173 @@
     @apply bg-[var(--background)] text-[var(--foreground)] text-base leading-relaxed transition-colors duration-300;
     color: var(--foreground);
     background: var(--background);
+    /* Prevent text size adjust on mobile */
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
+  
+  /* Mobile-first responsive typography */
   h1 {
-    @apply text-5xl leading-tight tracking-tight font-bold text-[var(--primary)] dark:text-[var(--primary-foreground)] mb-6;
+    @apply text-3xl sm:text-4xl lg:text-5xl leading-tight tracking-tight font-bold text-[var(--primary)] dark:text-[var(--primary-foreground)] mb-4 sm:mb-6;
   }
   h2 {
-    @apply text-4xl leading-tight tracking-tight font-semibold text-[var(--primary)] dark:text-[var(--primary-foreground)] mb-4;
+    @apply text-2xl sm:text-3xl lg:text-4xl leading-tight tracking-tight font-semibold text-[var(--primary)] dark:text-[var(--primary-foreground)] mb-3 sm:mb-4;
   }
   h3 {
-    @apply text-3xl leading-snug tracking-tight font-semibold text-[var(--primary)] dark:text-[var(--primary-foreground)] mb-3;
+    @apply text-xl sm:text-2xl lg:text-3xl leading-snug tracking-tight font-semibold text-[var(--primary)] dark:text-[var(--primary-foreground)] mb-2 sm:mb-3;
   }
   h4 {
-    @apply text-2xl leading-snug tracking-tight font-medium text-[var(--primary)] dark:text-[var(--primary-foreground)] mb-2;
+    @apply text-lg sm:text-xl lg:text-2xl leading-snug tracking-tight font-medium text-[var(--primary)] dark:text-[var(--primary-foreground)] mb-2;
   }
   p {
-    @apply text-base leading-relaxed text-[var(--foreground)] mb-4;
+    @apply text-sm sm:text-base leading-relaxed text-[var(--foreground)] mb-3 sm:mb-4;
   }
   a {
-    @apply text-base leading-relaxed font-medium text-[var(--primary)] hover:text-primary-600 dark:text-[var(--primary)] dark:hover:text-primary-400 transition-colors duration-200;
+    @apply text-sm sm:text-base leading-relaxed font-medium text-[var(--primary)] hover:text-primary-600 dark:text-[var(--primary)] dark:hover:text-primary-400 transition-colors duration-200;
+    /* Enhanced touch targets for links */
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
   }
   button {
     @apply text-base leading-relaxed font-medium transition-colors duration-200;
+    /* Ensure minimum touch target */
+    min-height: 44px;
+    min-width: 44px;
   }
   label {
     @apply text-sm leading-relaxed font-medium block mb-1;
   }
   input, textarea, select {
     @apply text-base leading-relaxed;
+    /* Prevent zoom on iOS when font-size < 16px */
+    font-size: 16px;
   }
 }
 
 @layer components {
+  /* Enhanced button components with mobile-first approach */
   .btn-primary {
-    @apply bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--secondary)] dark:bg-[var(--primary)] dark:text-[var(--primary-foreground)] dark:hover:bg-[var(--secondary)] px-4 py-2 rounded-md transition-colors duration-200;
+    @apply bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--secondary)] dark:bg-[var(--primary)] dark:text-[var(--primary-foreground)] dark:hover:bg-[var(--secondary)] px-4 py-3 sm:py-2 rounded-md transition-colors duration-200;
+    min-height: 48px;
   }
   
   .btn-secondary {
-    @apply bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--accent)] dark:bg-[var(--secondary)] dark:text-[var(--secondary-foreground)] dark:hover:bg-[var(--accent)] px-4 py-2 rounded-md transition-colors duration-200;
+    @apply bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--accent)] dark:bg-[var(--secondary)] dark:text-[var(--secondary-foreground)] dark:hover:bg-[var(--accent)] px-4 py-3 sm:py-2 rounded-md transition-colors duration-200;
+    min-height: 48px;
   }
 
   .card {
-    @apply bg-[var(--card)] text-[var(--card-foreground)] rounded-lg shadow-md p-6;
+    @apply bg-[var(--card)] text-[var(--card-foreground)] rounded-lg shadow-md p-4 sm:p-6;
   }
 
   .input {
-    @apply bg-[var(--input)] border-[var(--border)] text-[var(--foreground)] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2 focus:ring-offset-[var(--background)];
+    @apply bg-[var(--input)] border-[var(--border)] text-[var(--foreground)] rounded-md px-3 py-3 sm:py-2 focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2 focus:ring-offset-[var(--background)];
+    min-height: 48px;
+    font-size: 16px; /* Prevent iOS zoom */
   }
 
+  /* Mobile-optimized text utilities */
   .text-caption {
     @apply text-xs leading-normal text-[var(--muted-foreground)];
   }
 
   .text-display {
-    @apply text-5xl leading-tight tracking-tight font-bold text-[var(--foreground)];
+    @apply text-3xl sm:text-4xl lg:text-5xl leading-tight tracking-tight font-bold text-[var(--foreground)];
   }
 
   .text-subtitle {
-    @apply text-lg leading-relaxed font-medium text-[var(--muted-foreground)];
+    @apply text-base sm:text-lg leading-relaxed font-medium text-[var(--muted-foreground)];
+  }
+  
+  /* Mobile-specific touch target utilities */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .touch-target-large {
+    min-height: 48px;
+    min-width: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Mobile-optimized spacing utilities */
+  .mobile-spacing {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  .mobile-gap {
+    @apply gap-3 sm:gap-4 lg:gap-6;
+  }
+  
+  /* Enhanced focus states for mobile accessibility */
+  .focus-enhanced {
+    @apply focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2 focus:ring-offset-[var(--background)];
+  }
+  
+  /* Mobile-first responsive grid utilities */
+  .responsive-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6;
+  }
+  
+  .responsive-flex {
+    @apply flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4;
+  }
+  
+  /* Mobile-optimized card layouts */
+  .mobile-card {
+    @apply bg-[var(--card)] text-[var(--card-foreground)] rounded-lg shadow-sm p-4 sm:p-6 transition-shadow duration-200 hover:shadow-md;
+  }
+  
+  /* Touch-friendly interactive elements */
+  .mobile-interactive {
+    @apply transition-all duration-200 hover:bg-opacity-80 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Mobile navigation utilities */
+  .mobile-nav-item {
+    @apply flex items-center gap-3 p-3 rounded-lg transition-colors duration-200 hover:bg-[var(--background)] focus:bg-[var(--background)] focus:outline-none;
+    min-height: 48px;
+  }
+  
+  /* Mobile form enhancements */
+  .mobile-form-group {
+    @apply space-y-2 sm:space-y-1;
+  }
+  
+  .mobile-form-row {
+    @apply flex flex-col sm:flex-row gap-3 sm:gap-4;
+  }
+  
+  /* Mobile typography scale */
+  .mobile-heading-primary {
+    @apply text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight;
+  }
+  
+  .mobile-heading-secondary {
+    @apply text-xl sm:text-2xl lg:text-3xl font-semibold leading-snug;
+  }
+  
+  .mobile-body-large {
+    @apply text-base sm:text-lg leading-relaxed;
+  }
+  
+  .mobile-body {
+    @apply text-sm sm:text-base leading-relaxed;
+  }
+  
+  .mobile-caption {
+    @apply text-xs sm:text-sm leading-normal;
   }
 }
 
@@ -84,6 +194,17 @@ html,
 body {
   height: 100%;
   width: 100%;
+}
+
+/* Mobile-specific scroll behavior */
+@media (max-width: 768px) {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* Animations - These are custom animations that aren't part of Material-UI */
@@ -135,7 +256,7 @@ body {
   animation: statusPulse 2s infinite;
 }
 
-/* Custom scrollbar styles */
+/* Enhanced scrollbar styles with mobile considerations */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -152,6 +273,14 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile-specific scrollbar (thinner) */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
 }
 
 /* For animated backgrounds */
@@ -394,5 +523,63 @@ body {
 /* Hide elements temporarily during PDF generation */
 .hidden-temp {
   display: none !important;
+}
+
+/* Mobile-optimized animation performance */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in,
+  .slide-in,
+  .status-pulse,
+  .animated-background,
+  .mobile-interactive {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Enhanced mobile animations */
+@keyframes mobileSlideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes mobileFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.mobile-slide-up {
+  animation: mobileSlideUp 0.3s ease-out;
+}
+
+.mobile-fade-in {
+  animation: mobileFadeIn 0.2s ease-in;
+}
+
+/* Touch feedback animations */
+@keyframes touchFeedback {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.touch-feedback:active {
+  animation: touchFeedback 0.1s ease-in-out;
 }
 

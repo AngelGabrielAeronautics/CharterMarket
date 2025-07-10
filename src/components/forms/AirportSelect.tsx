@@ -57,7 +57,7 @@ export function AirportSelect({
       name={name}
       label={label}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(e) => onChange(e.target.value as string)}
       options={options}
       required={required}
       isLoading={isLoading}

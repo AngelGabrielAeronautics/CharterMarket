@@ -112,28 +112,58 @@ export default function OfferCard({
         flexDirection: 'column',
         borderColor: offer.offerStatus === 'accepted-by-client' ? 'success.main' : 'divider',
         borderWidth: offer.offerStatus === 'accepted-by-client' ? 2 : 1,
+        // Enhanced mobile padding and spacing
+        p: { xs: 0, sm: 0 }
       }}
     >
-      <CardContent sx={{ flexGrow: 1 }}>
+      <CardContent sx={{ 
+        flexGrow: 1,
+        // Better mobile padding
+        p: { xs: 2, sm: 2, md: 3 },
+        '&:last-child': { pb: { xs: 2, sm: 2, md: 3 } }
+      }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
             <CircularProgress />
           </Box>
         ) : (
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            mb: 2,
+            // Better mobile spacing and wrapping
+            flexDirection: { xs: 'column', sm: 'row' },
+            textAlign: { xs: 'center', sm: 'left' },
+            gap: { xs: 1, sm: 0 }
+          }}>
             {operator?.photoURL ? (
               <Avatar 
                 src={operator.photoURL} 
                 alt={operator.companyName || operator.company || 'Operator Logo'}
-                sx={{ mr: 2, width: 40, height: 40 }}
+                sx={{ 
+                  mr: { xs: 0, sm: 2 }, 
+                  width: { xs: 48, sm: 40 }, 
+                  height: { xs: 48, sm: 40 },
+                  mb: { xs: 1, sm: 0 }
+                }}
               />
             ) : (
-              <Avatar sx={{ mr: 2, width: 40, height: 40, bgcolor: 'primary.main' }}>
+              <Avatar sx={{ 
+                mr: { xs: 0, sm: 2 }, 
+                width: { xs: 48, sm: 40 }, 
+                height: { xs: 48, sm: 40 }, 
+                bgcolor: 'primary.main',
+                mb: { xs: 1, sm: 0 }
+              }}>
                 {operator?.companyName?.charAt(0) || operator?.company?.charAt(0) || <Business />}
               </Avatar>
             )}
             <Box sx={{ flex: 1 }}>
-              <Typography variant="h6" component="div" sx={{ fontWeight: 'medium' }}>
+              <Typography variant="h6" component="div" sx={{ 
+                fontWeight: 'medium',
+                // Responsive font size for mobile
+                fontSize: { xs: '1rem', sm: '1.25rem' }
+              }}>
                 {operator?.companyName || operator?.company || `${operator?.firstName} ${operator?.lastName}` || 'Operator'}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -142,72 +172,139 @@ export default function OfferCard({
             </Box>
           </Box>
         )}
-        <Divider sx={{ my: 1.5 }} />
-        <Box
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', my: 2 }}
-        >
+        <Divider sx={{ my: { xs: 1.5, sm: 1.5 } }} />
+        
+        {/* Enhanced mobile pricing display */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: { xs: 'center', sm: 'space-between' }, 
+          alignItems: 'baseline', 
+          my: 2,
+          flexDirection: { xs: 'column', sm: 'row' },
+          textAlign: { xs: 'center', sm: 'left' },
+          gap: { xs: 0.5, sm: 0 }
+        }}>
           <Box>
-            <Typography variant="h5" component="p" sx={{ fontWeight: 'bold' }}>
+            <Typography variant="h5" component="p" sx={{ 
+              fontWeight: 'bold',
+              // Responsive font size for pricing
+              fontSize: { xs: '1.5rem', sm: '2rem' }
+            }}>
               {getCurrencySymbol(offer.currency || 'USD')}{(isClientView ? offer.totalPrice : offer.price).toFixed(2)}
-              <Typography component="span" variant="body2" sx={{ ml: 1, color: 'text.secondary' }}>
+              <Typography component="span" variant="body2" sx={{ 
+                ml: 1, 
+                color: 'text.secondary',
+                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+              }}>
                 {offer.currency || 'USD'}
               </Typography>
             </Typography>
             {isClientView && (
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" color="text.secondary" sx={{
+                fontSize: { xs: '0.7rem', sm: '0.75rem' }
+              }}>
                 (incl. 3% fee)
               </Typography>
             )}
           </Box>
         </Box>
 
-        {/* Additional offer info */}
+        {/* Additional offer info - better mobile spacing */}
         {offer.notes && (
           <Box sx={{ mb: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ 
+              fontStyle: 'italic',
+              fontSize: { xs: '0.875rem', sm: '0.875rem' },
+              lineHeight: { xs: 1.4, sm: 1.43 }
+            }}>
               "{offer.notes}"
             </Typography>
           </Box>
         )}
 
-        {/* Aircraft Information */}
+        {/* Aircraft Information - improved mobile layout */}
         {offer.aircraftDetails && (
           <Box sx={{ mb: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 'medium' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ 
+              mb: 1, 
+              fontWeight: 'medium',
+              fontSize: { xs: '0.875rem', sm: '0.875rem' }
+            }}>
               Aircraft
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-              <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+            {/* Stack registration and aircraft details vertically on mobile for better readability */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              flexDirection: { xs: 'column', sm: 'row' }, 
+              gap: { xs: 0.5, sm: 1 }, 
+              mb: 0.5 
+            }}>
+              <Typography variant="body2" sx={{ 
+                fontWeight: 'medium',
+                fontSize: { xs: '0.875rem', sm: '0.875rem' }
+              }}>
                 {offer.aircraftDetails.registration}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                - {offer.aircraftDetails.make} {offer.aircraftDetails.model}
+              <Typography variant="body2" color="text.secondary" sx={{
+                fontSize: { xs: '0.875rem', sm: '0.875rem' }
+              }}>
+                {/* Remove dash on mobile since it's stacked */}
+                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>- </Box>
+                {offer.aircraftDetails.make} {offer.aircraftDetails.model}
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Typography variant="caption" color="text.secondary">
+            {/* Better mobile layout for aircraft specs */}
+            <Box sx={{ 
+              display: 'flex', 
+              gap: { xs: 1, sm: 2 },
+              flexDirection: { xs: 'column', sm: 'row' }
+            }}>
+              <Typography variant="caption" color="text.secondary" sx={{
+                fontSize: { xs: '0.75rem', sm: '0.75rem' }
+              }}>
                 Type: {offer.aircraftDetails.type}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" color="text.secondary" sx={{
+                fontSize: { xs: '0.75rem', sm: '0.75rem' }
+              }}>
                 Max: {offer.aircraftDetails.maxPassengers} pax
               </Typography>
             </Box>
           </Box>
         )}
 
-        {/* Attachment info (for admin or operator view) */}
+        {/* Attachment info (for admin or operator view) - enhanced mobile layout */}
         {(showAdminInfo || !isClientView) && (
           <>
             {/* New multiple attachments */}
             {offer.attachments && offer.attachments.length > 0 && (
               <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 'medium' }}>
+                <Typography variant="body2" color="text.secondary" sx={{ 
+                  mb: 1, 
+                  fontWeight: 'medium',
+                  fontSize: { xs: '0.875rem', sm: '0.875rem' }
+                }}>
                   Attachments ({offer.attachments.length})
                 </Typography>
                 {offer.attachments.map((attachment, index) => (
-                  <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                  <Box key={index} sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 1, 
+                    mb: 0.5,
+                    // Better mobile touch targets
+                    p: { xs: 0.5, sm: 0 },
+                    borderRadius: { xs: 1, sm: 0 },
+                    '&:hover': {
+                      bgcolor: { xs: 'action.hover', sm: 'transparent' }
+                    }
+                  }}>
                     <AttachFile fontSize="small" color="primary" />
-                    <Typography variant="body2" color="primary" sx={{ fontSize: '0.875rem' }}>
+                    <Typography variant="body2" color="primary" sx={{ 
+                      fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                      lineHeight: 1.4
+                    }}>
                       {attachment.fileName}
                     </Typography>
                   </Box>
@@ -217,9 +314,22 @@ export default function OfferCard({
             
             {/* Legacy single attachment (for backward compatibility) */}
             {!offer.attachments && offer.attachmentUrl && (
-              <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ 
+                mb: 2, 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                // Better mobile touch targets
+                p: { xs: 0.5, sm: 0 },
+                borderRadius: { xs: 1, sm: 0 },
+                '&:hover': {
+                  bgcolor: { xs: 'action.hover', sm: 'transparent' }
+                }
+              }}>
                 <AttachFile fontSize="small" color="primary" />
-                <Typography variant="body2" color="primary">
+                <Typography variant="body2" color="primary" sx={{
+                  fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                }}>
                   {offer.attachmentFileName || 'Attachment Available'}
                 </Typography>
               </Box>
@@ -231,11 +341,23 @@ export default function OfferCard({
           label={config.label}
           color={config.color}
           size="small"
-          sx={{ width: '100%' }}
+          sx={{ 
+            width: '100%',
+            // Enhanced mobile touch targets and spacing
+            height: { xs: 36, sm: 32 },
+            fontSize: { xs: '0.8rem', sm: '0.75rem' },
+            '& .MuiChip-icon': {
+              fontSize: { xs: '1rem', sm: '0.875rem' }
+            }
+          }}
         />
       </CardContent>
       {isClientView && (
-        <CardActions sx={{ justifyContent: 'center', p: 2 }}>
+        <CardActions sx={{ 
+          justifyContent: 'center', 
+          p: { xs: 2, sm: 2 },
+          pt: { xs: 0, sm: 0 }
+        }}>
           <Button
             variant="contained"
             color="primary"
@@ -244,6 +366,12 @@ export default function OfferCard({
             disabled={
               isAccepting || offer.offerStatus !== 'pending-client-acceptance' || isRequestBooked
             }
+            sx={{
+              // Enhanced mobile touch targets
+              height: { xs: 48, sm: 36 },
+              fontSize: { xs: '0.95rem', sm: '0.875rem' },
+              fontWeight: 'medium'
+            }}
           >
             {isAccepting ? 'Processing...' : 'Accept Offer'}
           </Button>

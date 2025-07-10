@@ -754,27 +754,60 @@ export default function BookingForm() {
               onChange={(_, val) => {
                 if (val) handleFlightTypeChange(val as FlightType);
               }}
-              sx={{ display: 'flex', justifyContent: 'flex-start', gap: 1 }}
+              sx={{ 
+                display: 'flex', 
+                flexDirection: { xs: 'column', sm: 'row' },
+                justifyContent: 'flex-start', 
+                gap: { xs: 1, sm: 1 },
+                width: { xs: '100%', sm: 'auto' }
+              }}
             >
               <ToggleButton
                 value="one-way"
-                sx={{ textTransform: 'none', fontFamily: 'inherit', borderRadius: 1, px: 2 }}
+                sx={{ 
+                  textTransform: 'none', 
+                  fontFamily: 'inherit', 
+                  borderRadius: 1, 
+                  px: { xs: 3, sm: 2 },
+                  py: { xs: 1.5, sm: 1 },
+                  minHeight: { xs: '48px', sm: 'auto' },
+                  flex: { xs: 1, sm: 'none' },
+                  justifyContent: { xs: 'flex-start', sm: 'center' }
+                }}
               >
-                <ArrowForwardIcon />
+                <ArrowForwardIcon fontSize="small" />
                 <Typography sx={{ ml: 1, fontFamily: 'inherit' }}>One Way</Typography>
               </ToggleButton>
               <ToggleButton
                 value="return"
-                sx={{ textTransform: 'none', fontFamily: 'inherit', borderRadius: 1, px: 2 }}
+                sx={{ 
+                  textTransform: 'none', 
+                  fontFamily: 'inherit', 
+                  borderRadius: 1, 
+                  px: { xs: 3, sm: 2 },
+                  py: { xs: 1.5, sm: 1 },
+                  minHeight: { xs: '48px', sm: 'auto' },
+                  flex: { xs: 1, sm: 'none' },
+                  justifyContent: { xs: 'flex-start', sm: 'center' }
+                }}
               >
-                <SwapHorizIcon />
+                <SwapHorizIcon fontSize="small" />
                 <Typography sx={{ ml: 1, fontFamily: 'inherit' }}>Return</Typography>
               </ToggleButton>
               <ToggleButton
                 value="multicity"
-                sx={{ textTransform: 'none', fontFamily: 'inherit', borderRadius: 1, px: 2 }}
+                sx={{ 
+                  textTransform: 'none', 
+                  fontFamily: 'inherit', 
+                  borderRadius: 1, 
+                  px: { xs: 3, sm: 2 },
+                  py: { xs: 1.5, sm: 1 },
+                  minHeight: { xs: '48px', sm: 'auto' },
+                  flex: { xs: 1, sm: 'none' },
+                  justifyContent: { xs: 'flex-start', sm: 'center' }
+                }}
               >
-                <MultipleStopIcon />
+                <MultipleStopIcon fontSize="small" />
                 <Typography sx={{ ml: 1, fontFamily: 'inherit' }}>Multi-city</Typography>
               </ToggleButton>
             </ToggleButtonGroup>
@@ -811,21 +844,29 @@ export default function BookingForm() {
               )}
 
               <Box
-                sx={{ display: 'flex', flexWrap: 'nowrap', gap: 2, mb: 2, alignItems: 'center' }}
+                sx={{ 
+                  display: 'flex', 
+                  flexDirection: { xs: 'column', md: 'row' },
+                  flexWrap: { xs: 'wrap', md: 'nowrap' },
+                  gap: { xs: 1.5, md: 2 }, 
+                  mb: 2, 
+                  alignItems: { xs: 'stretch', md: 'center' }
+                }}
               >
                 {/* From Airport */}
                 <Box
                   sx={{
-                    flex: 1.5,
+                    flex: { xs: '1 1 100%', md: '1.5 1 0' },
                     minWidth: 0,
-                    // Square right corners for the From field
+                    order: { xs: 1, md: 1 },
+                    // Square right corners for the From field on desktop only
                     '& .MuiOutlinedInput-root': {
-                      borderTopRightRadius: 0,
-                      borderBottomRightRadius: 0,
+                      borderTopRightRadius: { xs: 1, md: 0 },
+                      borderBottomRightRadius: { xs: 1, md: 0 },
                     },
                     '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
-                      borderTopRightRadius: 0,
-                      borderBottomRightRadius: 0,
+                      borderTopRightRadius: { xs: 1, md: 0 },
+                      borderBottomRightRadius: { xs: 1, md: 0 },
                     },
                     '& .MuiOutlinedInput-input': {
                       paddingTop: '14px',
@@ -834,7 +875,7 @@ export default function BookingForm() {
                   }}
                 >
                   <AirportSelect
-                    label=""
+                    label="From"
                     value={leg.from}
                     onChange={(value: string) => updateLeg(index, 'from', value)}
                     disabled={formState.flightType === 'multicity' && index > 0}
@@ -845,16 +886,19 @@ export default function BookingForm() {
 
                 {/* To Airport */}
                 <Box sx={{ 
-                  flex: 1.5, 
-                  minWidth: 0, 
-                  '& .MuiOutlinedInput-root': { borderRadius: 0 },
+                  flex: { xs: '1 1 100%', md: '1.5 1 0' },
+                  minWidth: 0,
+                  order: { xs: 2, md: 2 },
+                  '& .MuiOutlinedInput-root': { 
+                    borderRadius: { xs: 1, md: 0 } 
+                  },
                   '& .MuiOutlinedInput-input': {
                     paddingTop: '14px',
                     paddingBottom: '14px',
                   },
                 }}>
                   <AirportSelect
-                    label=""
+                    label="To"
                     value={leg.to}
                     onChange={(value: string) => updateLeg(index, 'to', value)}
                     error={undefined}
@@ -864,16 +908,19 @@ export default function BookingForm() {
 
                 {/* Departure Date & Time */}
                 <Box sx={{ 
-                  flex: 1, 
-                  minWidth: 0, 
-                  '& .MuiOutlinedInput-root': { borderRadius: 0 },
+                  flex: { xs: '1 1 100%', md: '1 1 0' },
+                  minWidth: 0,
+                  order: { xs: 3, md: 3 },
+                  '& .MuiOutlinedInput-root': { 
+                    borderRadius: { xs: 1, md: 0 } 
+                  },
                   '& .MuiOutlinedInput-input': {
                     paddingTop: '10px',
                     paddingBottom: '8px',
                   },
                 }}>
                   <CustomDateTimePicker
-                    label=""
+                    label="Departure"
                     value={leg.departureDate}
                     onChange={(newDate) => updateLegDateTime(index, newDate)}
                     minDate={
@@ -898,9 +945,12 @@ export default function BookingForm() {
                 {formState.flightType === 'return' && index === 0 && (
                   <Box
                     sx={{ 
-                      flex: 1, 
-                      minWidth: 0, 
-                      '& .MuiOutlinedInput-root': { borderRadius: 0 },
+                      flex: { xs: '1 1 100%', md: '1 1 0' },
+                      minWidth: 0,
+                      order: { xs: 4, md: 4 },
+                      '& .MuiOutlinedInput-root': { 
+                        borderRadius: { xs: 1, md: 0 } 
+                      },
                       '& .MuiOutlinedInput-input': {
                         paddingTop: '14px',
                         paddingBottom: '14px',
@@ -908,7 +958,7 @@ export default function BookingForm() {
                     }}
                   >
                     <CustomDateTimePicker
-                      label=""
+                      label="Return"
                       value={formState.returnDate}
                       onChange={updateReturnDateTime}
                       minDate={formState.legs[0]?.departureDate || new Date()}
@@ -927,16 +977,17 @@ export default function BookingForm() {
                   index === 0 && (
                     <Box
                       sx={{
-                        flex: 0.7,
+                        flex: { xs: '1 1 100%', md: '0.7 1 0' },
                         minWidth: 0,
-                        // Square left corners of the passenger field
+                        order: { xs: 5, md: 5 },
+                        // Square left corners of the passenger field on desktop only
                         '& .MuiOutlinedInput-root': {
-                          borderTopLeftRadius: 0,
-                          borderBottomLeftRadius: 0,
+                          borderTopLeftRadius: { xs: 1, md: 0 },
+                          borderBottomLeftRadius: { xs: 1, md: 0 },
                         },
                         '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
-                          borderTopLeftRadius: 0,
-                          borderBottomLeftRadius: 0,
+                          borderTopLeftRadius: { xs: 1, md: 0 },
+                          borderBottomLeftRadius: { xs: 1, md: 0 },
                         },
                         '& .MuiOutlinedInput-input': {
                           paddingTop: '14px',
@@ -946,10 +997,11 @@ export default function BookingForm() {
                     >
                       <TextField
                         id="global-passengers"
+                        label="Passengers"
                         autoComplete="off"
                         name="passengers"
                         value={formState.passengers > 0 ? formState.passengers : ''}
-                        placeholder="-"
+                        placeholder="1"
                         onChange={(e) => {
                           const val = parseInt(e.target.value);
                           if (!isNaN(val) && val >= 1 && val <= 300) {
@@ -964,20 +1016,32 @@ export default function BookingForm() {
                           ),
                           endAdornment: (
                             <InputAdornment position="end">
-                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                              <Box sx={{ 
+                                display: 'flex', 
+                                flexDirection: { xs: 'row', md: 'column' },
+                                gap: { xs: 0.5, md: 0.25 }
+                              }}>
                                 <IconButton
                                   onClick={() => incrementPassengers()}
                                   disabled={formState.passengers >= 300}
                                   size="small"
+                                  sx={{ 
+                                    minWidth: { xs: '32px', md: 'auto' },
+                                    minHeight: { xs: '32px', md: 'auto' }
+                                  }}
                                 >
-                                  <AddIcon />
+                                  <AddIcon fontSize="small" />
                                 </IconButton>
                                 <IconButton
                                   onClick={() => decrementPassengers()}
                                   disabled={formState.passengers <= 1}
                                   size="small"
+                                  sx={{ 
+                                    minWidth: { xs: '32px', md: 'auto' },
+                                    minHeight: { xs: '32px', md: 'auto' }
+                                  }}
                                 >
-                                  <RemoveIcon />
+                                  <RemoveIcon fontSize="small" />
                                 </IconButton>
                               </Box>
                             </InputAdornment>
@@ -994,16 +1058,17 @@ export default function BookingForm() {
                 {formState.flightType === 'multicity' && (
                   <Box
                     sx={{
-                      flex: 0.7,
+                      flex: { xs: '1 1 100%', md: '0.7 1 0' },
                       minWidth: 0,
-                      // Square left corners of the per-leg passenger field
+                      order: { xs: 5, md: 5 },
+                      // Square left corners of the per-leg passenger field on desktop only
                       '& .MuiOutlinedInput-root': {
-                        borderTopLeftRadius: 0,
-                        borderBottomLeftRadius: 0,
+                        borderTopLeftRadius: { xs: 1, md: 0 },
+                        borderBottomLeftRadius: { xs: 1, md: 0 },
                       },
                       '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
-                        borderTopLeftRadius: 0,
-                        borderBottomLeftRadius: 0,
+                        borderTopLeftRadius: { xs: 1, md: 0 },
+                        borderBottomLeftRadius: { xs: 1, md: 0 },
                       },
                       '& .MuiOutlinedInput-input': {
                         paddingTop: '14px',
@@ -1013,10 +1078,11 @@ export default function BookingForm() {
                   >
                     <TextField
                       id={`leg-${index}-passengers`}
+                      label="Passengers"
                       autoComplete="off"
                       name={`leg${index}Passengers`}
                       value={leg.passengers > 0 ? leg.passengers : ''}
-                      placeholder="-"
+                      placeholder="1"
                       onChange={(e) => {
                         const val = parseInt(e.target.value);
                         if (!isNaN(val) && val >= 1 && val <= 300) {
@@ -1031,20 +1097,32 @@ export default function BookingForm() {
                         ),
                         endAdornment: (
                           <InputAdornment position="end">
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                            <Box sx={{ 
+                              display: 'flex', 
+                              flexDirection: { xs: 'row', md: 'column' },
+                              gap: { xs: 0.5, md: 0.25 }
+                            }}>
                               <IconButton
                                 onClick={() => incrementPassengers(index)}
                                 disabled={leg.passengers >= 300}
                                 size="small"
+                                sx={{ 
+                                  minWidth: { xs: '32px', md: 'auto' },
+                                  minHeight: { xs: '32px', md: 'auto' }
+                                }}
                               >
-                                <AddIcon />
+                                <AddIcon fontSize="small" />
                               </IconButton>
                               <IconButton
                                 onClick={() => decrementPassengers(index)}
                                 disabled={leg.passengers <= 1}
                                 size="small"
+                                sx={{ 
+                                  minWidth: { xs: '32px', md: 'auto' },
+                                  minHeight: { xs: '32px', md: 'auto' }
+                                }}
                               >
-                                <RemoveIcon />
+                                <RemoveIcon fontSize="small" />
                               </IconButton>
                             </Box>
                           </InputAdornment>
@@ -1116,37 +1194,70 @@ export default function BookingForm() {
                   <FlightTakeoffIcon fontSize="small" />
                   Aircraft Options
                 </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: { xs: 'column', md: 'row' },
+                  flexWrap: 'wrap', 
+                  gap: { xs: 1, md: 2 }, 
+                  mb: 2 
+                }}>
                   <FormControlLabel
                     control={
                       <Checkbox
                         checked={formState.twinEngineMin}
                         onChange={handleCheckboxChange('twinEngineMin')}
+                        sx={{ 
+                          '&.Mui-checked': { 
+                            color: 'primary.main' 
+                          } 
+                        }}
                       />
                     }
                     label={
                       <Typography sx={{ fontFamily: 'inherit' }}>Twin Engine Minimum</Typography>
                     }
+                    sx={{ 
+                      mr: { xs: 0, md: 2 },
+                      minHeight: { xs: '44px', md: 'auto' }
+                    }}
                   />
                   <FormControlLabel
                     control={
                       <Checkbox
                         checked={formState.pressurisedCabin}
                         onChange={handleCheckboxChange('pressurisedCabin')}
+                        sx={{ 
+                          '&.Mui-checked': { 
+                            color: 'primary.main' 
+                          } 
+                        }}
                       />
                     }
                     label={
                       <Typography sx={{ fontFamily: 'inherit' }}>Pressurised Cabin</Typography>
                     }
+                    sx={{ 
+                      mr: { xs: 0, md: 2 },
+                      minHeight: { xs: '44px', md: 'auto' }
+                    }}
                   />
                   <FormControlLabel
                     control={
                       <Checkbox
                         checked={formState.twoCrewMin}
                         onChange={handleCheckboxChange('twoCrewMin')}
+                        sx={{ 
+                          '&.Mui-checked': { 
+                            color: 'primary.main' 
+                          } 
+                        }}
                       />
                     }
                     label={<Typography sx={{ fontFamily: 'inherit' }}>Two Crew Minimum</Typography>}
+                    sx={{ 
+                      mr: { xs: 0, md: 2 },
+                      minHeight: { xs: '44px', md: 'auto' }
+                    }}
                   />
                 </Box>
 
@@ -1164,35 +1275,68 @@ export default function BookingForm() {
                   <LuggageIcon fontSize="small" />
                   Baggage Options
                 </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: { xs: 'column', md: 'row' },
+                  flexWrap: 'wrap', 
+                  gap: { xs: 1, md: 2 }, 
+                  mb: 2 
+                }}>
                   <FormControlLabel
                     control={
                       <Checkbox
                         checked={formState.hasExtraBaggage}
                         onChange={handleCheckboxChange('hasExtraBaggage')}
+                        sx={{ 
+                          '&.Mui-checked': { 
+                            color: 'primary.main' 
+                          } 
+                        }}
                       />
                     }
                     label={<Typography sx={{ fontFamily: 'inherit' }}>Extra Baggage</Typography>}
+                    sx={{ 
+                      mr: { xs: 0, md: 2 },
+                      minHeight: { xs: '44px', md: 'auto' }
+                    }}
                   />
                   <FormControlLabel
                     control={
                       <Checkbox
                         checked={formState.hasPets}
                         onChange={handleCheckboxChange('hasPets')}
+                        sx={{ 
+                          '&.Mui-checked': { 
+                            color: 'primary.main' 
+                          } 
+                        }}
                       />
                     }
                     label={
                       <Typography sx={{ fontFamily: 'inherit' }}>Traveling with Pets</Typography>
                     }
+                    sx={{ 
+                      mr: { xs: 0, md: 2 },
+                      minHeight: { xs: '44px', md: 'auto' }
+                    }}
                   />
                   <FormControlLabel
                     control={
                       <Checkbox
                         checked={formState.hasHardBags}
                         onChange={handleCheckboxChange('hasHardBags')}
+                        sx={{ 
+                          '&.Mui-checked': { 
+                            color: 'primary.main' 
+                          } 
+                        }}
                       />
                     }
                     label={<Typography sx={{ fontFamily: 'inherit' }}>Hard Bags</Typography>}
+                    sx={{ 
+                      mr: { xs: 0, md: 2 },
+                      minHeight: { xs: '44px', md: 'auto' }
+                    }}
                   />
                 </Box>
                 {/* Conditional Baggage fields */}

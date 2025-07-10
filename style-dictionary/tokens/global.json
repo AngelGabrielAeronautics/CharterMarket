@@ -17,19 +17,43 @@
     "1": { "value": "4px" },
     "2": { "value": "8px" },
     "3": { "value": "16px" },
-    "4": { "value": "24px" }
+    "4": { "value": "24px" },
+    "5": { "value": "32px" },
+    "6": { "value": "48px" },
+    "8": { "value": "64px" },
+    "mobile": {
+      "xs": { "value": "8px" },
+      "sm": { "value": "12px" },
+      "md": { "value": "16px" },
+      "lg": { "value": "20px" },
+      "xl": { "value": "24px" }
+    }
+  },
+  "touchTarget": {
+    "min": { "value": "44px" },
+    "recommended": { "value": "48px" },
+    "large": { "value": "56px" }
   },
   "borderRadius": {
     "sm": { "value": "2px" },
     "md": { "value": "4px" },
-    "lg": { "value": "4px" },
+    "lg": { "value": "8px" },
+    "xl": { "value": "12px" },
     "full": { "value": "9999px" }
   },
   "fontSize": {
+    "xs": { "value": "0.75rem" },
     "sm": { "value": "0.875rem" },
     "base": { "value": "1rem" },
     "lg": { "value": "1.25rem" },
-    "xl": { "value": "1.5rem" }
+    "xl": { "value": "1.5rem" },
+    "2xl": { "value": "2rem" },
+    "mobile": {
+      "body": { "value": "16px" },
+      "button": { "value": "16px" },
+      "input": { "value": "16px" },
+      "small": { "value": "14px" }
+    }
   },
   "shadow": {
     "soft": { "value": "0px 1px 3px rgba(0,0,0,0.12), 0px 1px 2px rgba(0,0,0,0.24)" },
@@ -39,9 +63,22 @@
     "medium": { "value": "0px 4px 8px rgba(0,0,0,0.15), 0px 2px 4px rgba(0,0,0,0.12)" },
     "heavy": {
       "value": "0px 8px 16px rgba(0,0,0,0.20), 0px 4px 8px rgba(0,0,0,0.14), 0px 2px 4px rgba(0,0,0,0.12)"
+    },
+    "mobile": {
+      "card": { "value": "0px 2px 8px rgba(0,0,0,0.1)" },
+      "button": { "value": "0px 1px 4px rgba(0,0,0,0.1)" }
     }
   },
   "lineHeight": {
-    "base": { "value": "1.5" }
+    "base": { "value": "1.5" },
+    "tight": { "value": "1.25" },
+    "relaxed": { "value": "1.6" }
+  },
+  "breakpoints": {
+    "xs": { "value": "0px" },
+    "sm": { "value": "600px" },
+    "md": { "value": "900px" },
+    "lg": { "value": "1200px" },
+    "xl": { "value": "1536px" }
   }
 }
