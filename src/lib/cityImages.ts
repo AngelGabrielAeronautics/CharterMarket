@@ -1,8 +1,7 @@
 import { Airport } from '@/types/airport';
+import { placeholders } from '@/utils/placeholder-utils';
 
 const UNSPLASH_ACCESS_KEY = process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY;
-const DEFAULT_FALLBACK_IMAGE_URL =
-  'https://images.unsplash.com/photo-1559670176-afe7c85994ba?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800'; // A generic airport/travel image
 
 // Collection of curated high-quality cityscape images
 const CURATED_CITY_IMAGES: Record<string, string> = {
@@ -48,7 +47,7 @@ const STYLIZED_COLLECTIONS = [
 
 // This function gets a city image from the Unsplash API based on the city name
 export const getCityImageUrl = async (city: string, country: string): Promise<string> => {
-  if (!city) return DEFAULT_FALLBACK_IMAGE_URL;
+  if (!city) return placeholders.city('Default City');
   
   // First check if we have a curated image for this city
   const cityLower = city.toLowerCase();
@@ -57,8 +56,8 @@ export const getCityImageUrl = async (city: string, country: string): Promise<st
   }
 
   if (!UNSPLASH_ACCESS_KEY) {
-    console.warn('Unsplash Access Key is not configured. Returning default fallback image.');
-    return DEFAULT_FALLBACK_IMAGE_URL;
+    console.warn('Unsplash Access Key is not configured. Using placeholder image.');
+    return placeholders.city(city);
   }
 
   // Get a random collection ID for variety
@@ -111,7 +110,7 @@ export const getCityImageUrl = async (city: string, country: string): Promise<st
       );
       const errorData = await response.json();
       console.error('Unsplash error details:', errorData);
-      return DEFAULT_FALLBACK_IMAGE_URL;
+      return placeholders.city(city);
     }
 
     data = await response.json();
@@ -138,7 +137,7 @@ export const getCityImageUrl = async (city: string, country: string): Promise<st
     });
 
     if (!response.ok) {
-      return DEFAULT_FALLBACK_IMAGE_URL;
+      return placeholders.city(city);
     }
 
     data = await response.json();
@@ -154,26 +153,26 @@ export const getCityImageUrl = async (city: string, country: string): Promise<st
 
     // Final fallback
     console.warn(
-      `No Unsplash image found for query: ${city}, ${country}. Returning default fallback.`
+      `No Unsplash image found for query: ${city}, ${country}. Using placeholder.`
     );
-    return DEFAULT_FALLBACK_IMAGE_URL;
+    return placeholders.city(city);
   } catch (error) {
     console.error('Error fetching city image from Unsplash:', error);
-    return DEFAULT_FALLBACK_IMAGE_URL;
+    return placeholders.city(city);
   }
 };
 
 // Asynchronously gets the image URL, to be used in components that can handle async operations for setting state.
 export const getCityImageUrlWithFallback = async (airport: Airport | null): Promise<string> => {
   if (!airport || !airport.city || !airport.country) {
-    // console.warn('Airport details incomplete for image fetching. Returning default fallback.');
-    return DEFAULT_FALLBACK_IMAGE_URL;
+    // console.warn('Airport details incomplete for image fetching. Using placeholder.');
+    return placeholders.city('Default City');
   }
 
   try {
     return await getCityImageUrl(airport.city, airport.country);
   } catch (error) {
     // Error is already logged in getCityImageUrl
-    return DEFAULT_FALLBACK_IMAGE_URL;
+    return placeholders.city(airport.city);
   }
 };

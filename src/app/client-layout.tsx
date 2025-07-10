@@ -18,6 +18,10 @@ export default function ClientLayout({
   // Hide TopNavBar on pages that use SideNav (dashboard and admin dashboard)
   const isSideNavPage =
     pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin/dashboard');
+  
+  // Homepage should have no container padding for edge-to-edge hero
+  const isHomePage = pathname === '/';
+  
   return (
     <CookiesProvider>
       <AuthProvider>
@@ -38,11 +42,15 @@ export default function ClientLayout({
                 sx={{
                   width: '100%',
                   flexGrow: 1,
-                  pt: !isSideNavPage ? 8 : 0,
+                  pt: !isSideNavPage ? { xs: 8, sm: 10, md: 12 } : 0,
                   overflowY: isSideNavPage ? 'hidden' : 'auto',
                 }}
               >
-                <Container maxWidth={false} disableGutters sx={{ py: 4 }}>
+                <Container 
+                  maxWidth={false} 
+                  disableGutters 
+                  sx={{ py: isHomePage ? 0 : 4 }} // No padding on homepage
+                >
                   {children}
                 </Container>
               </Box>

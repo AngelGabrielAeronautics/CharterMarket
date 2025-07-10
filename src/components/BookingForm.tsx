@@ -172,6 +172,7 @@ export default function BookingForm() {
   const { user, userRole } = useAuth();
   const { openLoginModal, openRegisterModal } = useModal();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   // Form state
   const [formState, setFormState] = useState<FormState>(initialFormState);
@@ -179,6 +180,11 @@ export default function BookingForm() {
   // UI state
   const [operatorModalOpen, setOperatorModalOpen] = useState(false);
   const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
+
+  // Set mounted flag to prevent hydration mismatches
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Effect to manage date range error toast
   useEffect(() => {
@@ -713,7 +719,7 @@ export default function BookingForm() {
         : formState.passengers > 0)
   );
   useEffect(() => {
-    if (user) {
+    if (user && mounted) {
       const draft = getDraftFromLocalStorage();
       if (draft) {
         const revived = reviveDraft(draft);
@@ -722,7 +728,7 @@ export default function BookingForm() {
         handleSubmit(new Event('submit') as any);
       }
     }
-  }, [user]);
+  }, [user, mounted]);
 
   return (
     <>

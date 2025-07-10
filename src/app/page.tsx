@@ -20,6 +20,7 @@ import {
   Divider,
   InputAdornment,
   styled,
+  CircularProgress,
 } from '@mui/material';
 import type { GridProps as MuiGridProps } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -111,17 +112,17 @@ const BRAND_COLORS = {
 const destinations = [
   {
     name: 'Cape Town',
-    image: `${PLACEHOLDER_BASE}/800x1200/1A2B3C/FFFFFF?text=Cape+Town`,
+    image: '/images/destinations/cape-town.jpg',
     description: 'Experience the Mother City',
   },
   {
     name: 'Johannesburg',
-    image: `${PLACEHOLDER_BASE}/800x1200/1A2B3C/FFFFFF?text=Johannesburg`,
+    image: '/images/destinations/johannesburg.jpg',
     description: 'The City of Gold',
   },
   {
     name: 'Durban',
-    image: `${PLACEHOLDER_BASE}/800x1200/1A2B3C/FFFFFF?text=Durban`,
+    image: '/images/destinations/durban.jpg',
     description: 'The Warmest Place to Be',
   },
 ];
@@ -129,22 +130,22 @@ const destinations = [
 const aircraft = [
   {
     name: 'Light Jets',
-    image: `${PLACEHOLDER_BASE}/600x400/1A2B3C/FFFFFF?text=Light+Jets`,
+    image: '/images/aircraft/light-jets.jpg',
     description: 'Perfect for short trips',
   },
   {
     name: 'Midsize Jets',
-    image: `${PLACEHOLDER_BASE}/600x400/1A2B3C/FFFFFF?text=Midsize+Jets`,
+    image: '/images/aircraft/midsize-jets.jpg',
     description: 'Ideal for regional flights',
   },
   {
     name: 'Heavy Jets',
-    image: `${PLACEHOLDER_BASE}/600x400/1A2B3C/FFFFFF?text=Heavy+Jets`,
+    image: '/images/aircraft/heavy-jets.jpg',
     description: 'Long-range luxury',
   },
   {
     name: 'VIP Airliners',
-    image: `${PLACEHOLDER_BASE}/600x400/1A2B3C/FFFFFF?text=VIP+Airliners`,
+    image: '/images/aircraft/vip-airliners.jpg',
     description: 'Ultimate luxury travel',
   },
 ];
@@ -315,6 +316,86 @@ const EmptyLegCard: React.FC<{ leg: EmptyLeg }> = ({ leg }) => {
   );
 };
 
+// Image component with fallback
+const ImageWithFallback: React.FC<{
+  src: string;
+  alt: string;
+  fallbackText: string;
+  className?: string;
+  style?: React.CSSProperties;
+}> = ({ src, alt, fallbackText, className, style }) => {
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const handleError = () => {
+    setHasError(true);
+    setIsLoading(false);
+  };
+
+  const handleLoad = () => {
+    setIsLoading(false);
+  };
+
+  if (hasError) {
+    return (
+      <Box
+        className={className}
+        sx={{
+          ...style,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#1A2B3C',
+          color: 'white',
+          fontSize: '1.2rem',
+          fontWeight: 'bold',
+          textAlign: 'center',
+          position: 'relative',
+          ...style
+        }}
+      >
+        {fallbackText}
+      </Box>
+    );
+  }
+
+  return (
+    <>
+      {isLoading && (
+        <Box
+          className={className}
+          sx={{
+            ...style,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#f5f5f5',
+            position: 'absolute',
+            inset: 0
+          }}
+        >
+          <CircularProgress size={24} />
+        </Box>
+      )}
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes="(max-width: 768px) 100vw, 33vw"
+        style={{
+          objectFit: 'cover',
+          opacity: isLoading ? 0 : 1,
+          transition: 'opacity 0.3s ease-in-out',
+          ...style
+        }}
+        onError={handleError}
+        onLoad={handleLoad}
+        className={className}
+      />
+    </>
+  );
+};
+
 export default function Home() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -342,9 +423,10 @@ export default function Home() {
         component="section"
         sx={{
           position: 'relative',
-          minHeight: 600,
-          height: '100vh',
-          mt: -12,
+          minHeight: { xs: 450, sm: 500, md: 600 },
+          height: { xs: '100vh', sm: '100vh', md: '100vh' },
+          mt: { xs: -8, sm: -10, md: -12 },
+          overflow: 'hidden', // Prevent any content overflow
         }}
       >
         {/* Background with overlay */}
@@ -356,7 +438,19 @@ export default function Home() {
             backgroundImage:
               theme.palette.mode === 'dark'
                 ? 'linear-gradient(to bottom right, #0b3746, #072530, #000000)'
-                : 'none',
+                : 'linear-gradient(135deg, #1A2B3C 0%, #2C4155 50%, #1A2B3C 100%)',
+            // Add fallback background image for mobile
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              inset: 0,
+              backgroundImage: 'url(/images/hero/fallback-hero.jpg), linear-gradient(135deg, #1A2B3C 0%, #2C4155 50%, #1A2B3C 100%)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              opacity: { xs: 0.7, md: 0.3 },
+              zIndex: -1
+            }
           }}
         >
           {/* Decorative elements */}
@@ -378,12 +472,22 @@ export default function Home() {
           muted
           loop
           playsInline
+          preload="auto"
+          webkit-playsinline="true"
           sx={{
             position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%) scale(0.85)', // Scale down video
+            width: '120%', // Slightly larger than container to maintain coverage
+            height: '120%',
             objectFit: 'cover',
+            // Fallback gradient background for when video doesn't load/play
+            background: 'linear-gradient(135deg, #1A2B3C 0%, #2C4155 50%, #1A2B3C 100%)',
+            // Hide video on very slow connections or if it fails to load
+            '&:not([src])': {
+              display: 'none'
+            }
           }}
         />
         {/* Hero Content */}
@@ -421,12 +525,23 @@ export default function Home() {
                       variant="h1"
                       sx={{
                         fontFamily: 'var(--font-playfair)',
-                        fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem', lg: '4rem' },
+                        fontSize: { 
+                          xs: '1.5rem', // Smaller for iPhone SE
+                          sm: '2.2rem', 
+                          md: '3.5rem', 
+                          lg: '4rem' 
+                        },
                         color: theme.palette.common.white,
-                        mb: { xs: 2, sm: 3 },
-                        lineHeight: 1.2,
+                        mb: { xs: 1, sm: 1.5, md: 3 }, // Reduced bottom margin for mobile
+                        lineHeight: { xs: 1.05, sm: 1.15, md: 1.2 }, // Tighter line height
                         fontWeight: 700,
                         textShadow: '0 2px 4px rgba(0, 0, 0, 0.6)',
+                        // Special handling for very small screens
+                        '@media (max-width: 380px)': {
+                          fontSize: '1.3rem',
+                          lineHeight: 1.0,
+                          mb: 0.5,
+                        }
                       }}
                     >
                       The Worlds First and Only
@@ -439,9 +554,19 @@ export default function Home() {
                       variant="h5"
                       sx={{
                         color: theme.palette.common.white,
-                        mb: { xs: 4, sm: 6 },
+                        mb: { xs: 2, sm: 3, md: 6 }, // Reduced spacing
+                        fontSize: { 
+                          xs: '0.875rem', // Smaller subtitle for mobile
+                          sm: '1.1rem', 
+                          md: '1.5rem' 
+                        },
                         fontWeight: 400,
                         textShadow: '0 1px 3px rgba(0, 0, 0, 0.6)',
+                        // Special handling for very small screens
+                        '@media (max-width: 380px)': {
+                          fontSize: '0.8rem',
+                          mb: 1.5,
+                        }
                       }}
                     >
                       Transparent quoting direct from aircraft operators.
@@ -451,7 +576,14 @@ export default function Home() {
               </Grid>
 
               {/* Search Flight Form (remains below the two-column text) */}
-              <BookingForm />
+              <Box sx={{ 
+                mt: { xs: 2, sm: 3, md: 4 }, // Add top margin for spacing from text
+                '@media (max-width: 380px)': {
+                  mt: 1.5, // Smaller margin for very small screens
+                }
+              }}>
+                <BookingForm />
+              </Box>
             </Box>
           </Container>
         </Box>

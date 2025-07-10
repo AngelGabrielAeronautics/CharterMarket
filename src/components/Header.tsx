@@ -95,16 +95,18 @@ export default function Header() {
     >
       <Toolbar
         sx={{
-          height: 96,
-          px: { xs: 2, sm: 3, lg: 4 },
+          height: { xs: 64, sm: 80, md: 96 },
+          px: { xs: 1.5, sm: 3, lg: 4 },
           display: 'flex',
           justifyContent: 'space-between',
+          alignItems: 'center',
+          minHeight: { xs: '64px !important', sm: '80px !important', md: '96px !important' }
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Logo
             href="/"
-            height={pathname === '/' ? 60 : 40}
+            height={pathname === '/' ? { xs: 32, sm: 40, md: 60 } : { xs: 28, sm: 32, md: 40 }}
             sx={{ color: 'inherit' }}
             srcOverride={
               isScrolled
@@ -113,7 +115,7 @@ export default function Header() {
             }
           />
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
           {pathname !== '/' && (
           <IconButton onClick={toggleTheme} sx={{ color: 'inherit' }}>
             {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
@@ -155,7 +157,8 @@ export default function Header() {
                 sx={{
                   color: isScrolled ? 'text.primary' : 'common.white',
                   textTransform: 'none',
-                  p: 1,
+                  p: { xs: 0.5, sm: 1 },
+                  minWidth: { xs: 'auto', sm: 'auto' },
                   '&:hover': {
                     bgcolor: isScrolled ? 'action.hover' : alpha(theme.palette.common.white, 0.1),
                   },
@@ -170,10 +173,10 @@ export default function Header() {
                 >
                   <Avatar
                     sx={{
-                      width: theme.spacing(4),
-                      height: theme.spacing(4),
+                      width: { xs: theme.spacing(3), sm: theme.spacing(4) },
+                      height: { xs: theme.spacing(3), sm: theme.spacing(4) },
                       bgcolor: 'primary.main',
-                      fontSize: theme.typography.body2.fontSize,
+                      fontSize: { xs: theme.typography.caption.fontSize, sm: theme.typography.body2.fontSize },
                       fontWeight: theme.typography.body2.fontWeight,
                     }}
                   >
@@ -224,9 +227,10 @@ export default function Header() {
                 sx={{
                   zIndex: theme.zIndex.modal,
                   width: {
-                    xs: `calc(100vw - ${theme.spacing(4)})`,
+                    xs: `min(calc(100vw - ${theme.spacing(2)}), 280px)`,
                     sm: theme.spacing(32),
                   },
+                  maxWidth: { xs: '95vw', sm: 'none' },
                 }}
               >
                 {({ TransitionProps }) => (
