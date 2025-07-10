@@ -97,7 +97,7 @@ describe('BookingForm', () => {
     // Check that combobox inputs (from/to) are present
     const comboBoxes = screen.getAllByRole('combobox');
     expect(comboBoxes.length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByPlaceholderText('-')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('1')).toBeInTheDocument();
     
     // Check flight type buttons are present
     expect(screen.getByRole('button', { name: /one way/i })).toBeInTheDocument();
@@ -110,7 +110,7 @@ describe('BookingForm', () => {
     
     // Test that form fields accept input
     const [fromInput, toInput] = screen.getAllByRole('combobox');
-    const passengersInput = screen.getByPlaceholderText('-');
+    const passengersInput = screen.getByPlaceholderText('1');
 
     fireEvent.change(fromInput, { target: { value: 'JFK' } });
     fireEvent.change(toInput, { target: { value: 'LAX' } });
