@@ -21,6 +21,17 @@ import {
 import { Close } from '@mui/icons-material';
 import { useConversationManager } from '@/hooks/useMessaging';
 import { ConversationType } from '@/types/message';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface UserOption {
+  userCode: string;
+  name: string;
+  role: string;
+  email: string;
+}
 
 interface CreateConversationDialogProps {
   open: boolean;
@@ -31,15 +42,6 @@ interface CreateConversationDialogProps {
   contextId?: string;
 }
 
-// Mock user data - in real app, this would come from API
-const mockUsers = [
-  { userCode: 'OP001', name: 'Atlantic Airways', role: 'operator', email: 'ops@atlanticair.com' },
-  { userCode: 'PA001', name: 'John Smith', role: 'passenger', email: 'john@example.com' },
-  { userCode: 'AG001', name: 'Sarah Johnson', role: 'agent', email: 'sarah@travelagent.com' },
-  { userCode: 'OP002', name: 'Sky Elite Jets', role: 'operator', email: 'contact@skyelite.com' },
-  { userCode: 'PA002', name: 'Michael Brown', role: 'passenger', email: 'michael@example.com' },
-];
-
 const CreateConversationDialog: React.FC<CreateConversationDialogProps> = ({
   open,
   onClose,
@@ -48,24 +50,48 @@ const CreateConversationDialog: React.FC<CreateConversationDialogProps> = ({
   contextType: defaultContextType = 'general',
   contextId,
 }) => {
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [conversationType, setConversationType] = useState<ConversationType>('general_inquiry');
   const [contextType, setContextType] = useState<'quote' | 'booking' | 'invoice' | 'general'>(defaultContextType);
-  const [selectedUsers, setSelectedUsers] = useState<typeof mockUsers>([]);
+  const [allUsers, setAllUsers] = useState<UserOption[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<UserOption[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [currentTag, setCurrentTag] = useState('');
 
   const { createConversation, creating, error } = useConversationManager();
 
-  // Initialize preselected users
-  React.useEffect(() => {
-    if (preselectedUserCodes.length > 0) {
-      const preselected = mockUsers.filter(user => 
-        preselectedUserCodes.includes(user.userCode)
-      );
-      setSelectedUsers(preselected);
-    }
-  }, [preselectedUserCodes]);
+  // Fetch real users from Firestore (excluding current user)
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('status', '!=', 'inactive'));
+        const snapshot = await getDocs(q);
+        const fetched: UserOption[] = snapshot.docs.map((doc) => {
+          const d = doc.data();
+          return {
+            userCode: doc.id,
+            name: `${d.firstName} ${d.lastName}`.trim() || d.email,
+            role: d.role,
+            email: d.email,
+          };
+        }).filter(u => u.userCode !== user?.userCode); // exclude self
+
+        setAllUsers(fetched);
+
+        // Handle preselected list
+        if (preselectedUserCodes.length > 0) {
+          setSelectedUsers(fetched.filter(f => preselectedUserCodes.includes(f.userCode)));
+        }
+      } catch (err) {
+        console.error('Failed to fetch users for conversation dialog:', err);
+      }
+    };
+
+    fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async () => {
     if (selectedUsers.length === 0) {
@@ -155,7 +181,7 @@ const CreateConversationDialog: React.FC<CreateConversationDialogProps> = ({
           {/* Participants Selection */}
           <Autocomplete
             multiple
-            options={mockUsers}
+            options={allUsers}
             getOptionLabel={(option) => `${option.name} (${option.role})`}
             value={selectedUsers}
             onChange={(_, newValue) => setSelectedUsers(newValue)}

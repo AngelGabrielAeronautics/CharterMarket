@@ -97,57 +97,63 @@ export const createConversation = async (
   currentUserCode: string
 ): Promise<string> => {
   try {
-    const conversationId = generateConversationId(
-      data.contextType || 'general',
-      data.participantUserCodes
+    // Ensure the current user is included in the participant list
+    const uniqueParticipants = Array.from(
+      new Set([currentUserCode, ...data.participantUserCodes])
     );
 
     // Fetch participant details
     const participants: ConversationParticipant[] = [];
-    for (const userCode of data.participantUserCodes) {
+    for (const userCode of uniqueParticipants) {
       const userDoc = await getDoc(doc(db, 'users', userCode));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        participants.push({
-          userCode,
-          name: `${userData.firstName} ${userData.lastName}`,
-          role: userData.role,
-          avatar: userData.photoURL,
-          email: userData.email,
-          company: userData.company,
-          joinedAt: Timestamp.now(),
-          isActive: true,
-          notificationPreferences: {
-            inApp: true,
-            email: data.emailIntegrationEnabled ?? true,
-            whatsapp: data.whatsappIntegrationEnabled ?? false,
-          },
-        });
+      if (!userDoc.exists()) {
+        console.warn('Participant profile or email not found for', userCode);
+        continue;
       }
+      const userData = userDoc.data();
+      const participant: ConversationParticipant = {
+        userCode,
+        name: `${userData.firstName} ${userData.lastName}`.trim() || userData.email,
+        role: userData.role,
+        joinedAt: Timestamp.now(),
+        isActive: true,
+        notificationPreferences: {
+          inApp: true,
+          email: data.emailIntegrationEnabled ?? true,
+          whatsapp: data.whatsappIntegrationEnabled ?? false,
+        },
+      } as any;
+
+      // Optional properties – convert undefined to null to satisfy Firestore
+      participant.avatar = userData.photoURL ?? null;
+      participant.email = userData.email ?? null;
+      participant.company = userData.company ?? null;
+
+      participants.push(participant);
     }
 
-    // Generate conversation title if not provided
+    if (participants.length === 0) {
+      throw new Error('No valid participants found');
+    }
+
+    // Generate conversation title
     const title = data.title || generateConversationTitle(data, participants);
 
+    // Build conversation data
     const conversationData: Omit<Conversation, 'id'> = {
       title,
       type: data.type,
       status: 'active',
       participants,
-      participantUserCodes: data.participantUserCodes,
+      participantUserCodes: uniqueParticipants,
       messageCount: 0,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
       lastActivityAt: Timestamp.now(),
-      contextType: data.contextType,
-      contextId: data.contextId,
-      contextData: data.contextData,
-      isGroupChat: data.participantUserCodes.length > 2,
+      isGroupChat: uniqueParticipants.length > 2,
       allowFileUploads: data.allowFileUploads ?? true,
-      maxParticipants: data.participantUserCodes.length > 2 ? 10 : 2,
-      unreadCounts: Object.fromEntries(
-        data.participantUserCodes.map(userCode => [userCode, 0])
-      ),
+      maxParticipants: uniqueParticipants.length > 2 ? 10 : 2,
+      unreadCounts: Object.fromEntries(uniqueParticipants.map(u => [u, 0])),
       priority: data.priority || 'normal',
       tags: data.tags || [],
       createdBy: currentUserCode,
@@ -155,46 +161,54 @@ export const createConversation = async (
       whatsappIntegrationEnabled: data.whatsappIntegrationEnabled ?? false,
     };
 
-    // Create the conversation document
+    // Optional context fields
+    if (data.contextType !== undefined) {
+      conversationData.contextType = data.contextType;
+    }
+    if (data.contextId !== undefined) {
+      conversationData.contextId = data.contextId;
+    }
+    if (data.contextData !== undefined) {
+      conversationData.contextData = data.contextData;
+    }
+
+    // Generate conversation ID
+    const conversationId = generateConversationId(
+      data.contextType,
+      uniqueParticipants
+    );
+
+    // Save conversation
     await setDoc(doc(db, 'conversations', conversationId), conversationData);
 
-    // Initialize participant settings
+    // Create participant documents
     const batch = writeBatch(db);
-    for (const userCode of data.participantUserCodes) {
-      const participantSettingsRef = doc(db, 'conversations', conversationId, 'participants', userCode);
-      batch.set(participantSettingsRef, {
+    for (const participant of participants) {
+      const participantRef = doc(
+        db,
+        'conversations',
         conversationId,
-        userCode,
-        emailNotifications: data.emailIntegrationEnabled ?? true,
-        whatsappNotifications: data.whatsappIntegrationEnabled ?? false,
-        pushNotifications: true,
-        lastReadAt: Timestamp.now(),
-        unreadCount: 0,
-        isArchived: false,
-        isPinned: false,
-        customTitle: null,
-        updatedAt: Timestamp.now(),
-      } as ConversationSettings);
+        'participants',
+        participant.userCode
+      );
+      batch.set(participantRef, {
+        ...participant,
+        conversationId,
+      });
     }
     await batch.commit();
 
-    // Create full conversation object with ID for downstream functions
-    const conversationWithId: Conversation = { id: conversationId, ...conversationData };
+    // Update conversation summaries
+    await updateConversationSummaries(conversationId, {
+      id: conversationId,
+      ...conversationData,
+    } as Conversation);
 
-    // Update conversation summaries for all participants
-    await updateConversationSummaries(conversationId, conversationWithId);
-
-    // Send conversation started email notifications asynchronously (don't block conversation creation)
-    sendConversationStartedEmail(conversationWithId, currentUserCode)
-      .catch(emailError => {
-        console.warn('Failed to send conversation started email:', emailError);
-      });
-
-    console.log(`Created conversation ${conversationId} with ${data.participantUserCodes.length} participants`);
+    console.log(`Created conversation ${conversationId} with ${participants.length} participants`);
     return conversationId;
   } catch (error) {
     console.error('Error creating conversation:', error);
-    throw new Error('Failed to create conversation');
+    throw error;
   }
 };
 
@@ -329,30 +343,37 @@ export const sendMessage = async (
       attachments = await uploadMessageAttachments(messageData.attachments, conversationId, senderUserCode);
     }
 
+    // --- sanitize optional fields before writing to Firestore ---
+    // Build metadata object only with defined values
+    const metadata: Record<string, any> = {};
+    if (conversation.contextData?.quoteId !== undefined) metadata.quoteId = conversation.contextData.quoteId;
+    if (conversation.contextData?.bookingId !== undefined) metadata.bookingId = conversation.contextData.bookingId;
+    if (conversation.contextData?.invoiceId !== undefined) metadata.invoiceId = conversation.contextData.invoiceId;
+    if (conversation.contextData?.flightId !== undefined) metadata.flightId = conversation.contextData.flightId;
+
     const message: Omit<Message, 'id'> = {
       conversationId,
       content: messageData.content,
       type: messageData.type || 'text',
       attachments,
       senderId: senderUserCode,
-      senderName: `${senderData.firstName} ${senderData.lastName}`,
+      senderName: `${senderData.firstName} ${senderData.lastName}`.trim() || senderData.email,
       senderRole: senderData.role,
-      senderAvatar: senderData.photoURL,
+      // Convert undefined avatar to null to satisfy Firestore
+      senderAvatar: senderData.photoURL ?? null,
       status: 'sent',
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
       readBy: {
         [senderUserCode]: Timestamp.now(), // Sender automatically reads their own message
       },
-      contextType: messageData.contextType || conversation.contextType,
-      contextId: messageData.contextId || conversation.contextId,
-      metadata: {
-        quoteId: conversation.contextData?.quoteId,
-        bookingId: conversation.contextData?.bookingId,
-        invoiceId: conversation.contextData?.invoiceId,
-        flightId: conversation.contextData?.flightId,
-      },
-      replyToMessageId: messageData.replyToMessageId,
+      // Only include contextType/Id if they are provided
+      ...(messageData.contextType || conversation.contextType ? { contextType: messageData.contextType || conversation.contextType } : {}),
+      ...(messageData.contextId || conversation.contextId ? { contextId: messageData.contextId || conversation.contextId } : {}),
+      // Only include metadata if we actually have keys
+      ...(Object.keys(metadata).length ? { metadata } : {}),
+      // Only include replyToMessageId if defined
+      ...(messageData.replyToMessageId ? { replyToMessageId: messageData.replyToMessageId } : {}),
     };
 
     // Use transaction to ensure consistency
@@ -598,6 +619,8 @@ export const listenToUserConversations = (
   callback: (conversations: Conversation[]) => void,
   filters: ConversationFilters = {}
 ) => {
+  console.log('listenToUserConversations: Setting up listener for userCode:', userCode);
+  
   let q = query(
     collection(db, 'conversations'),
     where('participantUserCodes', 'array-contains', userCode),
@@ -612,13 +635,21 @@ export const listenToUserConversations = (
     q = query(q, limit(filters.limit));
   }
 
-  return onSnapshot(q, (querySnapshot) => {
-    const conversations = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Conversation[];
-    callback(conversations);
-  });
+  return onSnapshot(q, 
+    (querySnapshot) => {
+      console.log('listenToUserConversations: Received snapshot with', querySnapshot.docs.length, 'conversations');
+      const conversations = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Conversation[];
+      callback(conversations);
+    },
+    (error) => {
+      console.error('listenToUserConversations: Firestore listener error:', error);
+      // Call callback with empty array to indicate error state
+      callback([]);
+    }
+  );
 };
 
 /**
@@ -700,20 +731,30 @@ const updateConversationSummaries = async (
       const otherParticipants = conversation.participants.filter(p => p.userCode !== userCode);
       const otherParticipant = otherParticipants[0] || conversation.participants[0];
 
-      const conversationSummary = {
+      const conversationSummary: any = {
         id: conversationId,
         title: conversation.title,
         type: conversation.type,
         status: conversation.status,
         otherParticipantName: otherParticipant?.name || 'Unknown',
-        otherParticipantAvatar: otherParticipant?.avatar,
-        lastMessage: conversation.lastMessage,
         unreadCount: conversation.unreadCounts[userCode] || 0,
         lastActivityAt: conversation.lastActivityAt,
-        contextType: conversation.contextType,
-        contextId: conversation.contextId,
         priority: conversation.priority,
       };
+
+      // Only include optional fields if they are not undefined
+      if (otherParticipant?.avatar !== undefined) {
+        conversationSummary.otherParticipantAvatar = otherParticipant.avatar;
+      }
+      if (conversation.lastMessage !== undefined) {
+        conversationSummary.lastMessage = conversation.lastMessage;
+      }
+      if (conversation.contextType !== undefined) {
+        conversationSummary.contextType = conversation.contextType;
+      }
+      if (conversation.contextId !== undefined) {
+        conversationSummary.contextId = conversation.contextId;
+      }
 
       // Remove existing entry and add updated one
       const updatedConversations = existingConversations.filter(c => c.id !== conversationId);
@@ -774,10 +815,14 @@ export const findOrCreateConversation = async (
            contextType === 'invoice' ? 'payment_discussion' : 'general_inquiry',
       participantUserCodes,
       contextType,
-      contextId,
       emailIntegrationEnabled: true,
       whatsappIntegrationEnabled: false,
     };
+
+    // Only add contextId if it's not undefined
+    if (contextId !== undefined) {
+      conversationData.contextId = contextId;
+    }
 
     return await createConversation(conversationData, currentUserCode || participantUserCodes[0]);
   } catch (error) {

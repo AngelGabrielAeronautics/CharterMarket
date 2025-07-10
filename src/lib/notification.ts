@@ -11,16 +11,23 @@ export const createNotification = async (
   link?: string
 ): Promise<string> => {
   try {
-    const notificationData: Omit<Notification, 'id'> = {
+    // Build notification object without undefined fields
+    const notificationData: Omit<Notification, 'id'> & { [key: string]: any } = {
       userId,
       type,
       title,
       message,
-      link,
       read: false,
       createdAt: Timestamp.now(),
-      metadata,
     };
+
+    if (link !== undefined) {
+      notificationData.link = link;
+    }
+
+    if (metadata !== undefined) {
+      notificationData.metadata = metadata;
+    }
 
     const docRef = await addDoc(collection(db, 'notifications'), notificationData);
     return docRef.id;

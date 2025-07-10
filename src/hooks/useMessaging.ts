@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { auth } from '@/lib/firebase';
 import {
   Conversation,
   Message,
@@ -39,7 +40,39 @@ export const useConversations = (filters: ConversationFilters = {}) => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [claimsFixed, setClaimsFixed] = useState(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
+
+  // Function to fix user claims if needed
+  const fixUserClaims = useCallback(async () => {
+    if (!user || !auth.currentUser || claimsFixed) return;
+
+    try {
+      const idToken = await auth.currentUser.getIdToken();
+      const response = await fetch('/api/auth/fix-user-claims', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({}),
+      });
+
+      if (response.ok) {
+        console.log('User claims fixed successfully');
+        setClaimsFixed(true);
+        // Force token refresh to get updated claims
+        await auth.currentUser.getIdToken(true);
+        return true;
+      } else {
+        console.error('Failed to fix user claims:', await response.text());
+        return false;
+      }
+    } catch (error) {
+      console.error('Error fixing user claims:', error);
+      return false;
+    }
+  }, [user, claimsFixed]);
 
   useEffect(() => {
     if (!user?.userCode) {
@@ -51,25 +84,56 @@ export const useConversations = (filters: ConversationFilters = {}) => {
     setLoading(true);
     setError(null);
 
-    // Set up real-time listener
-    const unsubscribe = listenToUserConversations(
-      user.userCode,
-      (updatedConversations) => {
-        setConversations(updatedConversations);
-        setLoading(false);
-      },
-      { limit: 50, ...filters }
-    );
+    // Set up real-time listener with error handling for claims issues
+    const setupListener = async () => {
+      try {
+        // Set up real-time listener
+        const unsubscribe = listenToUserConversations(
+          user.userCode,
+          (updatedConversations) => {
+            setConversations(updatedConversations);
+            setLoading(false);
+            setError(null);
+          },
+          { limit: 50, ...filters }
+        );
 
-    unsubscribeRef.current = unsubscribe;
-
-    // Handle listener errors
-    const errorTimeout = setTimeout(() => {
-      if (loading) {
+        unsubscribeRef.current = unsubscribe;
+      } catch (error: any) {
+        console.error('Error setting up conversations listener:', error);
+        
+        // If the error might be related to missing claims, try to fix them
+        if (error.message?.includes('permission') || error.message?.includes('auth')) {
+          console.log('Attempting to fix user claims...');
+          const fixed = await fixUserClaims();
+          if (fixed) {
+            // Retry setting up the listener after fixing claims
+            setTimeout(() => setupListener(), 1000);
+            return;
+          }
+        }
+        
         setError('Failed to load conversations');
         setLoading(false);
       }
-    }, 10000);
+    };
+
+    setupListener();
+
+    // Handle listener errors with timeout
+    const errorTimeout = setTimeout(async () => {
+      if (loading && !claimsFixed) {
+        console.log('Conversations still loading, attempting to fix user claims...');
+        const fixed = await fixUserClaims();
+        if (fixed) {
+          // Retry after fixing claims
+          setupListener();
+        } else {
+          setError('Failed to load conversations. Please refresh the page.');
+          setLoading(false);
+        }
+      }
+    }, 5000);
 
     return () => {
       clearTimeout(errorTimeout);
@@ -77,7 +141,7 @@ export const useConversations = (filters: ConversationFilters = {}) => {
         unsubscribeRef.current();
       }
     };
-  }, [user?.userCode, JSON.stringify(filters)]);
+  }, [user?.userCode, JSON.stringify(filters), fixUserClaims]);
 
   const refreshConversations = useCallback(async () => {
     if (!user?.userCode) return;

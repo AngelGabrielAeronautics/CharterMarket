@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Box, TextField, InputAdornment, Typography, Skeleton, Alert } from '@mui/material';
-import { Search, Add, FilterList } from '@mui/icons-material';
+import { Box, TextField, InputAdornment, Typography, Skeleton, Alert, Button } from '@mui/material';
+import { Search, Add, FilterList, Refresh, Security } from '@mui/icons-material';
 import { useConversations, useUnreadCount } from '@/hooks/useMessaging';
 import { ConversationFilters } from '@/types/message';
 import ConversationCard from './ConversationCard';
 import CreateConversationDialog from './CreateConversationDialog';
+import { useAuth } from '@/contexts/AuthContext';
+import { auth } from '@/lib/firebase';
 
 interface ConversationListProps {
   selectedConversationId?: string;
@@ -19,9 +21,11 @@ const ConversationList: React.FC<ConversationListProps> = ({
   onConversationSelect,
   className,
 }) => {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [filters, setFilters] = useState<ConversationFilters>({});
+  const [fixingAuth, setFixingAuth] = useState(false);
 
   // Load conversations with real-time updates
   const { conversations, loading, error, refreshConversations } = useConversations(filters);
@@ -59,6 +63,39 @@ const ConversationList: React.FC<ConversationListProps> = ({
     setShowCreateDialog(false);
     onConversationSelect(conversationId);
     refreshConversations();
+  };
+
+  const handleFixAuthentication = async () => {
+    if (!user || !auth.currentUser || fixingAuth) return;
+
+    setFixingAuth(true);
+    try {
+      const idToken = await auth.currentUser.getIdToken();
+      const response = await fetch('/api/auth/fix-user-claims', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({}),
+      });
+
+      if (response.ok) {
+        console.log('User claims fixed successfully');
+        // Force token refresh to get updated claims
+        await auth.currentUser.getIdToken(true);
+        // Refresh conversations after fixing claims
+        setTimeout(() => {
+          refreshConversations();
+        }, 1000);
+      } else {
+        console.error('Failed to fix user claims:', await response.text());
+      }
+    } catch (error) {
+      console.error('Error fixing user claims:', error);
+    } finally {
+      setFixingAuth(false);
+    }
   };
 
   return (
@@ -175,7 +212,28 @@ const ConversationList: React.FC<ConversationListProps> = ({
       >
         {error && (
           <Box sx={{ p: 2 }}>
-            <Alert severity="error" onClose={refreshConversations}>
+            <Alert 
+              severity="error" 
+              action={
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    size="small"
+                    startIcon={<Security />}
+                    onClick={handleFixAuthentication}
+                    disabled={fixingAuth}
+                  >
+                    {fixingAuth ? 'Fixing...' : 'Fix Auth'}
+                  </Button>
+                  <Button
+                    size="small"
+                    startIcon={<Refresh />}
+                    onClick={refreshConversations}
+                  >
+                    Retry
+                  </Button>
+                </Box>
+              }
+            >
               {error}
             </Alert>
           </Box>
