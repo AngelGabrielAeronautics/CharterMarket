@@ -874,13 +874,18 @@ export default function BookingForm() {
                     '& .MuiOutlinedInput-root': {
                       borderTopRightRadius: { xs: 1, md: 0 },
                       borderBottomRightRadius: { xs: 1, md: 0 },
-                      minHeight: { xs: '48px', sm: '56px' }
+                      minHeight: { xs: '48px', sm: '56px' },
+                      height: { xs: '48px', sm: '56px' }
                     },
                     '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
                       borderTopRightRadius: { xs: 1, md: 0 },
                       borderBottomRightRadius: { xs: 1, md: 0 },
                     },
                     '& .MuiOutlinedInput-input': {
+                      paddingTop: '14px',
+                      paddingBottom: '14px',
+                    },
+                    '& .MuiInputBase-input': {
                       paddingTop: '14px',
                       paddingBottom: '14px',
                     },
@@ -903,9 +908,14 @@ export default function BookingForm() {
                   order: { xs: 2, md: 2 },
                   '& .MuiOutlinedInput-root': { 
                     borderRadius: { xs: 1, md: 0 },
-                    minHeight: { xs: '48px', sm: '56px' }
+                    minHeight: { xs: '48px', sm: '56px' },
+                    height: { xs: '48px', sm: '56px' }
                   },
                   '& .MuiOutlinedInput-input': {
+                    paddingTop: '14px',
+                    paddingBottom: '14px',
+                  },
+                  '& .MuiInputBase-input': {
                     paddingTop: '14px',
                     paddingBottom: '14px',
                   },
@@ -926,7 +936,11 @@ export default function BookingForm() {
                   order: { xs: 3, md: 3 },
                   '& .MuiOutlinedInput-root': { 
                     borderRadius: 0,
-                    minHeight: { xs: '48px', sm: '56px' }
+                    minHeight: { xs: '48px', sm: '56px' },
+                    height: { xs: '48px', sm: '56px' }
+                  },
+                  '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                    borderRadius: 0,
                   },
                   '& .MuiOutlinedInput-input': {
                     paddingTop: '14px',
@@ -963,7 +977,9 @@ export default function BookingForm() {
                       minWidth: 0,
                       order: { xs: 4, md: 4 },
                       '& .MuiOutlinedInput-root': { 
-                        borderRadius: { xs: 1, md: 0 } 
+                        borderRadius: { xs: 1, md: 0 },
+                        minHeight: { xs: '48px', sm: '56px' },
+                        height: { xs: '48px', sm: '56px' }
                       },
                       '& .MuiOutlinedInput-input': {
                         paddingTop: '14px',
@@ -998,7 +1014,8 @@ export default function BookingForm() {
                         '& .MuiOutlinedInput-root': {
                           borderTopLeftRadius: { xs: 1, md: 0 },
                           borderBottomLeftRadius: { xs: 1, md: 0 },
-                          minHeight: { xs: '48px', sm: '56px' }
+                          minHeight: { xs: '48px', sm: '56px' },
+                          height: { xs: '48px', sm: '56px' }
                         },
                         '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
                           borderTopLeftRadius: { xs: 1, md: 0 },
@@ -1016,7 +1033,7 @@ export default function BookingForm() {
                         autoComplete="off"
                         name="passengers"
                         value={formState.passengers > 0 ? formState.passengers : ''}
-                        placeholder="1"
+                        placeholder=""
                         onChange={(e) => {
                           const val = parseInt(e.target.value);
                           if (!isNaN(val) && val >= 1 && val <= 300) {
@@ -1080,7 +1097,8 @@ export default function BookingForm() {
                       '& .MuiOutlinedInput-root': {
                         borderTopLeftRadius: { xs: 1, md: 0 },
                         borderBottomLeftRadius: { xs: 1, md: 0 },
-                        minHeight: { xs: '48px', sm: '56px' }
+                        minHeight: { xs: '48px', sm: '56px' },
+                        height: { xs: '48px', sm: '56px' }
                       },
                       '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
                         borderTopLeftRadius: { xs: 1, md: 0 },
@@ -1098,7 +1116,7 @@ export default function BookingForm() {
                       autoComplete="off"
                       name={`leg${index}Passengers`}
                       value={leg.passengers > 0 ? leg.passengers : ''}
-                      placeholder="1"
+                      placeholder=""
                       onChange={(e) => {
                         const val = parseInt(e.target.value);
                         if (!isNaN(val) && val >= 1 && val <= 300) {

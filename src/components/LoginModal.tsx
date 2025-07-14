@@ -370,7 +370,12 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
               alt="Charter Logo"
               width={180}
               height={60}
-              style={{ marginBottom: 24 }}
+              style={{ 
+                marginBottom: 24,
+                objectFit: 'contain',
+                maxWidth: '100%',
+                height: 'auto'
+              }}
               priority
             />
             <Typography

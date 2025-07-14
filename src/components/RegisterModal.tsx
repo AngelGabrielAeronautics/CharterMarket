@@ -210,8 +210,8 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
     openLoginModal();
   };
 
-  const currentImageSrc = userType ? accountImages[userType] : '/images/register/register.png';
-  const isVideo = userType && accountImages[userType]?.endsWith('.mp4');
+  const currentImageSrc = userType ? accountImages[userType] : '/videos/onboarding/register.mp4';
+  const isVideo = currentImageSrc.endsWith('.mp4');
 
   const renderPasswordRequirements = () => {
     if (!showPasswordRequirements) return null;
@@ -290,6 +290,8 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
           m: { xs: tokens.spacing[2].value, sm: tokens.spacing[4].value },
           maxWidth: '1400px',
           width: { xs: '100%', md: '1400px' },
+          height: { xs: 'auto', md: '700px' },
+          maxHeight: { xs: '90vh', md: '700px' },
           '& .MuiOutlinedInput-notchedOutline': {
             border: `1px solid ${theme.palette.divider}`,
           },
@@ -299,8 +301,9 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' },
-          // height auto for square media
+          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+          height: '100%',
+          overflow: 'hidden',
         }}
       >
         <Box
@@ -309,6 +312,9 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
             display: { xs: 'none', md: 'block' },
             position: 'relative',
             overflow: 'hidden',
+            border: 'none',
+            outline: 'none',
+            backgroundColor: 'transparent',
           }}
         >
           <Box
@@ -322,7 +328,10 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                 '100%': { opacity: 1 },
               },
               animation: 'fadeIn 0.5s ease-in-out',
-              margin: '0 auto',
+              border: 'none',
+              outline: 'none',
+              backgroundColor: 'transparent',
+              overflow: 'hidden',
             }}
           >
             {isVideo ? (
@@ -332,7 +341,17 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                 autoPlay
                 muted
                 loop
-                style={{ display: 'block', objectFit: 'cover', width: '100%', height: '100%' }}
+                style={{ 
+                  display: 'block', 
+                  objectFit: 'cover', 
+                  width: '100%', 
+                  height: '100%',
+                  border: 'none',
+                  outline: 'none',
+                  margin: 0,
+                  padding: 0,
+                  verticalAlign: 'top'
+                }}
               />
             ) : (
               <Image
@@ -356,7 +375,9 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                 position: 'absolute',
                 bottom: tokens.spacing[3].value,
                 left: tokens.spacing[3].value,
-                zIndex: 2,
+                zIndex: 10,
+                maxWidth: '100%',
+                height: 'auto'
               }}
             />
           </Box>

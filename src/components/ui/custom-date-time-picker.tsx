@@ -88,8 +88,12 @@ export default function CustomDateTimePicker({
           sx: {
             // Enhanced mobile touch targets and spacing to match other inputs
             minHeight: { xs: '48px', sm: '56px' },
+            height: { xs: '48px', sm: '56px' },
             '& .MuiInputBase-input': {
-              padding: { xs: '12px 14px', sm: '16.5px 14px' },
+              paddingTop: '14px',
+              paddingBottom: '14px',
+              paddingLeft: '14px',
+              paddingRight: '14px',
               fontSize: { xs: '16px', sm: '1rem' }, // Prevents zoom on iOS
               lineHeight: { xs: 1.4, sm: 1.43 },
               cursor: 'pointer'
