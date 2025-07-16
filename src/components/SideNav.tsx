@@ -95,11 +95,11 @@ const navigation: NavItem[] = [
     roles: ['passenger', 'operator', 'agent', 'admin', 'superAdmin'],
     children: [
       {
-        name: 'Invoices',
+        name: 'Invoices & Payments',
         href: '/dashboard/invoices',
         icon: <ReceiptIcon />,
         roles: ['passenger', 'agent'],
-        order: '3a',
+        order: '4',
       },
       {
         name: 'Bookings',
@@ -209,6 +209,12 @@ const navigation: NavItem[] = [
         name: 'Style Guide',
         href: '/admin/dashboard/style-guide',
         icon: <StyleIcon />,
+        roles: ['superAdmin'],
+      },
+      {
+        name: 'Email Templates',
+        href: '/dashboard/settings/email-templates',
+        icon: <MessageIcon />,
         roles: ['superAdmin'],
       },
       {
@@ -634,7 +640,7 @@ export default function SideNav({
                                           zIndex: 1,
                                         }}
                                       >
-                                        {/* Connecting Line Above */}
+                                        {/* Connecting Line Above - Regular between children */}
                                         {childIndex > 0 && (
                                           <Box
                                             sx={{
@@ -643,6 +649,19 @@ export default function SideNav({
                                               backgroundColor: theme.palette.divider,
                                               position: 'absolute',
                                               top: '-20px',
+                                            }}
+                                          />
+                                        )}
+                                        
+                                        {/* Extended Connecting Line to Parent for first child (Invoices) */}
+                                        {childIndex === 0 && child.order === '4' && (
+                                          <Box
+                                            sx={{
+                                              width: '2px',
+                                              height: '60px', // Extended height to reach parent icon
+                                              backgroundColor: theme.palette.divider,
+                                              position: 'absolute',
+                                              top: '-60px', // Position to connect to parent
                                             }}
                                           />
                                         )}
@@ -763,7 +782,7 @@ export default function SideNav({
                               zIndex: 1,
                             }}
                           >
-                            {/* Connecting line above */}
+                            {/* Connecting line above - Regular between children */}
                             {childIndex > 0 && (
                               <Box
                                 sx={{
@@ -772,6 +791,19 @@ export default function SideNav({
                                   backgroundColor: theme.palette.divider,
                                   position: 'absolute',
                                   top: '-20px',
+                                }}
+                              />
+                            )}
+                            
+                            {/* Extended Connecting Line to Parent for first child (Invoices) */}
+                            {childIndex === 0 && child.order === '4' && (
+                              <Box
+                                sx={{
+                                  width: '2px',
+                                  height: '40px', // Slightly shorter for popup submenu
+                                  backgroundColor: theme.palette.divider,
+                                  position: 'absolute',
+                                  top: '-40px', // Position to connect to parent in popup
                                 }}
                               />
                             )}

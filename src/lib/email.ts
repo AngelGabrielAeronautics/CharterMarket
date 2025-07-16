@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 
 // Types for notifications
 export interface EmailNotification {
@@ -75,14 +75,20 @@ export async function sendVerificationEmail(email: string, userId: string, userC
 }
 
 // Function to send welcome email
-export async function sendWelcomeEmail(email: string, userId: string, userCode: string, firstName: string) {
+export async function sendWelcomeEmail(email: string, userId: string, userCode: string, firstName: string, role?: string, company?: string) {
   try {
     const response = await fetch('/api/email/welcome', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, firstName }),
+      body: JSON.stringify({ 
+        email, 
+        firstName, 
+        userCode, 
+        role: role || 'passenger',
+        company: company || null
+      }),
     });
 
     if (!response.ok) {
@@ -255,6 +261,172 @@ export async function sendAdminPermissionsUpdateEmail(email: string, firstName: 
       type: 'admin_permissions',
       emailType: 'ADMIN_PERMISSIONS_EMAIL',
       sentTo: email,
+      status: 'failed',
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
+}
+
+// Function to send operator notifications for new quote requests
+export async function sendOperatorQuoteNotifications(quoteRequest: any) {
+  try {
+    console.log('🔍 Starting operator notification process...');
+    console.log('📄 Quote request data:', JSON.stringify(quoteRequest, null, 2));
+    
+    // Get all active operators from Firestore
+    const operatorsQuery = query(
+      collection(db, 'users'),
+      where('role', '==', 'operator'),
+      where('status', '==', 'active')
+    );
+    
+    console.log('🔍 Querying for active operators...');
+    const operatorsSnapshot = await getDocs(operatorsQuery);
+    console.log(`📊 Found ${operatorsSnapshot.docs.length} documents matching operator criteria`);
+    
+    // Also check all operators regardless of status for debugging
+    const allOperatorsQuery = query(
+      collection(db, 'users'),
+      where('role', '==', 'operator')
+    );
+    const allOperatorsSnapshot = await getDocs(allOperatorsQuery);
+    console.log(`🔍 Total operators in database: ${allOperatorsSnapshot.docs.length}`);
+    
+    if (allOperatorsSnapshot.docs.length > 0) {
+      console.log('📋 All operators statuses:');
+      allOperatorsSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        console.log(`   - ${doc.id}: ${data.firstName} ${data.lastName} (${data.email}) - Status: ${data.status}`);
+      });
+    }
+    
+    const operators = operatorsSnapshot.docs.map(doc => ({
+      userCode: doc.id,
+      ...doc.data()
+    })) as Array<{
+      userCode: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+      role: string;
+      status: string;
+    }>;
+
+    console.log(`✅ Found ${operators.length} active operators to notify`);
+    if (operators.length > 0) {
+      console.log('👥 Active operators:', operators.map(op => ({ userCode: op.userCode, email: op.email, firstName: op.firstName })));
+    }
+
+    // Send notification to each operator
+    for (const operator of operators) {
+      try {
+        const response = await fetch('/api/email/operator-quote-notification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            operatorEmail: operator.email,
+            operatorFirstName: operator.firstName,
+            quoteRequestCode: quoteRequest.requestCode,
+            departureAirport: quoteRequest.routing?.departureAirport || quoteRequest.departureAirport,
+            arrivalAirport: quoteRequest.routing?.arrivalAirport || quoteRequest.arrivalAirport,
+            departureDate: quoteRequest.routing?.departureDate || quoteRequest.departureDate,
+            passengerCount: quoteRequest.passengerCount,
+            tripType: quoteRequest.tripType,
+            requestId: quoteRequest.id || quoteRequest.requestCode,
+          }),
+        });
+
+        if (response.ok) {
+          // Store successful notification
+          await storeEmailNotification({
+            userId: operator.userCode,
+            userCode: operator.userCode,
+            type: 'quote_request',
+            emailType: 'OPERATOR_QUOTE_NOTIFICATION',
+            sentTo: operator.email,
+            status: 'sent',
+          });
+          console.log(`Quote request notification sent to operator: ${operator.email}`);
+        } else {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+      } catch (error) {
+        // Store failed notification
+        await storeEmailNotification({
+          userId: operator.userCode,
+          userCode: operator.userCode,
+          type: 'quote_request',
+          emailType: 'OPERATOR_QUOTE_NOTIFICATION',
+          sentTo: operator.email,
+          status: 'failed',
+          error: error instanceof Error ? error.message : String(error),
+        });
+        console.error(`Failed to send notification to operator ${operator.email}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error('Error sending operator quote notifications:', error);
+    throw error;
+  }
+}
+
+// Function to send quote confirmation email to passenger
+export async function sendQuoteConfirmationEmail(
+  quoteRequest: any,
+  passengerEmail: string,
+  passengerFirstName: string
+) {
+  try {
+    console.log('📧 Sending quote confirmation email to passenger...');
+    
+    const response = await fetch('/api/email/quote-confirmation', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        passengerEmail,
+        passengerFirstName,
+        quoteRequestCode: quoteRequest.requestCode,
+        departureAirport: quoteRequest.routing?.departureAirport || quoteRequest.departureAirport,
+        arrivalAirport: quoteRequest.routing?.arrivalAirport || quoteRequest.arrivalAirport,
+        departureDate: quoteRequest.routing?.departureDate || quoteRequest.departureDate,
+        returnDate: quoteRequest.routing?.returnDate || quoteRequest.returnDate,
+        passengerCount: quoteRequest.passengerCount,
+        tripType: quoteRequest.tripType,
+        additionalInfo: quoteRequest.additionalInfo,
+        requestId: quoteRequest.id || quoteRequest.requestCode,
+      }),
+    });
+
+    if (response.ok) {
+      console.log('✅ Quote confirmation email sent successfully');
+      
+      // Store successful notification
+      await storeEmailNotification({
+        userId: 'system',
+        userCode: 'system',
+        type: 'quote_request',
+        emailType: 'QUOTE_CONFIRMATION_EMAIL',
+        sentTo: passengerEmail,
+        status: 'sent',
+      });
+    } else {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+  } catch (error) {
+    console.error('❌ Failed to send quote confirmation email:', error);
+    
+    // Store failed notification
+    await storeEmailNotification({
+      userId: 'system',
+      userCode: 'system',
+      type: 'quote_request',
+      emailType: 'QUOTE_CONFIRMATION_EMAIL',
+      sentTo: passengerEmail,
       status: 'failed',
       error: error instanceof Error ? error.message : String(error),
     });

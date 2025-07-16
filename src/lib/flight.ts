@@ -26,6 +26,7 @@ import {
 } from '@/types/flight';
 import { generateQuoteRequestCode } from '@/lib/serials';
 import { getAirportByICAO } from '@/lib/airport';
+import { sendOperatorQuoteNotifications, sendQuoteConfirmationEmail } from '@/lib/email';
 
 export const createQuoteRequest = async (
   clientUserCode: string,
@@ -285,11 +286,63 @@ export const submitQuoteRequest = async (id: string): Promise<void> => {
       throw new Error('Quote request not found');
     }
 
+    const quoteRequestData = requestDoc.data() as QuoteRequest;
+
+    // Fetch user profile to get email and name for notifications
+    let userEmail: string = '';
+    let userFirstName: string = '';
+    
+    try {
+      console.log(`Fetching user profile for clientUserCode: ${quoteRequestData.clientUserCode}`);
+      const userRef = doc(db, 'users', quoteRequestData.clientUserCode);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        userEmail = userData.email || '';
+        userFirstName = userData.firstName || '';
+        console.log(`Retrieved user info - Email: ${userEmail}, FirstName: ${userFirstName}`);
+      } else {
+        console.warn(`User profile not found for userCode: ${quoteRequestData.clientUserCode}`);
+      }
+    } catch (userFetchError) {
+      console.error('Error fetching user profile:', userFetchError);
+      // Continue with submission even if user fetch fails
+    }
+
     await updateDoc(requestRef, {
       status: 'submitted' as FlightStatus,
       updatedAt: Timestamp.now(),
     });
     console.log(`Quote request ${id} status updated to submitted`);
+
+    // Send operator notifications
+    try {
+      console.log('Sending operator notifications for new quote request...');
+      await sendOperatorQuoteNotifications(quoteRequestData);
+      console.log('Operator notifications sent successfully');
+    } catch (notificationError) {
+      console.warn('Failed to send operator notifications:', notificationError);
+      // Don't fail the entire submission if notifications fail
+    }
+
+    // Send quote confirmation email to passenger
+    try {
+      console.log('Sending quote confirmation email to passenger...');
+      if (userEmail && userFirstName) {
+        await sendQuoteConfirmationEmail(
+          quoteRequestData,
+          userEmail,
+          userFirstName
+        );
+        console.log('Quote confirmation email sent successfully');
+      } else {
+        console.warn('Cannot send quote confirmation email - missing user email or firstName');
+      }
+    } catch (confirmationError) {
+      console.warn('Failed to send quote confirmation email:', confirmationError);
+      // Don't fail the entire submission if confirmation email fails
+    }
   } catch (error) {
     console.error('Error submitting quote request:', error);
     throw new Error('Failed to submit quote request');

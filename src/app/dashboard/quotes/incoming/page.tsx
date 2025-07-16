@@ -35,93 +35,17 @@ import { RefreshCw, Search, X } from 'lucide-react';
 import QuoteRequestModal from '@/components/quotes/QuoteRequestModal';
 import ResponseTimeAnalyticsModal from '@/components/quotes/ResponseTimeAnalyticsModal';
 import { QuoteRequest } from '@/types/flight';
+import { 
+  getOperatorSpecificStatus, 
+  getOperatorStatusDisplayLabel, 
+  getOperatorCustomStatusSx, 
+  getOperatorStatusColor 
+} from '@/utils/status-helpers';
 
 type SortableColumn = 'status' | 'submitted' | 'flightDate' | 'client' | 'responseTime';
 type SortDirection = 'asc' | 'desc';
 
-const getStatusColor = (
-  status: string
-): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
-  // Operator perspective status colors
-  switch (status) {
-    case 'new request':
-    case 'submitted':
-    case 'pending':
-      return 'error'; // Pulsing red hue
-    case 'quote submitted':
-    case 'under-offer':
-    case 'quoted':
-      return 'success'; // Light green hue
-    case 'accepted!':
-    case 'accepted':
-    case 'booked':
-      return 'primary'; // Darker green hue (we'll customize this)
-    case 'rejected':
-      return 'default'; // Dark grey hue
-    case 'won by competitor':
-      return 'error'; // Dark red hue
-    case 'expired':
-    case 'cancelled':
-      return 'secondary'; // Greyed out
-    default:
-      return 'default';
-  }
-};
-
-// Get the operator-specific status for a request
-const getOperatorSpecificStatus = (request: QuoteRequest, operatorUserCode: string | undefined): string => {
-  if (!operatorUserCode) return request.status || 'pending';
-  
-  // Check if operator has submitted a quote for this request
-  const operatorOffer = request.offers?.find(offer => offer.operatorUserCode === operatorUserCode);
-  
-  if (operatorOffer) {
-    // Operator has submitted a quote, return based on their quote status
-    switch (operatorOffer.offerStatus) {
-      case 'pending-client-acceptance':
-        return 'quote submitted';
-      case 'accepted-by-client':
-        return 'accepted';
-      case 'rejected-by-client':
-        return 'rejected';
-      case 'expired':
-        return 'expired';
-      default:
-        return operatorOffer.offerStatus;
-    }
-  } else {
-    // Operator hasn't submitted a quote yet, return overall request status
-    return request.status || 'pending';
-  }
-};
-
-// Map database status to operator-friendly display names
-const getOperatorStatusDisplay = (status: string): string => {
-  switch (status) {
-    case 'submitted':
-    case 'pending':
-      return 'new request';
-    case 'under-operator-review':
-      return 'under review';
-    case 'under-offer':
-    case 'quoted':
-    case 'quote submitted':
-      return 'quote submitted';
-    case 'accepted':
-    case 'booked':
-      return 'accepted!';
-    case 'cancelled':
-    case 'rejected':
-      return 'Client Rejected';
-    case 'expired':
-      return 'expired';
-    // Custom statuses for operator perspective
-    case 'won by competitor':
-      return 'won by competitor';
-    default:
-      return status;
-  }
-};
+// Using centralized functions from @/utils/status-helpers
 
 // Count how many competitor operators have submitted quotes (excluding current operator)
 const getCompetitorCount = (request: QuoteRequest, currentOperatorUserCode: string | undefined): number => {
@@ -144,71 +68,7 @@ const getCompetitorCount = (request: QuoteRequest, currentOperatorUserCode: stri
   return 0;
 };
 
-// Custom status styling function
-const getCustomStatusSx = (status: string) => {
-  const displayStatus = getOperatorStatusDisplay(status);
-  
-  // Base styling with border for all statuses
-  const baseStyle = {
-    border: '1px solid',
-    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-  };
-  
-  switch (displayStatus) {
-    case 'new request':
-      return {
-        ...baseStyle,
-        backgroundColor: '#ffebee', // Light red background
-        color: '#c62828', // Dark red text
-        borderColor: '#ef5350', // Red border
-      };
-    case 'under review':
-      return {
-        ...baseStyle,
-        backgroundColor: '#fff3e0', // Light orange background
-        color: '#e65100', // Orange text
-        borderColor: '#ff9800', // Orange border
-      };
-    case 'quote submitted':
-      return {
-        ...baseStyle,
-        backgroundColor: '#e8f5e8', // Light green background
-        color: '#2e7d32', // Green text
-        borderColor: '#4caf50', // Green border
-      };
-    case 'accepted!':
-      return {
-        ...baseStyle,
-        backgroundColor: '#51727a', // Charter blue background
-        color: '#ffffff', // White text
-        borderColor: '#ffffff', // White border
-        fontWeight: 'bold'
-      };
-    case 'Client Rejected':
-      return {
-        ...baseStyle,
-        backgroundColor: '#f5f5f5', // Light grey background
-        color: '#424242', // Dark grey text
-        borderColor: '#9e9e9e', // Grey border
-      };
-    case 'won by competitor':
-      return {
-        ...baseStyle,
-        backgroundColor: '#b71c1c', // Dark red background
-        color: '#ffffff', // White text
-        borderColor: '#d32f2f', // Red border
-      };
-    case 'expired':
-      return {
-        ...baseStyle,
-        backgroundColor: '#eeeeee', // Grey background
-        color: '#9e9e9e', // Light grey text
-        borderColor: '#bdbdbd', // Light grey border
-      };
-    default:
-      return baseStyle;
-  }
-};
+// Using centralized getOperatorCustomStatusSx from @/utils/status-helpers
 
 // Helper function to format the complete route by legs
 const formatCompleteRouteLegs = (request: QuoteRequest): Array<{legNumber: number, route: string}> => {
@@ -422,7 +282,7 @@ export default function AllOperatorQuoteRequestsPage() {
   const getOldestNewRequestWaitTime = (): string | null => {
     const newRequests = quoteRequests.filter(request => {
       const operatorStatus = getOperatorSpecificStatus(request, user?.userCode);
-      return getOperatorStatusDisplay(operatorStatus) === 'new request';
+      return getOperatorStatusDisplayLabel(operatorStatus) === 'new request';
     });
     
     if (newRequests.length === 0) return null;
@@ -470,7 +330,7 @@ export default function AllOperatorQuoteRequestsPage() {
         const route = routeLegs.map(leg => `leg ${leg.legNumber} ${leg.route}`).join(' ').toLowerCase();
         const client = request.clientUserCode?.toLowerCase() || '';
         const operatorStatus = getOperatorSpecificStatus(request, user?.userCode);
-        const status = getOperatorStatusDisplay(operatorStatus).toLowerCase();
+        const status = getOperatorStatusDisplayLabel(operatorStatus).toLowerCase();
         
         // Format dates for searching
         let submittedDateStr = '';
@@ -507,8 +367,8 @@ export default function AllOperatorQuoteRequestsPage() {
         case 'status': {
           const operatorStatusA = getOperatorSpecificStatus(a, user?.userCode);
           const operatorStatusB = getOperatorSpecificStatus(b, user?.userCode);
-          valueA = getOperatorStatusDisplay(operatorStatusA);
-          valueB = getOperatorStatusDisplay(operatorStatusB);
+          valueA = getOperatorStatusDisplayLabel(operatorStatusA);
+          valueB = getOperatorStatusDisplayLabel(operatorStatusB);
           
           // Special handling: always prioritize "new request" at the top when sorting by status
           if (valueA === 'new request' && valueB !== 'new request') {
@@ -571,10 +431,10 @@ export default function AllOperatorQuoteRequestsPage() {
 
   // Calculate new requests count
   const newRequestsCount = useMemo(() => {
-    return quoteRequests.filter(request => {
-      const operatorStatus = getOperatorSpecificStatus(request, user?.userCode);
-      return getOperatorStatusDisplay(operatorStatus) === 'new request';
-    }).length;
+      return quoteRequests.filter(request => {
+    const operatorStatus = getOperatorSpecificStatus(request, user?.userCode);
+    return getOperatorStatusDisplayLabel(operatorStatus) === 'new request';
+  }).length;
   }, [quoteRequests, user?.userCode]);
 
   return (
@@ -627,12 +487,23 @@ export default function AllOperatorQuoteRequestsPage() {
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
                 border: '1px solid #e0e0e0',
+                boxShadow: 'none',
                 '&:hover': {
-                  borderColor: '#b0b0b0',
+                  borderColor: '#e0e0e0',
+                  boxShadow: 'none',
                 },
                 '&.Mui-focused': {
-                  borderColor: '#1976d2',
+                  borderColor: '#e0e0e0',
+                  boxShadow: 'none',
                 },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#e0e0e0',
+                  borderWidth: '1px',
+                },
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#e0e0e0',
+                borderWidth: '1px',
               },
             }}
           />
@@ -960,7 +831,7 @@ export default function AllOperatorQuoteRequestsPage() {
                       <TableCell>
                         {(() => {
                           const operatorStatus = getOperatorSpecificStatus(request, user?.userCode);
-                          const displayStatus = getOperatorStatusDisplay(operatorStatus);
+                          const displayStatus = getOperatorStatusDisplayLabel(operatorStatus);
                           
                           return (
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-start' }}>
@@ -1003,7 +874,7 @@ export default function AllOperatorQuoteRequestsPage() {
                                       width: '100%',
                                       textAlign: 'center'
                                     },
-                                    ...getCustomStatusSx(operatorStatus)
+                                    ...getOperatorCustomStatusSx(operatorStatus)
                                   }}
                                 />
                               </Box>

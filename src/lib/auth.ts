@@ -149,7 +149,11 @@ export const registerUser = async (
     });
 
     // Send verification email
-    if (process.env.NODE_ENV === 'production' || process.env.ENABLE_DEV_EMAILS === 'true') {
+    const enableEmails = process.env.NODE_ENV === 'production' || 
+                        process.env.ENABLE_DEV_EMAILS === 'true' || 
+                        process.env.NODE_ENV !== 'test';
+    
+    if (enableEmails) {
       try {
         await fetch('/api/auth/verify-email', {
           method: 'POST',
@@ -186,9 +190,13 @@ export const registerUser = async (
     }
 
     // Send welcome email
-    if (process.env.NODE_ENV === 'production' || process.env.ENABLE_DEV_EMAILS === 'true') {
+    const enableWelcomeEmails = process.env.NODE_ENV === 'production' || 
+                               process.env.ENABLE_DEV_EMAILS === 'true' || 
+                               process.env.NODE_ENV !== 'test';
+    
+    if (enableWelcomeEmails) {
       try {
-        await sendWelcomeEmail(email, user.uid, userCode, firstName);
+        await sendWelcomeEmail(email, user.uid, userCode, firstName, role, company);
       } catch (error: unknown) {
         // Log the welcome email error but don't block registration
         logSystemError(
@@ -209,7 +217,11 @@ export const registerUser = async (
     }
 
     // Send admin notification
-    if (process.env.NODE_ENV === 'production' || process.env.ENABLE_DEV_EMAILS === 'true') {
+    const enableAdminEmails = process.env.NODE_ENV === 'production' || 
+                             process.env.ENABLE_DEV_EMAILS === 'true' || 
+                             process.env.NODE_ENV !== 'test';
+    
+    if (enableAdminEmails) {
       try {
         await sendAdminNotification(email, firstName, lastName, role, userCode, company);
       } catch (error: unknown) {
@@ -381,10 +393,14 @@ export async function signInWithGoogle(): Promise<UserData> {
       // Continue with sign-in even if claims setting fails
     }
 
-    // Send welcome email
-    if (process.env.NODE_ENV === 'production' || process.env.ENABLE_DEV_EMAILS === 'true') {
+    // Send welcome email (Google sign-in)
+    const enableGoogleWelcomeEmails = process.env.NODE_ENV === 'production' || 
+                                     process.env.ENABLE_DEV_EMAILS === 'true' || 
+                                     process.env.NODE_ENV !== 'test';
+    
+    if (enableGoogleWelcomeEmails) {
       try {
-        await sendWelcomeEmail(user.email!, user.uid, userCode, firstName);
+        await sendWelcomeEmail(user.email!, user.uid, userCode, firstName, 'passenger', null);
       } catch (error) {
         console.error('Error sending welcome email:', error);
         // Don't block registration if email sending fails

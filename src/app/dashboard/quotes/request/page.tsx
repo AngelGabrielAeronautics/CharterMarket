@@ -198,6 +198,13 @@ export default function QuoteRequestsPage() {
       if (requestExists) {
         setSelectedRequestId(openRequestId);
         setTabValue(0);
+        
+        // Signal completion of quote submission process
+        const submittedQuoteId = sessionStorage.getItem('submittedQuoteId');
+        if (submittedQuoteId === openRequestId) {
+          sessionStorage.removeItem('quoteSubmissionInProgress');
+          sessionStorage.removeItem('submittedQuoteId');
+        }
       }
     }
   }, [searchParams, quoteRequests]);
@@ -354,8 +361,8 @@ export default function QuoteRequestsPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-        <Box>
+      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: 2 }}>
+        <Box sx={{ minWidth: 0, flex: { xs: '1 1 100%', sm: '1 1 50%' } }}>
           <Typography variant="h4" component="h1" fontWeight="bold">
             Quote Requests
           </Typography>
@@ -363,7 +370,7 @@ export default function QuoteRequestsPage() {
             View your existing quote requests or submit a new one
           </Typography>
         </Box>
-        <ProgressNav sx={{ maxWidth: 600 }} />
+        <ProgressNav sx={{ flex: { xs: '1 1 100%', sm: '1 1 50%' }, maxWidth: 'none' }} />
       </Box>
 
       <Paper
@@ -372,6 +379,7 @@ export default function QuoteRequestsPage() {
           borderRadius: 1,
           overflow: 'hidden',
           mb: 4,
+          backgroundColor: 'transparent',
         }}
       >
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -422,12 +430,23 @@ export default function QuoteRequestsPage() {
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
                     border: '1px solid #e0e0e0',
+                    boxShadow: 'none',
                     '&:hover': {
-                      borderColor: '#b0b0b0',
+                      borderColor: '#e0e0e0',
+                      boxShadow: 'none',
                     },
                     '&.Mui-focused': {
-                      borderColor: '#1976d2',
+                      borderColor: '#e0e0e0',
+                      boxShadow: 'none',
                     },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#e0e0e0',
+                      borderWidth: '1px',
+                    },
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#e0e0e0',
+                    borderWidth: '1px',
                   },
                 }}
                 InputProps={{
@@ -759,7 +778,7 @@ export default function QuoteRequestsPage() {
 
         <TabPanel value={tabValue} index={1}>
           {/* Submit New Request Tab */}
-          <Box sx={{ px: 3, pb: 4 }}>
+          <Box sx={{ px: 3, pb: 4, pt: 3 }}>
             <Typography variant="h6" component="h2" sx={{ mb: 3 }}>
               Submit New Quote Request
             </Typography>

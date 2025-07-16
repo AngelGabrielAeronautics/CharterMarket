@@ -191,7 +191,7 @@ export default function SystemSettingsPage() {
         
         return (
           <Box key={category} sx={{ mb: 4 }}>
-            <Paper elevation={1} sx={{ p: 3 }}>
+            <Paper elevation={1} sx={{ p: 3, backgroundColor: 'transparent', border: '1px solid', borderColor: 'divider' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                 {getCategoryIcon(category)}
                 <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1a2b3c' }}>
@@ -208,6 +208,7 @@ export default function SystemSettingsPage() {
                         display: 'flex', 
                         flexDirection: 'column',
                         transition: 'all 0.3s',
+                        backgroundColor: 'transparent',
                         '&:hover': { 
                           boxShadow: 6,
                           transform: 'translateY(-2px)'

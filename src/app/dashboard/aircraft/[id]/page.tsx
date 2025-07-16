@@ -83,25 +83,25 @@ export default function AircraftPage() {
         </TabsList>
 
         <TabsContent value="details">
-          <div className="bg-white shadow-sm rounded-lg">
+          <div className="bg-transparent shadow-sm rounded-lg border border-gray-200">
             <AircraftDetails aircraft={aircraft} />
           </div>
         </TabsContent>
 
         <TabsContent value="availability">
-          <div className="bg-white shadow-sm rounded-lg">
+          <div className="bg-transparent shadow-sm rounded-lg border border-gray-200">
             <AircraftAvailability aircraftId={aircraft.id} />
           </div>
         </TabsContent>
 
         <TabsContent value="maintenance">
-          <div className="bg-white shadow-sm rounded-lg">
+          <div className="bg-transparent shadow-sm rounded-lg border border-gray-200">
             <MaintenanceSchedule aircraftId={aircraft.id} />
           </div>
         </TabsContent>
 
         <TabsContent value="documents">
-          <div className="bg-white shadow-sm rounded-lg">
+          <div className="bg-transparent shadow-sm rounded-lg border border-gray-200">
             <AircraftDocuments aircraftId={aircraft.id} />
           </div>
         </TabsContent>

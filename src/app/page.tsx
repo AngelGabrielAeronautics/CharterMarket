@@ -105,7 +105,7 @@ const GridItem: React.FC<GridItemProps> = ({
 
 const PLACEHOLDER_BASE = 'https://placehold.co';
 const BRAND_COLORS = {
-  navy: '1A2B3C',
+  navy: '0b3847',
   gold: 'C4A962',
 };
 
@@ -159,8 +159,7 @@ const emptyLegs = [
     passengers: 8,
     flightPrice: 3400,
     seatPrice: null,
-    image:
-      'https://images.unsplash.com/photo-1610642372651-fe6e7bc40639?q=80&w=2670&auto=format&fit=crop',
+    image: '/images/hero/landing-temp.jpg',
   },
   {
     operator: 'MercAir',
@@ -170,8 +169,7 @@ const emptyLegs = [
     passengers: 8,
     flightPrice: 3400,
     seatPrice: 640,
-    image:
-      'https://images.unsplash.com/photo-1610642372651-fe6e7bc40639?q=80&w=2670&auto=format&fit=crop',
+    image: '/images/hero/landing-temp.jpg',
   },
   {
     operator: 'MercAir',
@@ -181,8 +179,7 @@ const emptyLegs = [
     passengers: 8,
     flightPrice: 3400,
     seatPrice: 640,
-    image:
-      'https://images.unsplash.com/photo-1610642372651-fe6e7bc40639?q=80&w=2670&auto=format&fit=crop',
+    image: '/images/hero/landing-temp.jpg',
   },
 ];
 
@@ -265,7 +262,7 @@ const EmptyLegCard: React.FC<{ leg: EmptyLeg }> = ({ leg }) => {
         overflow: 'hidden',
         mb: 2,
         bgcolor: leg.verified ? 'grey.50' : '#0B3D59',
-        color: leg.verified ? 'text.primary' : 'common.white',
+        color: leg.verified ? `#${BRAND_COLORS.navy}` : 'common.white',
         border: leg.verified ? 1 : 0,
         borderColor: 'grey.300',
       }}
@@ -292,24 +289,60 @@ const EmptyLegCard: React.FC<{ leg: EmptyLeg }> = ({ leg }) => {
               : 'linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.5))',
           }}
         >
-          <Typography variant="h5" fontWeight="bold">
+          <Typography 
+            variant="h5" 
+            fontWeight="bold"
+            sx={{
+              color: leg.verified ? `#${BRAND_COLORS.navy}` : 'common.white'
+            }}
+          >
             {leg.route}
           </Typography>
         </Box>
       </Box>
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center' }}>
-        <Typography variant="body2">{leg.date}</Typography>
+        <Typography 
+          variant="body2"
+          sx={{ color: leg.verified ? `#${BRAND_COLORS.navy}` : 'common.white' }}
+        >
+          {leg.date}
+        </Typography>
         <Box sx={{ mx: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <PeopleIcon sx={{ fontSize: 18 }} />
-          <Typography variant="body2">max {leg.passengers}</Typography>
+          <PeopleIcon 
+            sx={{ 
+              fontSize: 18,
+              color: leg.verified ? `#${BRAND_COLORS.navy}` : 'common.white'
+            }} 
+          />
+          <Typography 
+            variant="body2"
+            sx={{ color: leg.verified ? `#${BRAND_COLORS.navy}` : 'common.white' }}
+          >
+            max {leg.passengers}
+          </Typography>
         </Box>
         <Box sx={{ flexGrow: 1 }} />
         <Box sx={{ textAlign: 'right' }}>
-          <Typography variant="caption">Flight</Typography>
-          <Typography variant="h6" fontWeight="bold" lineHeight={1}>
+          <Typography 
+            variant="caption"
+            sx={{ color: leg.verified ? `#${BRAND_COLORS.navy}` : 'common.white' }}
+          >
+            Flight
+          </Typography>
+          <Typography 
+            variant="h6" 
+            fontWeight="bold" 
+            lineHeight={1}
+            sx={{ color: leg.verified ? `#${BRAND_COLORS.navy}` : 'common.white' }}
+          >
             {formattedFlightPrice}
           </Typography>
-          <Typography variant="caption">Seat {formattedSeatPrice}</Typography>
+          <Typography 
+            variant="caption"
+            sx={{ color: leg.verified ? `#${BRAND_COLORS.navy}` : 'common.white' }}
+          >
+            Seat {formattedSeatPrice}
+          </Typography>
         </Box>
       </Box>
     </Paper>
@@ -444,7 +477,7 @@ export default function Home() {
               content: '""',
               position: 'absolute',
               inset: 0,
-              backgroundImage: 'url(/images/hero/fallback-hero.jpg), linear-gradient(135deg, #1A2B3C 0%, #2C4155 50%, #1A2B3C 100%)',
+              backgroundImage: 'url(/images/hero/landing-temp.jpg), linear-gradient(135deg, #1A2B3C 0%, #2C4155 50%, #1A2B3C 100%)',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -661,7 +694,7 @@ export default function Home() {
         component="footer"
         sx={{
           py: { xs: 4, sm: 6, md: 8 },
-          bgcolor: 'background.paper',
+          bgcolor: `#${BRAND_COLORS.navy}`,
           color: 'common.white',
         }}
       >

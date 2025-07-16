@@ -99,8 +99,8 @@ export default function PassengerQuickActions() {
       href: '/dashboard/passengers',
     },
     {
-      title: 'View Invoices',
-      description: 'Access and download your invoices',
+          title: 'View Invoices & Payments',
+    description: 'Access and download your invoices and payment information',
       icon: <ReceiptLong />,
       href: '/dashboard/invoices',
     },

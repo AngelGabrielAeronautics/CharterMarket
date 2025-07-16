@@ -1,0 +1,15 @@
+<svg width="135" height="40" viewBox="0 0 135 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="135" height="40" rx="6.5" fill="black"/>
+<rect x="0.5" y="0.5" width="134" height="39" rx="6" stroke="white" stroke-opacity="0.117"/>
+<g clip-path="url(#clip0_1_2)">
+<path d="M24.7691 20.3036C24.7691 17.1054 27.5456 15.7051 27.6818 15.6242C26.1449 13.4239 23.7784 13.1419 22.9368 13.1172C20.8895 12.9038 18.9006 14.4147 17.8632 14.4147C16.8051 14.4147 15.1412 13.142 13.4158 13.1743C11.2629 13.2067 9.24847 14.5577 8.1127 16.6595C5.78537 20.9632 7.49348 27.1931 9.72568 30.5731C10.8429 32.2328 12.1442 34.0897 13.8696 34.0326C15.5537 33.9708 16.208 32.9135 18.2346 32.9135C20.2405 32.9135 20.8537 34.0326 22.6177 33.9955C24.4401 33.9708 25.5574 32.3266 26.6339 30.6515C27.9353 28.7316 28.4601 26.8488 28.4808 26.7556C28.4394 26.7432 24.7691 25.2447 24.7691 20.3036Z" fill="white"/>
+<path d="M21.0367 10.9757C21.9403 9.84601 22.5742 8.27505 22.4173 6.68066C21.0574 6.74007 19.3731 7.56364 18.4282 8.67369C17.5869 9.64138 16.8054 11.275 16.9829 12.8075C18.5198 12.9208 20.0981 12.0849 21.0367 10.9757Z" fill="white"/>
+</g>
+<text x="43" y="14" font-family="SF Pro Display, -apple-system, sans-serif" font-size="9" font-weight="400" fill="white">Download on the</text>
+<text x="43" y="26" font-family="SF Pro Display, -apple-system, sans-serif" font-size="17" font-weight="600" fill="white">App Store</text>
+<defs>
+<clipPath id="clip0_1_2">
+<rect width="21" height="25" fill="white" transform="translate(7 7.5)"/>
+</clipPath>
+</defs>
+</svg> 

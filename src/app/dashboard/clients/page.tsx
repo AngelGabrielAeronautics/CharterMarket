@@ -172,7 +172,30 @@ export default function ClientsPage() {
             size="small"
             value={searchTerm}
             onChange={handleSearchChange}
-            sx={{ minWidth: 300 }}
+            sx={{ 
+              minWidth: 300,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                border: '1px solid #e0e0e0',
+                boxShadow: 'none',
+                '&:hover': {
+                  borderColor: '#e0e0e0',
+                  boxShadow: 'none',
+                },
+                '&.Mui-focused': {
+                  borderColor: '#e0e0e0',
+                  boxShadow: 'none',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#e0e0e0',
+                  borderWidth: '1px',
+                },
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#e0e0e0',
+                borderWidth: '1px',
+              },
+            }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">

@@ -174,12 +174,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             aria-label="Open menu"
             onClick={toggleMobileMenu}
             sx={{
-              bgcolor: 'background.paper',
+              bgcolor: 'transparent',
               boxShadow: muiTheme.shadows[3],
               color: 'primary.main',
               borderRadius: '50%',
               width: 40,
               height: 40,
+              border: '1px solid',
+              borderColor: 'divider',
               '&:hover': {
                 bgcolor: 'action.hover',
               },

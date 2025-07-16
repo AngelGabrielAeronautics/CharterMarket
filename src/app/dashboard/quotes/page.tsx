@@ -25,10 +25,14 @@ import {
 } from '@mui/material';
 import ProgressNav from '@/components/dashboard/ProgressNav';
 import { Button } from '@/components/ui/Button';
-import { RefreshCw, Search, X, Building } from 'lucide-react';
+import { RefreshCw, Search, X, Building, Plane } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getAllQuotes } from '@/lib/quote';
+import { getOfferStatusLabel } from '@/utils/status-helpers';
 import { getQuoteRequest } from '@/lib/flight';
+import QuoteCard from '@/components/quotes/QuoteCard';
+import { Dialog, DialogContent, DialogTitle } from '@mui/material';
+import { Close as CloseIcon } from '@mui/icons-material';
 
 interface QuoteWithRequestData {
   id: string;
@@ -59,9 +63,10 @@ interface QuoteWithRequestData {
   arrivalAirport?: string;
   departureDate?: any;
   passengerCount?: number;
+  returnDate?: any;
 }
 
-type SortableColumn = 'submitted' | 'price' | 'status' | 'operator' | 'route' | 'requestCode';
+type SortableColumn = 'submitted' | 'flightDate' | 'price' | 'operator' | 'route' | 'quoteIdStatus';
 type SortDirection = 'asc' | 'desc';
 
 // Helper to parse Firestore Timestamp into JS Date
@@ -78,6 +83,14 @@ const formatRoute = (quote: QuoteWithRequestData): string => {
   return quote.departureAirport && quote.arrivalAirport
     ? `${quote.departureAirport} → ${quote.arrivalAirport}`
     : 'N/A';
+};
+
+// Format aircraft for display
+const formatAircraft = (quote: QuoteWithRequestData): string => {
+  if (quote.aircraftDetails) {
+    return `${quote.aircraftDetails.make} ${quote.aircraftDetails.model}`;
+  }
+  return 'Not specified';
 };
 
 // Format date for searching
@@ -101,28 +114,13 @@ const getStatusColor = (
     case 'rejected-by-client':
       return 'error';
     case 'expired':
-      return 'secondary';
-    default:
       return 'default';
+    default:
+      return 'info';
   }
 };
 
-const getStatusLabel = (status: string): string => {
-  switch (status) {
-    case 'pending-client-acceptance':
-      return 'Pending Review';
-    case 'accepted-by-client':
-      return 'Accepted';
-    case 'rejected-by-client':
-      return 'Declined';
-    case 'awaiting-acknowledgement':
-      return 'Awaiting Ack';
-    case 'expired':
-      return 'Expired';
-    default:
-      return status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  }
-};
+// Using centralized getOfferStatusLabel from @/utils/status-helpers
 
 export default function QuotesDashboardPage() {
   const { user } = useAuth();
@@ -135,6 +133,8 @@ export default function QuotesDashboardPage() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [selectedQuote, setSelectedQuote] = useState<QuoteWithRequestData | null>(null);
+  const [quoteModalOpen, setQuoteModalOpen] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
 
 
@@ -165,6 +165,11 @@ export default function QuotesDashboardPage() {
       
       const fetchedQuotes = await getAllQuotes(filters);
 
+      // DEBUG: Log the raw fetched quotes
+      console.log('DEBUG: Raw fetched quotes:', fetchedQuotes.length);
+      if (fetchedQuotes.length > 0) {
+        console.log('DEBUG: First raw quote:', fetchedQuotes[0]);
+      }
 
 
       // ADDITIONAL SECURITY CHECK: Filter quotes to ensure they belong to this user
@@ -222,42 +227,36 @@ export default function QuotesDashboardPage() {
       // Remove null entries (orphaned/invalid quotes)
       const validQuotes = enrichedQuotes.filter(quote => quote !== null) as QuoteWithRequestData[];
       
+      // DEBUG: Log the quote data to see what we're actually getting
+      console.log('DEBUG: Valid quotes retrieved:', validQuotes.length);
+      if (validQuotes.length > 0) {
+        console.log('DEBUG: First quote sample:', {
+          id: validQuotes[0].id,
+          offerId: validQuotes[0].offerId,
+          operatorUserCode: validQuotes[0].operatorUserCode,
+          requestId: validQuotes[0].requestId,
+          requestCode: validQuotes[0].requestCode,
+        });
+      }
+      
       setQuotes(validQuotes);
       setError(null);
       setLastRefreshed(new Date());
-    } catch (err: any) {
-      console.error('[SECURITY] Error fetching quotes for user:', user.userCode, err);
-      
-      // Check if this is a security-related error
-      if (err?.message?.includes('User-specific filtering is required') || 
-          err?.message?.includes('Invalid user permissions') ||
-          err?.message?.includes('Authentication required')) {
-        setError('Access denied: Please log in again');
-        // Optionally redirect to login
-      } else {
-        setError('Failed to load quotes');
-      }
+    } catch (err) {
+      console.error('Error fetching quotes:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch quotes');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // SECURITY: Clear quotes data when user changes to prevent data leaks
-    setQuotes([]);
-    setError(null);
-    
-    if (user?.userCode) {
-      fetchQuotes();
-    } else {
-      console.log('[SECURITY] No user.userCode, clearing quotes data');
-      setLoading(false);
-    }
+    fetchQuotes();
   }, [user?.userCode, user?.role]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
-    setPage(0); // Reset to first page when searching
+    setPage(0);
   };
 
   const handleClearSearch = () => {
@@ -285,7 +284,7 @@ export default function QuotesDashboardPage() {
   };
 
   const handleViewDetails = (requestId: string, quote?: QuoteWithRequestData) => {
-    // SECURITY CHECK: Verify the quote belongs to the current user before navigation
+    // SECURITY CHECK: Verify the quote belongs to the current user before opening modal
     if (quote && user?.userCode) {
       const belongsToUser = user.role === 'operator' 
         ? quote.operatorUserCode === user.userCode
@@ -298,7 +297,15 @@ export default function QuotesDashboardPage() {
       }
     }
     
-    router.push(`/dashboard/quotes/request?id=${requestId}`);
+    if (quote) {
+      setSelectedQuote(quote);
+      setQuoteModalOpen(true);
+    }
+  };
+
+  const handleCloseQuoteModal = () => {
+    setQuoteModalOpen(false);
+    setSelectedQuote(null);
   };
 
   // Filter and sort quotes
@@ -313,6 +320,7 @@ export default function QuotesDashboardPage() {
         const requestCode = quote.requestCode?.toLowerCase() || '';
         const operator = quote.operatorUserCode?.toLowerCase() || '';
         const route = formatRoute(quote).toLowerCase();
+        const aircraft = formatAircraft(quote).toLowerCase();
         const status = quote.offerStatus?.toLowerCase() || '';
         const price = quote.totalPrice?.toString() || '';
         
@@ -326,76 +334,84 @@ export default function QuotesDashboardPage() {
           }
         }
         
+        // DEBUG: Log search terms for first few quotes
+        if (search === 'qt-' || search.startsWith('qt-')) {
+          console.log('DEBUG: Search terms for quote:', {
+            search,
+            quoteId,
+            matches: quoteId.includes(search)
+          });
+        }
+        
         return quoteId.includes(search) ||
                requestCode.includes(search) ||
                operator.includes(search) ||
                route.includes(search) ||
+               aircraft.includes(search) ||
                status.includes(search) ||
                price.includes(search) ||
                submittedDateStr.includes(search);
       });
     }
     
-    // Sort by selected column and direction
-    return [...filtered].sort((a, b) => {
-      let valueA: any = '';
-      let valueB: any = '';
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
       
       switch (sortColumn) {
         case 'submitted':
-          valueA = a.createdAt ? toJsDate(a.createdAt).getTime() : 0;
-          valueB = b.createdAt ? toJsDate(b.createdAt).getTime() : 0;
+          aValue = a.createdAt ? toJsDate(a.createdAt) : new Date(0);
+          bValue = b.createdAt ? toJsDate(b.createdAt) : new Date(0);
           break;
-        case 'price':
-          valueA = a.totalPrice || 0;
-          valueB = b.totalPrice || 0;
+        case 'quoteIdStatus':
+          aValue = a.offerId || '';
+          bValue = b.offerId || '';
           break;
-        case 'status':
-          valueA = a.offerStatus || '';
-          valueB = b.offerStatus || '';
+        case 'flightDate':
+          aValue = a.departureDate ? toJsDate(a.departureDate) : new Date(0);
+          bValue = b.departureDate ? toJsDate(b.departureDate) : new Date(0);
           break;
         case 'operator':
-          valueA = a.operatorUserCode || '';
-          valueB = b.operatorUserCode || '';
+          aValue = user?.role === 'operator' ? (a.clientUserCode || '') : (a.operatorUserCode || '');
+          bValue = user?.role === 'operator' ? (b.clientUserCode || '') : (b.operatorUserCode || '');
           break;
         case 'route':
-          valueA = formatRoute(a);
-          valueB = formatRoute(b);
+          aValue = formatRoute(a);
+          bValue = formatRoute(b);
           break;
-        case 'requestCode':
-          valueA = a.requestCode || '';
-          valueB = b.requestCode || '';
+        case 'price':
+          aValue = a.totalPrice || 0;
+          bValue = b.totalPrice || 0;
           break;
-        default:
-          return 0;
-      }
-      
-      // Handle string comparison
-      if (typeof valueA === 'string' && typeof valueB === 'string') {
-        const comparison = valueA.localeCompare(valueB);
-        return sortDirection === 'asc' ? comparison : -comparison;
-      }
-      
-      // Handle numeric comparison
-      if (sortDirection === 'asc') {
-        return valueA - valueB;
-      } else {
-        return valueB - valueA;
-      }
-    });
-  }, [quotes, searchTerm, sortColumn, sortDirection]);
 
-  // Calculate pagination
+        default:
+          aValue = a.createdAt ? toJsDate(a.createdAt) : new Date(0);
+          bValue = b.createdAt ? toJsDate(b.createdAt) : new Date(0);
+      }
+      
+      if (aValue < bValue) {
+        return sortDirection === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortDirection === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+    
+    return sorted;
+  }, [quotes, searchTerm, sortColumn, sortDirection, user?.role]);
+
+  // Paginate the filtered and sorted quotes
   const paginatedQuotes = useMemo(() => {
     const startIndex = page * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-    return filteredAndSortedQuotes.slice(startIndex, endIndex);
+    return filteredAndSortedQuotes.slice(startIndex, startIndex + rowsPerPage);
   }, [filteredAndSortedQuotes, page, rowsPerPage]);
 
-  // Calculate unopened quotes count
+  // Calculate unopened quotes count for the banner
   const unopenedQuotesCount = useMemo(() => {
     if (user?.role === 'operator') {
-      // For operators: recent status changes (accepted, etc.) within last 3 days
+      // For operators: Count quotes with recent status changes (accepted or awaiting acknowledgement)
       const threeDaysAgo = new Date();
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
       
@@ -414,12 +430,12 @@ export default function QuotesDashboardPage() {
     if (user?.role === 'operator') {
       // Filter to show only recent status changes
       setSearchTerm('');
-      setSortColumn('status');
+      setSortColumn('quoteIdStatus');
       setSortDirection('desc');
     } else {
       // Filter to show only unopened quotes (pending status)
       setSearchTerm('pending');
-      setSortColumn('status');
+      setSortColumn('quoteIdStatus');
       setSortDirection('desc');
     }
     setPage(0);
@@ -429,8 +445,8 @@ export default function QuotesDashboardPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-        <Box>
+      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: 2 }}>
+        <Box sx={{ minWidth: 0, flex: { xs: '1 1 100%', sm: '1 1 50%' } }}>
           <Typography variant="h4" component="h1" fontWeight="bold">
             My Quotes
           </Typography>
@@ -441,7 +457,7 @@ export default function QuotesDashboardPage() {
             }
           </Typography>
         </Box>
-        <ProgressNav sx={{ maxWidth: 600 }} />
+        <ProgressNav sx={{ flex: { xs: '1 1 100%', sm: '1 1 50%' }, maxWidth: 'none' }} />
       </Box>
 
       <Paper
@@ -450,6 +466,7 @@ export default function QuotesDashboardPage() {
           borderRadius: 1,
           overflow: 'hidden',
           mb: 4,
+          backgroundColor: 'transparent',
         }}
       >
         {/* Header with search and refresh */}
@@ -473,12 +490,23 @@ export default function QuotesDashboardPage() {
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 2,
                   border: '1px solid #e0e0e0',
+                  boxShadow: 'none',
                   '&:hover': {
-                    borderColor: '#b0b0b0',
+                    borderColor: '#e0e0e0',
+                    boxShadow: 'none',
                   },
                   '&.Mui-focused': {
-                    borderColor: '#1976d2',
+                    borderColor: '#e0e0e0',
+                    boxShadow: 'none',
                   },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#e0e0e0',
+                    borderWidth: '1px',
+                  },
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#e0e0e0',
+                  borderWidth: '1px',
                 },
               }}
               InputProps={{
@@ -620,7 +648,7 @@ export default function QuotesDashboardPage() {
                   )}
                 </Box>
               ) : (
-                <Paper sx={{ overflow: 'hidden' }}>
+                <Paper sx={{ overflow: 'hidden', backgroundColor: 'transparent' }}>
                   <TableContainer>
                     <MuiTable stickyHeader aria-label="quotes table">
                       <MuiTableHead>
@@ -655,11 +683,11 @@ export default function QuotesDashboardPage() {
                           </MuiTableCell>
                           <MuiTableCell>
                             <TableSortLabel
-                              active={sortColumn === 'requestCode'}
-                              direction={sortColumn === 'requestCode' ? sortDirection : 'desc'}
-                              onClick={() => handleSort('requestCode')}
+                              active={sortColumn === 'flightDate'}
+                              direction={sortColumn === 'flightDate' ? sortDirection : 'desc'}
+                              onClick={() => handleSort('flightDate')}
                             >
-                              Request
+                              Flight Date
                             </TableSortLabel>
                           </MuiTableCell>
                           <MuiTableCell>
@@ -681,6 +709,9 @@ export default function QuotesDashboardPage() {
                             </TableSortLabel>
                           </MuiTableCell>
                           <MuiTableCell>
+                            Aircraft
+                          </MuiTableCell>
+                          <MuiTableCell>
                             <TableSortLabel
                               active={sortColumn === 'price'}
                               direction={sortColumn === 'price' ? sortDirection : 'desc'}
@@ -691,23 +722,23 @@ export default function QuotesDashboardPage() {
                           </MuiTableCell>
                           <MuiTableCell>
                             <TableSortLabel
-                              active={sortColumn === 'status'}
-                              direction={sortColumn === 'status' ? sortDirection : 'desc'}
-                              onClick={() => handleSort('status')}
+                              active={sortColumn === 'quoteIdStatus'}
+                              direction={sortColumn === 'quoteIdStatus' ? sortDirection : 'desc'}
+                              onClick={() => handleSort('quoteIdStatus')}
                             >
-                              Status
+                              Quote ID / Status
                             </TableSortLabel>
                           </MuiTableCell>
                         </MuiTableRow>
                       </MuiTableHead>
                       <MuiTableBody>
                         {paginatedQuotes.map((quote) => (
-                                                     <MuiTableRow
-                             hover
-                             key={quote.id}
-                             onClick={() => handleViewDetails(quote.requestId, quote)}
-                             sx={{ cursor: 'pointer' }}
-                           >
+                          <MuiTableRow
+                            hover
+                            key={quote.id}
+                            onClick={() => handleViewDetails(quote.requestId, quote)}
+                            sx={{ cursor: 'pointer' }}
+                          >
                             <MuiTableCell>
                               <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
                                 {quote.createdAt
@@ -716,9 +747,23 @@ export default function QuotesDashboardPage() {
                               </Typography>
                             </MuiTableCell>
                             <MuiTableCell>
+                              <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                                {quote.departureDate
+                                  ? toJsDate(quote.departureDate).toLocaleDateString()
+                                  : 'N/A'}
+                              </Typography>
+                            </MuiTableCell>
+                            <MuiTableCell>
                               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                                  {quote.requestCode || 'N/A'}
+                                <Typography
+                                  variant="body2"
+                                  sx={{ 
+                                    fontFamily: 'monospace',
+                                    fontSize: '0.85rem',
+                                    fontWeight: 'medium'
+                                  }}
+                                >
+                                  {formatRoute(quote)}
                                 </Typography>
                                 <Typography variant="caption" color="text.secondary">
                                   {quote.passengerCount ? `${quote.passengerCount} pax` : ''}
@@ -726,28 +771,29 @@ export default function QuotesDashboardPage() {
                               </Box>
                             </MuiTableCell>
                             <MuiTableCell>
-                              <Typography
-                                variant="body2"
-                                sx={{ 
-                                  fontFamily: 'monospace',
-                                  fontSize: '0.85rem',
-                                  fontWeight: 'medium'
-                                }}
-                              >
-                                {formatRoute(quote)}
-                              </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Building size={16} color="#666" />
+                                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                                  {user?.role === 'operator' 
+                                    ? (quote.clientUserCode || 'N/A')
+                                    : (quote.operatorUserCode || 'N/A')
+                                  }
+                                </Typography>
+                              </Box>
                             </MuiTableCell>
-                                                         <MuiTableCell>
-                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                 <Building size={16} color="#666" />
-                                 <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                                   {user?.role === 'operator' 
-                                     ? (quote.clientUserCode || 'N/A')
-                                     : (quote.operatorUserCode || 'N/A')
-                                   }
-                                 </Typography>
-                               </Box>
-                             </MuiTableCell>
+                            <MuiTableCell>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Plane size={16} color="#666" />
+                                <Typography variant="body2" fontSize="0.875rem">
+                                  {formatAircraft(quote)}
+                                </Typography>
+                              </Box>
+                              {quote.aircraftDetails?.registration && (
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', ml: 2.5 }}>
+                                  {quote.aircraftDetails.registration}
+                                </Typography>
+                              )}
+                            </MuiTableCell>
                             <MuiTableCell>
                               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                                 <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
@@ -772,12 +818,38 @@ export default function QuotesDashboardPage() {
                               </Box>
                             </MuiTableCell>
                             <MuiTableCell>
-                              <Chip
-                                label={getStatusLabel(quote.offerStatus)}
-                                size="small"
-                                color={getStatusColor(quote.offerStatus)}
-                                variant="outlined"
-                              />
+                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-start' }}>
+                                <Box sx={{ minWidth: '200px', width: '100%' }}>
+                                  <Chip
+                                    label={getOfferStatusLabel(quote.offerStatus)}
+                                    size="small"
+                                    color={getStatusColor(quote.offerStatus)}
+                                    variant="outlined"
+                                    sx={{ 
+                                      width: '100%',
+                                      '& .MuiChip-label': {
+                                        display: 'block',
+                                        width: '100%',
+                                        textAlign: 'center'
+                                      }
+                                    }}
+                                  />
+                                </Box>
+                                <Typography 
+                                  variant="body2" 
+                                  color="text.secondary" 
+                                  sx={{ 
+                                    fontSize: '0.75rem',
+                                    fontWeight: 'normal',
+                                    width: '100%',
+                                    minWidth: '200px',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center'
+                                  }}
+                                >
+                                  {quote.offerId || 'N/A'}
+                                </Typography>
+                              </Box>
                             </MuiTableCell>
                           </MuiTableRow>
                         ))}
@@ -799,6 +871,68 @@ export default function QuotesDashboardPage() {
           )}
         </Box>
       </Paper>
+
+      {/* Quote Details Modal */}
+      <Dialog 
+        open={quoteModalOpen} 
+        onClose={handleCloseQuoteModal}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{
+          sx: { 
+            borderRadius: 2,
+            maxHeight: '90vh',
+            m: 2
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          pb: 1 
+        }}>
+          <Box>
+            <Typography variant="h6" fontWeight="bold">
+              Quote Details
+            </Typography>
+            {selectedQuote && (
+              <Typography variant="caption" color="text.secondary">
+                {selectedQuote.offerId}
+              </Typography>
+            )}
+          </Box>
+          <IconButton onClick={handleCloseQuoteModal} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers sx={{ p: 0 }}>
+          {selectedQuote && (
+            <QuoteCard
+              offer={{
+                offerId: selectedQuote.offerId,
+                operatorUserCode: selectedQuote.operatorUserCode,
+                clientUserCode: selectedQuote.clientUserCode,
+                price: selectedQuote.price,
+                commission: selectedQuote.commission,
+                totalPrice: selectedQuote.totalPrice,
+                currency: selectedQuote.currency,
+                notes: selectedQuote.notes,
+                offerStatus: selectedQuote.offerStatus as any,
+                createdAt: selectedQuote.createdAt,
+                updatedAt: selectedQuote.updatedAt,
+                responseTimeMinutes: selectedQuote.responseTimeMinutes,
+                aircraftDetails: selectedQuote.aircraftDetails,
+                attachments: []
+              }}
+              requestId={selectedQuote.requestId}
+              isClientView={user?.role === 'passenger' || user?.role === 'agent'}
+              showActions={false}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </Container>
   );
 }

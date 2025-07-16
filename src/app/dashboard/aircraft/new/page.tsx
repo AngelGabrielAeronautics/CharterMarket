@@ -75,7 +75,7 @@ export default function NewAircraftPage() {
           </Box>
         )}
 
-        <Box sx={{ bgcolor: 'background.paper', boxShadow: 1, borderRadius: 2, p: 3 }}>
+        <Box sx={{ bgcolor: 'transparent', boxShadow: 1, borderRadius: 2, p: 3, border: '1px solid', borderColor: 'divider' }}>
           <AircraftFormMaterial 
             onSubmit={handleSubmit} 
             onClose={handleClose}

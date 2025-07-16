@@ -32,6 +32,7 @@ import { Button } from '@/components/ui/Button';
 import { Plus, Search, X, RefreshCw, Plane } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AircraftDetailsModal from '@/components/AircraftDetailsModal';
+import { getAircraftStatusSx, getAircraftStatusColor } from '@/utils/status-helpers';
 
 interface Aircraft extends AircraftFormData {
   id: string;
@@ -40,54 +41,7 @@ interface Aircraft extends AircraftFormData {
 type SortableColumn = 'registration' | 'type' | 'makeModel' | 'year' | 'baseAirport' | 'status';
 type SortDirection = 'asc' | 'desc';
 
-const getStatusColor = (
-  status: AircraftStatus
-): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
-  switch (status) {
-    case 'ACTIVE':
-      return 'success';
-    case 'MAINTENANCE':
-      return 'warning';
-    case 'INACTIVE':
-      return 'error';
-    default:
-      return 'default';
-  }
-};
-
-const getCustomStatusSx = (status: AircraftStatus) => {
-  const baseStyle = {
-    border: '1px solid',
-    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-    fontWeight: 500,
-  };
-  
-  switch (status) {
-    case 'ACTIVE':
-      return {
-        ...baseStyle,
-        backgroundColor: '#e8f5e8',
-        color: '#2e7d32',
-        borderColor: '#4caf50',
-      };
-    case 'MAINTENANCE':
-      return {
-        ...baseStyle,
-        backgroundColor: '#fff3e0',
-        color: '#e65100',
-        borderColor: '#ff9800',
-      };
-    case 'INACTIVE':
-      return {
-        ...baseStyle,
-        backgroundColor: '#ffebee',
-        color: '#c62828',
-        borderColor: '#ef5350',
-      };
-    default:
-      return baseStyle;
-  }
-};
+// Using centralized functions from @/utils/status-helpers
 
 export default function AircraftPage() {
   const { user } = useAuth();
@@ -327,12 +281,23 @@ export default function AircraftPage() {
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
                 border: '1px solid #e0e0e0',
+                boxShadow: 'none',
                 '&:hover': {
-                  borderColor: '#b0b0b0',
+                  borderColor: '#e0e0e0',
+                  boxShadow: 'none',
                 },
                 '&.Mui-focused': {
-                  borderColor: '#1976d2',
+                  borderColor: '#e0e0e0',
+                  boxShadow: 'none',
                 },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#e0e0e0',
+                  borderWidth: '1px',
+                },
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#e0e0e0',
+                borderWidth: '1px',
               },
             }}
           />
@@ -571,9 +536,9 @@ export default function AircraftPage() {
                       <TableCell>
                         <Chip
                           label={ac.status}
-                          color={getStatusColor(ac.status)}
+                          color={getAircraftStatusColor(ac.status)}
                           size="small"
-                          sx={getCustomStatusSx(ac.status)}
+                          sx={getAircraftStatusSx(ac.status)}
                         />
                       </TableCell>
                     </TableRow>

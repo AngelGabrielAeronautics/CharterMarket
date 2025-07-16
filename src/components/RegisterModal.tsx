@@ -193,7 +193,10 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
 
       if (redirect) {
         sessionStorage.removeItem('postAuthRedirect');
-        router.push(redirect);
+        // Small delay to ensure auth context updates
+        setTimeout(() => {
+          router.push(redirect);
+        }, 100);
       } else {
         router.push('/dashboard');
       }
@@ -322,7 +325,7 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
             sx={{
               position: 'relative',
               width: '100%',
-              aspectRatio: '1 / 1',
+              height: '100%',
               '@keyframes fadeIn': {
                 '0%': { opacity: 0 },
                 '100%': { opacity: 1 },

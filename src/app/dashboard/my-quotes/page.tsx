@@ -20,6 +20,7 @@ import {
 import { EyeIcon } from 'lucide-react'; // Or a suitable MUI icon
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { getOfferStatusLabel, getOfferStatusColor } from '@/utils/status-helpers';
 
 export default function MySubmittedOffersPage() {
   const { user } = useAuth();
@@ -110,29 +111,9 @@ export default function MySubmittedOffersPage() {
   }, [user]);
 
   const getStatusChip = (status: OfferStatus) => {
-    switch (status) {
-      case 'pending-client-acceptance':
-        return <Chip label="Pending Client Acceptance" color="warning" size="small" />;
-      case 'accepted-by-client':
-        return <Chip label="Accepted by Client" color="success" size="small" />;
-      case 'rejected-by-client':
-        return <Chip label="Rejected by Client" color="error" size="small" />;
-      case 'expired':
-        return <Chip label="Expired" color="default" size="small" />;
-      case 'awaiting-acknowledgement':
-        return <Chip label="Awaiting Acknowledgement" color="info" size="small" />;
-      default: {
-        // Fallback label by converting status to string
-        const label = status
-          ? String(status)
-              .replace(/-/g, ' ')
-              .split(' ')
-              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-              .join(' ')
-          : 'Unknown';
-        return <Chip label={label} size="small" />;
-      }
-    }
+    const label = getOfferStatusLabel(status);
+    const color = getOfferStatusColor(status);
+    return <Chip label={label} color={color} size="small" />;
   };
 
   if (loading) {
@@ -175,7 +156,7 @@ export default function MySubmittedOffersPage() {
                 sx={{
                   p: 2,
                   borderRadius: 2,
-                  bgcolor: 'background.paper',
+                  bgcolor: 'transparent',
                   '&:hover': { bgcolor: 'action.hover' },
                 }}
               >

@@ -352,14 +352,15 @@ const ResponseTimeAnalyticsModal: React.FC<ResponseTimeAnalyticsModalProps> = ({
         transform: 'translate(-50%, -50%)',
         width: { xs: '95vw', sm: '90vw', md: '80vw', lg: '1200px' },
         height: { xs: '95vh', sm: '90vh', md: '85vh' },
-        bgcolor: 'background.paper',
+        bgcolor: 'transparent',
         borderRadius: 2,
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+        border: '1px solid',
+        borderColor: 'divider',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
         outline: 'none',
-        border: 'none',
       }}>
         {/* Header */}
         <Box sx={{ 

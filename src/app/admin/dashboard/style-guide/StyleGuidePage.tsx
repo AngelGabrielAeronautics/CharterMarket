@@ -28,7 +28,8 @@ import {
   type GridProps,
   Container,
   ToggleButton,
-  ToggleButtonGroup
+  ToggleButtonGroup,
+  Chip
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
@@ -39,6 +40,14 @@ import { Card } from '@/components/ui/Card';
 import tokens from '@/styles/tokens';
 import { ThemeProvider, useTheme } from '@mui/material/styles';
 import { lightTheme, darkTheme } from '@/theme/theme';
+import StatusBadge from '@/components/ui/StatusBadge';
+import { FlightStatus } from '@/types/flight';
+import { 
+  getOperatorSpecificStatus, 
+  getOperatorStatusDisplayLabel, 
+  getOperatorCustomStatusSx, 
+  getOperatorStatusColor 
+} from '@/utils/status-helpers';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -305,6 +314,15 @@ const ComponentsSection: React.FC = () => {
 
 // Insert renderShadows function
 const renderShadows = () => {
+  const shadowLevels = [
+    { name: 'None', value: 'none' },
+    { name: 'Small', value: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' },
+    { name: 'Base', value: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' },
+    { name: 'Medium', value: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' },
+    { name: 'Large', value: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' },
+    { name: 'Extra Large', value: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' },
+  ];
+
   return (
     <StyledGrid container spacing={3}>
       <GridItem xs={12}>
@@ -313,16 +331,16 @@ const renderShadows = () => {
           Use consistent box-shadow styles across components.
         </Alert>
       </GridItem>
-      {Object.entries(tokens.shadow).map(([key, token]) => (
-        <GridItem xs={12} md={6} key={key}>
+      {shadowLevels.map((shadow) => (
+        <GridItem xs={12} md={6} key={shadow.name}>
           <Typography variant="subtitle1" gutterBottom>
-            {key.charAt(0).toUpperCase() + key.slice(1) + ' Shadow'}
+            {shadow.name} Shadow
           </Typography>
-          <Paper sx={{ p: 4, boxShadow: token.value, borderRadius: 2, backgroundColor: 'background.paper', mb: 1 }}>
+          <Paper sx={{ p: 4, boxShadow: shadow.value, borderRadius: 2, backgroundColor: 'background.paper', mb: 1 }}>
             <Typography variant="body2">Demo</Typography>
           </Paper>
-          <Box component="pre" sx={{ fontFamily: 'monospace', p: 1 }}>
-            {'box-shadow: ' + token.value + ';'}
+          <Box component="pre" sx={{ fontFamily: 'monospace', p: 1, fontSize: '0.75rem' }}>
+            {'box-shadow: ' + shadow.value + ';'}
           </Box>
         </GridItem>
       ))}
@@ -370,6 +388,320 @@ const renderNotifications = () => (
   </StyledGrid>
 );
 
+// Status badges rendering helper
+const renderStatusBadges = () => {
+  const allStatuses: FlightStatus[] = ['submitted', 'quote-received', 'quotes-viewed', 'accepted', 'rejected', 'expired'];
+  
+  // Helper function from operator page
+  // Using centralized functions from @/utils/status-helpers
+
+  return (
+    <StyledGrid container spacing={3}>
+      <GridItem xs={12}>
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Status badges are used throughout the quote and booking system to indicate the current state of flight requests. 
+          They have different implementations and colors depending on whether viewed from passenger or operator perspective.
+        </Alert>
+      </GridItem>
+      
+      {/* Passenger Perspective */}
+      <GridItem xs={12}>
+        <Paper sx={{ p: 4 }}>
+          <Typography variant="h6" gutterBottom>Passenger/Agent Perspective</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Status badges as seen by passengers and agents on the quote request page. Uses the StatusBadge component.
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {allStatuses.map((status) => (
+              <Box key={`passenger-${status}`} sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Box sx={{ minWidth: 250 }}>
+                  <StatusBadge 
+                    status={status} 
+                    perspective="passenger"
+                    hasUnviewedQuotes={status === 'quote-received'}
+                  />
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                  {status === 'submitted' && 'Request submitted, awaiting quotes'}
+                  {status === 'quote-received' && 'New quotes available (pulsing animation)'}
+                  {status === 'quotes-viewed' && 'All quotes have been viewed'}
+                  {status === 'accepted' && 'Quote accepted, booking confirmed'}
+                  {status === 'rejected' && 'All quotes declined'}
+                  {status === 'expired' && 'Request expired without action'}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </Paper>
+      </GridItem>
+
+      {/* Operator Perspective */}
+      <GridItem xs={12}>
+        <Paper sx={{ p: 4 }}>
+          <Typography variant="h6" gutterBottom>Operator Perspective</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Status badges as seen by operators on the incoming quotes page. Uses Material-UI Chip component with custom styling.
+          </Typography>
+          
+          {/* New Request Scenarios */}
+          <Typography variant="subtitle1" sx={{ mt: 3, mb: 2, fontWeight: 600 }}>New Requests (Operator hasn't quoted)</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <Box 
+                sx={{
+                  minWidth: 250,
+                  animation: 'statusPulse 1.5s infinite',
+                  '@keyframes statusPulse': {
+                    '0%': { 
+                      opacity: 1,
+                      transform: 'scale(1)',
+                      boxShadow: '0 0 0 0 rgba(220, 38, 127, 0.7)',
+                      borderRadius: '16px'
+                    },
+                    '50%': { 
+                      opacity: 0.4,
+                      transform: 'scale(1.15)',
+                      boxShadow: '0 0 0 8px rgba(220, 38, 127, 0)',
+                      borderRadius: '20px'
+                    },
+                    '100%': { 
+                      opacity: 1,
+                      transform: 'scale(1)',
+                      boxShadow: '0 0 0 0 rgba(220, 38, 127, 0.7)',
+                      borderRadius: '16px'
+                    }
+                  }
+                }}
+              >
+                <Chip 
+                  label="New Request" 
+                  size="small" 
+                  sx={{ 
+                    width: '100%',
+                    textTransform: 'capitalize',
+                    '& .MuiChip-label': {
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'center'
+                    },
+                    ...getOperatorCustomStatusSx('submitted')
+                  }}
+                />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                Brand new request requiring immediate attention (red with pulse animation)
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Operator Has Quoted Scenarios */}
+          <Typography variant="subtitle1" sx={{ mt: 3, mb: 2, fontWeight: 600 }}>After Operator Has Quoted</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <Box sx={{ minWidth: 250 }}>
+                <Chip 
+                  label="Quote Submitted" 
+                  size="small" 
+                  sx={{ 
+                    width: '100%',
+                    textTransform: 'capitalize',
+                    '& .MuiChip-label': {
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'center'
+                    },
+                    ...getOperatorCustomStatusSx('quote submitted')
+                  }}
+                />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                Quote submitted, awaiting client decision (light green)
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Final Outcomes */}
+          <Typography variant="subtitle1" sx={{ mt: 3, mb: 2, fontWeight: 600 }}>Final Outcomes</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <Box sx={{ minWidth: 250 }}>
+                <Chip 
+                  label="Accepted!" 
+                  size="small" 
+                  sx={{ 
+                    width: '100%',
+                    textTransform: 'capitalize',
+                    '& .MuiChip-label': {
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'center'
+                    },
+                    ...getOperatorCustomStatusSx('accepted')
+                  }}
+                />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                Operator won the quote (Charter blue with white text)
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <Box sx={{ minWidth: 250 }}>
+                <Chip 
+                  label="Won By Competitor" 
+                  size="small" 
+                  sx={{ 
+                    width: '100%',
+                    textTransform: 'capitalize',
+                    '& .MuiChip-label': {
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'center'
+                    },
+                    ...getOperatorCustomStatusSx('won by competitor')
+                  }}
+                />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                Another operator was selected (dark red)
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <Box sx={{ minWidth: 250 }}>
+                <Chip 
+                  label="Client Rejected" 
+                  size="small" 
+                  sx={{ 
+                    width: '100%',
+                    textTransform: 'capitalize',
+                    '& .MuiChip-label': {
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'center'
+                    },
+                    ...getOperatorCustomStatusSx('rejected')
+                  }}
+                />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                Client declined all quotes (dark grey)
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <Box sx={{ minWidth: 250 }}>
+                <Chip 
+                  label="Expired" 
+                  size="small" 
+                  sx={{ 
+                    width: '100%',
+                    textTransform: 'capitalize',
+                    '& .MuiChip-label': {
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'center'
+                    },
+                    ...getOperatorCustomStatusSx('expired')
+                  }}
+                />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                Request expired without decision (light grey)
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </GridItem>
+
+      {/* Implementation Differences */}
+      <GridItem xs={12}>
+        <Paper sx={{ p: 4 }}>
+          <Typography variant="h6" gutterBottom>Implementation Details</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Typography variant="body2">
+              <strong>Passenger Pages:</strong> Use the <code>StatusBadge</code> component located at 
+              <code>src/components/ui/StatusBadge.tsx</code> with logic from <code>src/utils/status-helpers.ts</code>
+            </Typography>
+            <Typography variant="body2">
+              <strong>Operator Pages:</strong> Use Material-UI's <code>Chip</code> component with 
+              the <code>getOperatorCustomStatusSx</code> function for styling and <code>getOperatorStatusDisplayLabel</code> for labels
+            </Typography>
+            <Typography variant="body2">
+              <strong>Animations:</strong> New requests have a pulsing animation using CSS keyframes 
+              to draw operator attention to urgent items
+            </Typography>
+          </Box>
+        </Paper>
+      </GridItem>
+
+      {/* Color Legend */}
+      <GridItem xs={12}>
+        <Paper sx={{ p: 4 }}>
+          <Typography variant="h6" gutterBottom>Color System</Typography>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ 
+                width: 24, 
+                height: 24, 
+                backgroundColor: '#ffebee', 
+                border: '1px solid #ef5350',
+                borderRadius: 1 
+              }} />
+              <Typography variant="body2">Light Red: New requests requiring attention</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ 
+                width: 24, 
+                height: 24, 
+                backgroundColor: '#e8f5e8', 
+                border: '1px solid #4caf50',
+                borderRadius: 1 
+              }} />
+              <Typography variant="body2">Light Green: Quote submitted, awaiting decision</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ 
+                width: 24, 
+                height: 24, 
+                backgroundColor: '#51727a', 
+                borderRadius: 1 
+              }} />
+              <Typography variant="body2">Charter Blue: Quote accepted / Won</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ 
+                width: 24, 
+                height: 24, 
+                backgroundColor: '#b71c1c', 
+                borderRadius: 1 
+              }} />
+              <Typography variant="body2">Dark Red: Lost to competitor</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ 
+                width: 24, 
+                height: 24, 
+                backgroundColor: '#6b7280', 
+                border: '1px solid #6b7280',
+                borderRadius: 1 
+              }} />
+              <Typography variant="body2">Dark Grey: Rejected by client</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ 
+                width: 24, 
+                height: 24, 
+                backgroundColor: '#eeeeee', 
+                border: '1px solid #bdbdbd',
+                borderRadius: 1 
+              }} />
+              <Typography variant="body2">Neutral Grey: Expired requests</Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </GridItem>
+    </StyledGrid>
+  );
+};
+
 // Banners rendering helper
 const renderBanners = () => (
   <StyledGrid container spacing={3}>
@@ -403,6 +735,7 @@ const renderStyleGuide = (value: number, onChange: (event: React.SyntheticEvent,
         <Tab label="Buttons" />
         <Tab label="Elevation" />
         <Tab label="Components" />
+        <Tab label="Status Badges" />
         <Tab label="Notifications" />
         <Tab label="Banners" />
       </Tabs>
@@ -434,8 +767,9 @@ const renderStyleGuide = (value: number, onChange: (event: React.SyntheticEvent,
         </GridItem>
       </StyledGrid>
     </TabPanel>
-    <TabPanel value={value} index={5}>{renderNotifications()}</TabPanel>
-    <TabPanel value={value} index={6}>{renderBanners()}</TabPanel>
+    <TabPanel value={value} index={5}>{renderStatusBadges()}</TabPanel>
+    <TabPanel value={value} index={6}>{renderNotifications()}</TabPanel>
+    <TabPanel value={value} index={7}>{renderBanners()}</TabPanel>
   </Box>
 );
 

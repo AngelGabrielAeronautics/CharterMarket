@@ -63,6 +63,7 @@ import { UserStatus } from '@/types/user';
 // Admin specific components (assuming they are in these paths)
 import FlightOverview from '@/components/admin/FlightOverview';
 import SalesKPI from '@/components/admin/SalesKPI';
+import UserKPIs from '@/components/admin/UserKPIs';
 // Panel can be replaced with Paper or Box for now if not crucial
 // import { Panel } from '@/components/admin/Panel';
 
@@ -273,7 +274,7 @@ const AdminSpecificContent: React.FC<AdminSpecificContentProps> = ({ userData })
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Paper elevation={1} sx={{ borderBottom: 1, borderColor: 'divider', mb: 2, borderRadius: 1 }}>
+      <Paper elevation={1} sx={{ borderBottom: 1, borderColor: 'divider', mb: 2, borderRadius: 1, backgroundColor: 'transparent' }}>
         <Tabs
           value={currentTab}
           onChange={handleTabChange}
@@ -296,6 +297,9 @@ const AdminSpecificContent: React.FC<AdminSpecificContentProps> = ({ userData })
             <Typography variant="h5" gutterBottom>
               Key Metrics Overview
             </Typography>
+          </div>
+          <div className="w-full px-3 mb-4">
+            <UserKPIs />
           </div>
           <div className="w-full px-3 mb-4">
             <FlightOverview />
@@ -469,7 +473,7 @@ export default function DashboardPage() {
             p: 3,
           }}
         >
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity="error" sx={{ mb: 2, backgroundColor: 'transparent', border: '1px solid', borderColor: 'error.main' }}>
             Failed to load user data:{' '}
             {typeof dataError === 'string'
               ? dataError
@@ -506,7 +510,7 @@ export default function DashboardPage() {
           <Alert 
             severity="info" 
             icon={<Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>ℹ️</Box>}
-            sx={{ borderRadius: 1, mb: 3 }}
+            sx={{ borderRadius: 1, mb: 3, backgroundColor: 'transparent', border: '1px solid', borderColor: 'info.main' }}
           >
             Welcome back, {userData?.firstName || 'Traveler'}! Here's your flight overview.
           </Alert>
@@ -520,7 +524,7 @@ export default function DashboardPage() {
               p: 3, 
               borderRadius: 1, 
               mb: 3,
-              backgroundColor: '#f9f9f9',
+              backgroundColor: 'transparent',
               border: '1px solid #e0e0e0'
             }}
           >
@@ -569,7 +573,7 @@ export default function DashboardPage() {
             sx={{ 
               p: 3, 
               borderRadius: 1,
-              backgroundColor: '#f9f9f9',
+              backgroundColor: 'transparent',
               border: '1px solid #e0e0e0'
             }}
           >
@@ -582,7 +586,7 @@ export default function DashboardPage() {
                 <CircularProgress size={24} />
               </Box>
             ) : clientRequestsError ? (
-              <Alert severity="error">{clientRequestsError}</Alert>
+              <Alert severity="error" sx={{ backgroundColor: 'transparent', border: '1px solid', borderColor: 'error.main' }}>{clientRequestsError}</Alert>
             ) : clientQuoteRequests.length === 0 ? (
               <Box sx={{ py: 3, textAlign: 'center' }}>
                 <Typography variant="body1" color="text.secondary">
@@ -598,9 +602,9 @@ export default function DashboardPage() {
                     sx={{ 
                       cursor: 'pointer', 
                       borderRadius: 1,
-                      backgroundColor: '#ffffff',
+                      backgroundColor: 'transparent',
                       '&:hover': {
-                        backgroundColor: '#f5f5f5'
+                        backgroundColor: 'action.hover'
                       }
                     }}
                   >
@@ -649,7 +653,7 @@ export default function DashboardPage() {
         <div className="w-full px-3 mb-4">
           <Alert
             severity="info"
-            sx={{ mb: 2 }}
+            sx={{ mb: 2, backgroundColor: 'transparent', border: '1px solid', borderColor: 'info.main' }}
             action={
               <Button
                 href="/dashboard/quotes/request"
@@ -666,20 +670,20 @@ export default function DashboardPage() {
         </div>
 
         <div className="w-full md:w-2/3 px-3 mb-4">
-          <Paper elevation={1} sx={{ p: 3, borderRadius: 1 }}>
+          <Paper elevation={1} sx={{ p: 3, borderRadius: 1, backgroundColor: 'transparent', border: '1px solid', borderColor: 'divider' }}>
             <Typography variant="h6" fontWeight="medium" gutterBottom>
               Client Requests
             </Typography>
             {clientRequestsLoading ? (
               <CircularProgress size={24} />
             ) : clientRequestsError ? (
-              <Alert severity="error">{clientRequestsError}</Alert>
+              <Alert severity="error" sx={{ backgroundColor: 'transparent', border: '1px solid', borderColor: 'error.main' }}>{clientRequestsError}</Alert>
             ) : clientQuoteRequests.length === 0 ? (
               <Typography>No quote requests found.</Typography>
             ) : (
               <Stack spacing={2}>
                 {clientQuoteRequests.map((req) => (
-                  <Card key={req.id} elevation={0} variant="outlined" sx={{ borderRadius: 1 }}>
+                  <Card key={req.id} elevation={0} variant="outlined" sx={{ borderRadius: 1, backgroundColor: 'transparent' }}>
                     <CardContent>
                       <Typography variant="subtitle1">Request #{req.id}</Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
@@ -730,7 +734,7 @@ export default function DashboardPage() {
 
         <Grid container spacing={3}>
           <Grid size={12}>
-            <Paper sx={{ mb: 3, borderRadius: 2, overflow: 'hidden' }}>
+            <Paper sx={{ mb: 3, borderRadius: 2, overflow: 'hidden', backgroundColor: 'transparent', border: '1px solid', borderColor: 'divider' }}>
               <Tabs
                 value={operatorActiveTab}
                 onChange={handleOperatorTabChange}
@@ -802,7 +806,7 @@ export default function DashboardPage() {
                   <Grid size={{ xs: 12, md: 8 }}>
                     <Grid container spacing={2}>
                       <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                        <Paper sx={{ p: 2, borderRadius: 2, textAlign: 'center' }}>
+                        <Paper sx={{ p: 2, borderRadius: 2, textAlign: 'center', backgroundColor: 'transparent', border: '1px solid', borderColor: 'divider' }}>
                           <Typography variant="h4" fontWeight="bold" color="primary.main">
                             {mockOperatorFlights.length}
                           </Typography>
@@ -812,7 +816,7 @@ export default function DashboardPage() {
                         </Paper>
                       </Grid>
                       <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                        <Paper sx={{ p: 2, borderRadius: 2, textAlign: 'center' }}>
+                        <Paper sx={{ p: 2, borderRadius: 2, textAlign: 'center', backgroundColor: 'transparent', border: '1px solid', borderColor: 'divider' }}>
                           <Typography variant="h4" fontWeight="bold" color="success.main">
                             {mockOperatorFlights.filter(f => f.status === 'confirmed').length}
                           </Typography>
@@ -822,7 +826,7 @@ export default function DashboardPage() {
                         </Paper>
                       </Grid>
                       <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                        <Paper sx={{ p: 2, borderRadius: 2, textAlign: 'center' }}>
+                        <Paper sx={{ p: 2, borderRadius: 2, textAlign: 'center', backgroundColor: 'transparent', border: '1px solid', borderColor: 'divider' }}>
                           <Typography variant="h4" fontWeight="bold" color="warning.main">
                             {mockQuoteRequests.length}
                           </Typography>
@@ -832,7 +836,7 @@ export default function DashboardPage() {
                         </Paper>
                       </Grid>
                       <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                        <Paper sx={{ p: 2, borderRadius: 2, textAlign: 'center' }}>
+                        <Paper sx={{ p: 2, borderRadius: 2, textAlign: 'center', backgroundColor: 'transparent', border: '1px solid', borderColor: 'divider' }}>
                           <Typography variant="h4" fontWeight="bold" color="info.main">
                             {mockAircraft.filter(a => a.status === 'ACTIVE').length}
                           </Typography>
@@ -845,7 +849,7 @@ export default function DashboardPage() {
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
+                    <Paper sx={{ p: 3, borderRadius: 2, height: '100%', backgroundColor: 'transparent', border: '1px solid', borderColor: 'divider' }}>
                       <Typography variant="h6" fontWeight="medium" gutterBottom>
                         Quote Requests
                       </Typography>
@@ -906,7 +910,7 @@ export default function DashboardPage() {
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
+                    <Paper sx={{ p: 3, borderRadius: 2, height: '100%', backgroundColor: 'transparent', border: '1px solid', borderColor: 'divider' }}>
                       <Typography variant="h6" fontWeight="medium" gutterBottom>
                         Upcoming Flights
                       </Typography>
@@ -982,7 +986,7 @@ export default function DashboardPage() {
               {operatorActiveTab === 1 && (
                 <Grid container spacing={3}>
                   <Grid size={12}>
-                    <Paper sx={{ p: 3, borderRadius: 2 }}>
+                    <Paper sx={{ p: 3, borderRadius: 2, backgroundColor: 'transparent', border: '1px solid', borderColor: 'divider' }}>
                       <Box
                         sx={{
                           display: 'flex',
@@ -998,7 +1002,7 @@ export default function DashboardPage() {
 
                       <Grid container spacing={2}>
                         <Grid size={{ xs: 12, md: 6 }}>
-                          <Paper sx={{ p: 3, borderRadius: 2 }}>
+                          <Paper sx={{ p: 3, borderRadius: 2, backgroundColor: 'transparent', border: '1px solid', borderColor: 'divider' }}>
                             <Typography variant="h6" fontWeight="medium" gutterBottom>
                               Aircraft
                             </Typography>
@@ -1009,7 +1013,7 @@ export default function DashboardPage() {
                         </Grid>
 
                         <Grid size={{ xs: 12, md: 6 }}>
-                          <Paper sx={{ p: 3, borderRadius: 2 }}>
+                          <Paper sx={{ p: 3, borderRadius: 2, backgroundColor: 'transparent', border: '1px solid', borderColor: 'divider' }}>
                             <Typography variant="h6" fontWeight="medium" gutterBottom>
                               Aircraft Types
                             </Typography>
@@ -1089,7 +1093,7 @@ export default function DashboardPage() {
               p: 3, 
               borderRadius: 1, 
               height: '100%',
-              backgroundColor: '#f9f9f9',
+              backgroundColor: 'transparent',
               border: '1px solid #e0e0e0'
             }}
           >
@@ -1107,7 +1111,7 @@ export default function DashboardPage() {
                       transition: 'all 0.3s', 
                       '&:hover': { boxShadow: 6 }, 
                       borderRadius: 1,
-                      backgroundColor: '#ffffff'
+                      backgroundColor: 'transparent'
                     }}
                   >
                     <CardContent>
@@ -1155,7 +1159,7 @@ export default function DashboardPage() {
       ) : userData.role === 'operator' ? (
         renderOperatorDashboard()
       ) : (
-        <Alert severity="info">Dashboard content for your role is under construction.</Alert>
+        <Alert severity="info" sx={{ backgroundColor: 'transparent', border: '1px solid', borderColor: 'info.main' }}>Dashboard content for your role is under construction.</Alert>
       )}
 
       {/* Common sections like Calendar - could be conditional too */}
@@ -1173,7 +1177,7 @@ export default function DashboardPage() {
               sx={{ 
                 p: 2, 
                 borderRadius: 1,
-                backgroundColor: '#f9f9f9',
+                backgroundColor: 'transparent',
                 border: '1px solid #e0e0e0'
               }}
             >

@@ -47,7 +47,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
         fontWeight: 'bold',
         fontSize: '0.75rem',
         border: '1px solid',
-        borderColor: status === 'accepted' ? '#ffffff' : 'rgba(0, 0, 0, 0.23)',
+        borderColor: status === 'accepted' ? '#ffffff' : statusDisplay.pulse ? '#4caf50' : 'rgba(0, 0, 0, 0.23)',
         boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
         textTransform: 'capitalize',
         '& .MuiChip-label': {
@@ -58,7 +58,27 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
           fontSize: 'inherit',
         },
         ...(statusDisplay.pulse && {
-          animation: 'statusPulse 2s infinite',
+          animation: 'quoteReceivedPulse 1.5s infinite',
+          '@keyframes quoteReceivedPulse': {
+            '0%': { 
+              opacity: 1,
+              transform: 'scale(1)',
+              boxShadow: '0 0 0 0 rgba(76, 175, 80, 0.7)',
+              borderRadius: '16px'
+            },
+            '50%': { 
+              opacity: 0.4,
+              transform: 'scale(1.15)',
+              boxShadow: '0 0 0 8px rgba(76, 175, 80, 0)',
+              borderRadius: '20px'
+            },
+            '100%': { 
+              opacity: 1,
+              transform: 'scale(1)',
+              boxShadow: '0 0 0 0 rgba(76, 175, 80, 0.7)',
+              borderRadius: '16px'
+            }
+          }
         }),
       }}
       className={`${pulseClasses} ${className}`}

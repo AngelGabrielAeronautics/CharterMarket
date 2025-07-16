@@ -174,8 +174,8 @@ export default function BookingsPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-        <Box>
+      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: 2 }}>
+        <Box sx={{ minWidth: 0, flex: { xs: '1 1 100%', sm: '1 1 50%' } }}>
           <Typography variant="h4" component="h1" fontWeight="bold">
             Bookings
           </Typography>
@@ -183,7 +183,7 @@ export default function BookingsPage() {
             View and manage your bookings
           </Typography>
         </Box>
-        <ProgressNav sx={{ maxWidth: 600 }} />
+        <ProgressNav sx={{ flex: { xs: '1 1 100%', sm: '1 1 50%' }, maxWidth: 'none' }} />
       </Box>
 
       <Paper
@@ -215,12 +215,23 @@ export default function BookingsPage() {
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 2,
                   border: '1px solid #e0e0e0',
+                  boxShadow: 'none',
                   '&:hover': {
-                    borderColor: '#b0b0b0',
+                    borderColor: '#e0e0e0',
+                    boxShadow: 'none',
                   },
                   '&.Mui-focused': {
-                    borderColor: '#1976d2',
+                    borderColor: '#e0e0e0',
+                    boxShadow: 'none',
                   },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#e0e0e0',
+                    borderWidth: '1px',
+                  },
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#e0e0e0',
+                  borderWidth: '1px',
                 },
               }}
               InputProps={{

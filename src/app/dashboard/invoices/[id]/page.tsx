@@ -305,7 +305,7 @@ export default function InvoiceDetailsPage() {
           Back
         </Button>
         <Button variant="outlined" onClick={() => router.push('/dashboard/invoices')}>
-          All Invoices
+                          All Invoices & Payments
         </Button>
       </Box>
 

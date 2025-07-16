@@ -16,7 +16,7 @@ export default function MessagesPage() {
         </Typography>
       </Box>
 
-      <Paper sx={{ flex: 1, overflow: 'hidden' }}>
+      <Paper sx={{ flex: 1, overflow: 'hidden', backgroundColor: 'transparent' }}>
         <MessagingInterface />
       </Paper>
     </Container>

@@ -345,7 +345,10 @@ export default function PassengersPage() {
               p: 4, 
               textAlign: 'center', 
               borderRadius: 1,
-              mb: 2
+              mb: 2,
+              backgroundColor: 'transparent',
+              border: '1px solid',
+              borderColor: 'divider'
             }}
           >
             <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
@@ -356,7 +359,7 @@ export default function PassengersPage() {
             </Typography>
           </Paper>
         ) : (
-          <Paper elevation={1} sx={{ borderRadius: 1, overflow: 'hidden' }}>
+          <Paper elevation={1} sx={{ borderRadius: 1, overflow: 'hidden', backgroundColor: 'transparent', border: '1px solid', borderColor: 'divider' }}>
             <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider' }}>
               <Typography variant="h6" fontWeight="medium" color="text.primary">
                 Passenger List

@@ -82,7 +82,7 @@ export default function EventLogsPage() {
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+      <div className="bg-transparent rounded-lg shadow-sm p-6 mb-8 border border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <Input
             label="Search"
@@ -137,7 +137,7 @@ export default function EventLogsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-transparent rounded-lg shadow-sm overflow-hidden border border-gray-200">
         <Table>
           <TableHeader>
             <TableRow>

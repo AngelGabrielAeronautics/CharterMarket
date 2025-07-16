@@ -1,0 +1,704 @@
+import { NextResponse } from 'next/server';
+import sgMail from '@sendgrid/mail';
+
+if (!process.env.SENDGRID_API_KEY) {
+  throw new Error('SENDGRID_API_KEY is not set in environment variables');
+}
+
+// Initialize SendGrid with API key
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+export async function POST(request: Request) {
+  try {
+    const { email, firstName, userCode, role, company } = await request.json();
+
+    if (!email || !firstName) {
+      return NextResponse.json(
+        { error: 'Email and firstName are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!process.env.SENDGRID_FROM_EMAIL) {
+      throw new Error('Required SendGrid configuration is missing');
+    }
+
+    // Get the base URL with fallback
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+    
+    // Role-specific content
+    const getRoleSpecificContent = (userRole: string) => {
+      switch (userRole) {
+        case 'operator':
+          return {
+            title: 'Welcome to Charter - Start Growing Your Aircraft Business',
+            subtitle: 'Connect with clients and manage your fleet efficiently',
+            benefits: [
+              '📈 <strong>Expand Your Client Base:</strong> Access passengers actively seeking private jet services',
+              '💰 <strong>Increase Revenue:</strong> Receive quote requests without marketing costs',
+              '✈️ <strong>Manage Your Fleet:</strong> Add aircraft and showcase your capabilities',
+              '📊 <strong>Performance Insights:</strong> Track bookings and revenue through your dashboard',
+              '⚡ <strong>Quick Responses:</strong> Fast quote submissions give you competitive advantage'
+            ],
+            nextSteps: [
+              { step: '1. Verify Your Email', description: 'Click the verification link we sent you', url: null },
+              { step: '2. Add Your Aircraft', description: 'Upload your fleet details and availability', url: '/dashboard/aircraft' },
+              { step: '3. Complete Your Profile', description: 'Add company information and certifications', url: '/dashboard/profile' },
+              { step: '4. Start Receiving Requests', description: 'Get notified of new quote opportunities', url: '/dashboard/quotes/incoming' }
+            ],
+            cta: {
+              text: 'Set Up My Fleet',
+              url: '/dashboard/aircraft'
+            }
+          };
+        case 'agent':
+          return {
+            title: 'Welcome to Charter - Streamline Your Travel Operations',
+            subtitle: 'Book private flights efficiently for your clients',
+            benefits: [
+              '🎯 <strong>Multi-Quote Comparison:</strong> Get multiple quotes with one request',
+              '👥 <strong>Client Management:</strong> Organize and track all your client bookings',
+              '📋 <strong>Simplified Booking:</strong> Handle complex itineraries with ease',
+              '💼 <strong>Professional Tools:</strong> Invoice management and booking analytics',
+              '🔒 <strong>Trusted Network:</strong> Access only certified, licensed operators'
+            ],
+            nextSteps: [
+              { step: '1. Verify Your Email', description: 'Click the verification link we sent you', url: null },
+              { step: '2. Add Your First Client', description: 'Set up client profiles for easier booking', url: '/dashboard/clients' },
+              { step: '3. Complete Your Profile', description: 'Add your agency information', url: '/dashboard/profile' },
+              { step: '4. Request Your First Quote', description: 'Start booking flights for clients', url: '/dashboard/quotes/request' }
+            ],
+            cta: {
+              text: 'Request My First Quote',
+              url: '/dashboard/quotes/request'
+            }
+          };
+        default: // passenger
+          return {
+            title: 'Welcome to Charter - Your Gateway to Private Aviation',
+            subtitle: 'Experience seamless private jet travel',
+            benefits: [
+              '✈️ <strong>Compare Multiple Options:</strong> Get quotes from various operators instantly',
+              '🛡️ <strong>Vetted Operators:</strong> All aircraft are operated by certified professionals',
+              '💰 <strong>Transparent Pricing:</strong> No hidden fees or surprise charges',
+              '📱 <strong>Easy Management:</strong> Track bookings and communicate in one place',
+              '🌟 <strong>Premium Service:</strong> Dedicated support throughout your journey'
+            ],
+            nextSteps: [
+              { step: '1. Verify Your Email', description: 'Click the verification link we sent you', url: null },
+              { step: '2. Request Your First Quote', description: 'Tell us where you want to fly', url: '/dashboard/quotes/request' },
+              { step: '3. Compare & Choose', description: 'Review quotes and select your preferred operator', url: '/dashboard/quotes' },
+              { step: '4. Book & Fly', description: 'Complete your booking and enjoy your flight', url: '/dashboard/bookings' }
+            ],
+            cta: {
+              text: 'Request My First Quote',
+              url: '/dashboard/quotes/request'
+            }
+          };
+      }
+    };
+
+    const content = getRoleSpecificContent(role || 'passenger');
+
+    const msg = {
+      to: email,
+      from: process.env.SENDGRID_FROM_EMAIL,
+      subject: `Welcome to Charter, ${firstName}! 🛩️`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Welcome to Charter</title>
+          <style>
+            body { 
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
+              margin: 0; 
+              padding: 0; 
+              background-color: #f2f0e7;
+              min-height: 100vh;
+            }
+            .container { 
+              max-width: 650px; 
+              margin: 0 auto; 
+              background-color: #ffffff; 
+              box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            }
+            .video-header { 
+              position: relative;
+              height: 400px;
+              overflow: hidden;
+              background: linear-gradient(135deg, #1A2B3C 0%, #2c4757 100%);
+            }
+            .video-background {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              z-index: 1;
+            }
+            .video-overlay {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background: rgba(26, 43, 60, 0.3);
+              z-index: 2;
+            }
+            .video-content {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              z-index: 3;
+              color: white;
+              text-align: center;
+              padding: 40px 20px;
+            }
+            .charter-logo {
+              position: absolute;
+              bottom: 24px;
+              left: 24px;
+              z-index: 4;
+            }
+            .welcome-title {
+              font-size: 48px;
+              font-weight: 700;
+              color: #ffffff;
+              text-shadow: 0 2px 4px rgba(0,0,0,0.7);
+              margin-bottom: 16px;
+              letter-spacing: -1px;
+            }
+            .welcome-subtitle {
+              font-size: 24px;
+              font-weight: 400;
+              color: #ffffff;
+              text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+              margin-bottom: 0;
+            }
+            .logo { 
+              font-size: 42px; 
+              font-weight: 700; 
+              color: #ffffff; 
+              letter-spacing: -2px; 
+              margin-bottom: 10px;
+              text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+              position: relative;
+              z-index: 1;
+            }
+            .header-subtitle { 
+              color: #C4A962; 
+              margin: 0; 
+              font-size: 18px; 
+              font-weight: 500;
+              position: relative;
+              z-index: 1;
+            }
+            .content { 
+              padding: 50px 40px; 
+              background-color: #ffffff;
+            }
+            .login-section {
+              background: linear-gradient(135deg, #7CB9E8 0%, #4a9eff 100%);
+              padding: 24px 30px;
+              border-radius: 12px;
+              margin: 30px 0;
+              text-align: center;
+            }
+            .login-button {
+              background: #ffffff;
+              color: #1A2B3C;
+              padding: 12px 24px;
+              text-decoration: none;
+              border-radius: 6px;
+              font-weight: 600;
+              font-size: 16px;
+              display: inline-block;
+              margin-top: 10px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            .mobile-app-section {
+              background: linear-gradient(135deg, #1A2B3C 0%, #2c4757 100%);
+              color: white;
+              padding: 40px 30px;
+              border-radius: 12px;
+              margin: 30px 0;
+              text-align: center;
+            }
+            .mobile-app-section h3 {
+              color: #C4A962;
+              margin-top: 0;
+              margin-bottom: 16px;
+              font-size: 24px;
+              font-weight: 600;
+            }
+            .mobile-app-section p {
+              font-size: 16px;
+              margin-bottom: 24px;
+              color: #e9ecef;
+            }
+            .app-buttons {
+              display: flex;
+              justify-content: center;
+              gap: 16px;
+              flex-wrap: wrap;
+            }
+            .app-button {
+              background: #000000;
+              color: white;
+              padding: 12px 20px;
+              text-decoration: none;
+              border-radius: 8px;
+              font-weight: 500;
+              font-size: 14px;
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            }
+            .welcome-badge { 
+              background: linear-gradient(135deg, #C4A962 0%, #d4bb72 100%); 
+              color: white; 
+              padding: 16px 28px; 
+              border-radius: 30px; 
+              display: inline-block; 
+              font-weight: 600; 
+              margin-bottom: 35px; 
+              box-shadow: 0 4px 15px rgba(196,169,98,0.3);
+            }
+            .user-info { 
+              background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); 
+              border-left: 5px solid #C4A962; 
+              padding: 25px; 
+              margin: 30px 0; 
+              border-radius: 0 12px 12px 0; 
+            }
+            .user-detail { 
+              display: flex; 
+              justify-content: space-between; 
+              padding: 10px 0; 
+              border-bottom: 1px solid #dee2e6; 
+            }
+            .user-detail:last-child { 
+              border-bottom: none; 
+            }
+            .detail-label { 
+              font-weight: 600; 
+              color: #495057; 
+            }
+            .detail-value { 
+              color: #1A2B3C; 
+              font-weight: 500; 
+            }
+            .benefits { 
+              background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%); 
+              padding: 30px; 
+              border-radius: 12px; 
+              margin: 30px 0; 
+              border: 1px solid #bbdefb;
+            }
+            .benefits h3 { 
+              color: #1A2B3C; 
+              margin-top: 0; 
+              font-size: 20px;
+              margin-bottom: 20px;
+            }
+            .benefits ul { 
+              color: #37474f; 
+              line-height: 1.8; 
+              padding-left: 0;
+              list-style: none;
+            }
+            .benefits li {
+              margin-bottom: 12px;
+              padding-left: 0;
+            }
+            .next-steps { 
+              background: linear-gradient(135deg, #fff8e1 0%, #fff3c4 100%); 
+              border: 2px solid #C4A962; 
+              padding: 30px; 
+              border-radius: 12px; 
+              margin: 30px 0; 
+            }
+            .next-steps h3 { 
+              color: #1A2B3C; 
+              margin-top: 0; 
+              font-size: 20px;
+              margin-bottom: 25px;
+            }
+            .step {
+              display: flex;
+              align-items: flex-start;
+              margin-bottom: 20px;
+              padding: 15px;
+              background: rgba(255,255,255,0.7);
+              border-radius: 8px;
+            }
+            .step:last-child { 
+              margin-bottom: 0; 
+            }
+            .step-number {
+              background: linear-gradient(135deg, #C4A962 0%, #d4bb72 100%);
+              color: white;
+              width: 28px;
+              height: 28px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: bold;
+              font-size: 14px;
+              margin-right: 15px;
+              flex-shrink: 0;
+            }
+            .step-content h4 {
+              margin: 0 0 5px 0;
+              color: #1A2B3C;
+              font-size: 16px;
+            }
+            .step-content p {
+              margin: 0;
+              color: #666;
+              font-size: 14px;
+              line-height: 1.4;
+            }
+            .cta-button { 
+              background: linear-gradient(135deg, #C4A962 0%, #d4bb72 100%); 
+              color: white; 
+              padding: 18px 35px; 
+              text-decoration: none; 
+              border-radius: 8px; 
+              display: inline-block; 
+              font-weight: 600; 
+              margin: 30px 0; 
+              font-size: 16px;
+              box-shadow: 0 4px 15px rgba(196,169,98,0.3);
+              transition: all 0.3s ease;
+            }
+            .cta-button:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 6px 20px rgba(196,169,98,0.4);
+            }
+            .footer { 
+              background-color: #1A2B3C; 
+              padding: 40px 30px; 
+              text-align: center; 
+              color: #ffffff; 
+              font-size: 14px;
+            }
+            .footer-content {
+              max-width: 600px;
+              margin: 0 auto;
+            }
+            .footer-logo {
+              font-size: 28px;
+              font-weight: 700;
+              color: #ffffff;
+              margin-bottom: 16px;
+              letter-spacing: -1px;
+            }
+            .footer-tagline {
+              color: #C4A962;
+              font-size: 16px;
+              margin-bottom: 24px;
+            }
+            .social-icons {
+              display: flex;
+              justify-content: center;
+              gap: 16px;
+              margin: 24px 0;
+            }
+            .social-icon {
+              display: inline-block;
+              width: 40px;
+              height: 40px;
+              background: #C4A962;
+              border-radius: 50%;
+              color: white;
+              text-decoration: none;
+              font-weight: bold;
+              line-height: 40px;
+              text-align: center;
+            }
+            .footer-links { 
+              margin: 20px 0;
+            }
+            .footer-links a { 
+              color: #C4A962; 
+              text-decoration: none; 
+              margin: 0 15px; 
+              font-weight: 500;
+            }
+            .footer-links a:hover { 
+              color: #ffffff;
+            }
+            .footer-bottom {
+              margin-top: 24px;
+              padding-top: 24px;
+              border-top: 1px solid rgba(196,169,98,0.3);
+              color: #888;
+              font-size: 12px;
+            }
+            .footer p { 
+              margin: 8px 0; 
+              line-height: 1.6;
+            }
+            .footer strong { 
+              color: #ffffff; 
+            }
+            .support-box {
+              background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+              border: 1px solid #4caf50;
+              padding: 20px;
+              border-radius: 8px;
+              margin: 20px 0;
+              text-align: center;
+            }
+            .support-box h4 {
+              color: #2e7d32;
+              margin: 0 0 10px 0;
+            }
+            .support-box p {
+              color: #388e3c;
+              margin: 0;
+              font-size: 14px;
+            }
+            @media (max-width: 600px) {
+              .container { margin: 0; }
+              .video-header { height: 300px; }
+              .welcome-title { font-size: 32px; }
+              .welcome-subtitle { font-size: 18px; }
+              .content { padding: 30px 20px; }
+              .logo { font-size: 36px; }
+              .step { flex-direction: column; text-align: center; }
+              .step-number { margin: 0 0 10px 0; }
+              .mobile-app-section { padding: 30px 20px; }
+              .app-buttons { flex-direction: column; align-items: center; }
+              .footer { padding: 30px 20px; }
+              .social-icons { gap: 12px; }
+              .login-section { padding: 20px; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="video-header">
+              <!-- Video Background -->
+              <video class="video-background" autoplay muted loop playsinline>
+                <source src="${baseUrl}/videos/onboarding/register.mp4" type="video/mp4">
+              </video>
+              
+              <!-- Video Overlay -->
+              <div class="video-overlay"></div>
+              
+              <!-- Welcome Content Over Video -->
+              <div class="video-content">
+                <h1 class="welcome-title">Welcome to Charter</h1>
+                <p class="welcome-subtitle">${content.subtitle}</p>
+              </div>
+              
+              <!-- Charter Logo -->
+              <img src="${baseUrl}/branding/logos/light/charter logo - dark mode.png" 
+                   alt="Charter Logo" 
+                   class="charter-logo" 
+                   width="140" 
+                   height="40" />
+            </div>
+            
+            <div class="content">
+              <div class="welcome-badge">
+                🎉 Welcome to Charter!
+              </div>
+              
+              <h1 style="color: #1A2B3C; margin: 0 0 20px 0; font-size: 28px; line-height: 1.3;">
+                ${content.title}
+              </h1>
+              
+              <p style="font-size: 16px; line-height: 1.6; color: #555; margin-bottom: 30px;">
+                Hello ${firstName}! Welcome to Charter, the platform that's revolutionizing private aviation. 
+                ${company ? `We're excited to have ${company} join our growing network.` : "We're excited to have you join our growing community."}
+              </p>
+              
+              <div class="user-info">
+                <h3 style="margin-top: 0; color: #1A2B3C;">Your Account Details</h3>
+                <div class="user-detail">
+                  <span class="detail-label">User Code:</span>
+                  <span class="detail-value">${userCode}</span>
+                </div>
+                <div class="user-detail">
+                  <span class="detail-label">Account Type:</span>
+                  <span class="detail-value">${role.charAt(0).toUpperCase() + role.slice(1)}</span>
+                </div>
+                <div class="user-detail">
+                  <span class="detail-label">Email:</span>
+                  <span class="detail-value">${email}</span>
+                </div>
+                ${company ? `
+                <div class="user-detail">
+                  <span class="detail-label">Company:</span>
+                  <span class="detail-value">${company}</span>
+                </div>
+                ` : ''}
+              </div>
+              
+              <div class="benefits">
+                <h3>Why You'll Love Charter</h3>
+                <ul>
+                  ${content.benefits.map(benefit => `<li>${benefit}</li>`).join('')}
+                </ul>
+              </div>
+              
+              <div class="next-steps">
+                <h3>Get Started in 4 Easy Steps</h3>
+                ${content.nextSteps.map((step, index) => `
+                  <div class="step">
+                    <div class="step-number">${index + 1}</div>
+                    <div class="step-content">
+                      <h4>${step.step}</h4>
+                      <p>${step.description}</p>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+              
+              <!-- Login Section -->
+              <div class="login-section">
+                <h3 style="color: white; margin: 0 0 10px 0; font-size: 20px;">Ready to Get Started?</h3>
+                <p style="color: white; margin: 0 0 16px 0; font-size: 16px;">Log in to your Charter account and start your journey</p>
+                <a href="${baseUrl}/login" class="login-button">
+                  Login to Charter
+                </a>
+              </div>
+
+              <div style="text-align: center; margin: 40px 0;">
+                <a href="${baseUrl}${content.cta.url}" class="cta-button">
+                  ${content.cta.text}
+                </a>
+              </div>
+
+              <!-- Mobile App Section -->
+              <div class="mobile-app-section">
+                <h3>📱 Get the Charter Mobile App</h3>
+                <p>Take Charter with you wherever you go. Book flights, manage trips, and stay connected with our mobile app.</p>
+                <div class="app-buttons">
+                  <a href="https://apps.apple.com/app/charter" class="app-button">
+                    📱 Download for iOS
+                  </a>
+                  <a href="https://play.google.com/store/apps/details?id=com.charter" class="app-button">
+                    🤖 Coming Soon on Android
+                  </a>
+                </div>
+                <p style="font-size: 14px; margin-top: 16px; color: #C4A962;">
+                  <strong>✨ Mobile Features:</strong> Instant notifications • Offline access • Touch ID login • Real-time flight tracking
+                </p>
+              </div>
+              
+              <div class="support-box">
+                <h4>🛟 Need Help Getting Started?</h4>
+                <p>Our customer success team is ready to help you make the most of Charter. Simply reply to this email or visit your dashboard.</p>
+              </div>
+              
+              <p style="color: #666; font-size: 14px; line-height: 1.6; margin-top: 30px;">
+                <strong>🔐 Security Note:</strong> Your account is protected with industry-standard security. 
+                ${role === 'operator' ? 'As an operator, you have access to sensitive flight information and should keep your credentials secure.' : 'Never share your login credentials with anyone.'}
+              </p>
+            </div>
+            
+            <div class="footer">
+              <div class="footer-content">
+                <div class="footer-logo">charter.</div>
+                <p class="footer-tagline">Making private jet travel accessible and efficient</p>
+                
+                <!-- Social Icons -->
+                <div class="social-icons">
+                  <a href="https://linkedin.com/company/charter-aviation" class="social-icon" title="LinkedIn">in</a>
+                  <a href="https://twitter.com/charter_aviation" class="social-icon" title="Twitter">𝕏</a>
+                  <a href="https://instagram.com/charter_aviation" class="social-icon" title="Instagram">📷</a>
+                  <a href="https://facebook.com/charter.aviation" class="social-icon" title="Facebook">f</a>
+                  <a href="https://youtube.com/@charteraviation" class="social-icon" title="YouTube">▶</a>
+                </div>
+                
+                <!-- Footer Links -->
+                <div class="footer-links">
+                  <a href="${baseUrl}/about">About</a>
+                  <a href="${baseUrl}/safety">Safety</a>
+                  <a href="${baseUrl}/support">Support</a>
+                  <a href="${baseUrl}/privacy">Privacy</a>
+                  <a href="${baseUrl}/terms">Terms</a>
+                </div>
+                
+                <!-- Footer Bottom -->
+                <div class="footer-bottom">
+                  <p>📧 Need help? Just reply to this email or visit our support center</p>
+                  <p style="margin-top: 12px;">
+                    You're receiving this email because you created an account on Charter. 
+                    <a href="${baseUrl}/dashboard/profile" style="color: #C4A962;">Manage your preferences</a>
+                  </p>
+                  <p style="margin-top: 16px;">
+                    © ${new Date().getFullYear()} Charter Aviation Platform. All rights reserved.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      // Plain text version
+      text: `
+        Welcome to Charter, ${firstName}!
+        
+        ${content.title}
+        
+        Hello ${firstName}! Welcome to Charter, the platform that's revolutionizing private aviation. 
+        ${company ? `We're excited to have ${company} join our growing network.` : "We're excited to have you join our growing community."}
+        
+        Your Account Details:
+        - User Code: ${userCode}
+        - Account Type: ${role.charAt(0).toUpperCase() + role.slice(1)}
+        - Email: ${email}
+        ${company ? `- Company: ${company}` : ''}
+        
+        Why You'll Love Charter:
+        ${content.benefits.map(benefit => `- ${benefit.replace(/<[^>]*>/g, '')}`).join('\n')}
+        
+        Get Started in 4 Easy Steps:
+        ${content.nextSteps.map((step, index) => `${index + 1}. ${step.step}: ${step.description}`).join('\n')}
+        
+        ${content.cta.text}: ${baseUrl}${content.cta.url}
+        
+        Need Help Getting Started?
+        Our customer success team is ready to help you make the most of Charter. Simply reply to this email or visit your dashboard.
+        
+        Charter Aviation Platform
+        Making private jet travel accessible and efficient
+        
+        You're receiving this email because you created an account on Charter.
+        Manage your preferences: ${baseUrl}/dashboard/profile
+      `,
+    };
+
+    await sgMail.send(msg);
+    console.log('Welcome email sent successfully to:', email);
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Error sending welcome email:', error?.response?.body || error);
+    return NextResponse.json(
+      { 
+        error: 'Failed to send welcome email',
+        details: error?.response?.body?.errors || error.message
+      },
+      { status: 500 }
+    );
+  }
+} 

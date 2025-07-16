@@ -524,7 +524,7 @@ const OperatorQuoteForm: React.FC<OperatorQuoteFormProps> = ({ request, onSucces
       sx={{ 
         p: 4, 
         borderRadius: 2,
-        bgcolor: 'background.paper'
+        bgcolor: 'transparent'
       }}
     >
       {/* Header with operator logo */}
@@ -599,7 +599,7 @@ const OperatorQuoteForm: React.FC<OperatorQuoteFormProps> = ({ request, onSucces
             </Box>
 
             {price && !priceError && parseFloat(price) > 0 && (
-              <Paper variant="outlined" elevation={0} sx={{ p: 2, bgcolor: 'grey.50', boxShadow: 'none' }}>
+              <Paper variant="outlined" elevation={0} sx={{ p: 2, bgcolor: 'transparent', boxShadow: 'none' }}>
                 <Typography variant="subtitle2" gutterBottom>
                   Price Breakdown:
                 </Typography>
@@ -647,7 +647,7 @@ const OperatorQuoteForm: React.FC<OperatorQuoteFormProps> = ({ request, onSucces
               </Typography>
             </Box>
           ) : aircraft.length === 0 ? (
-            <Paper variant="outlined" elevation={0} sx={{ p: 3, bgcolor: 'grey.50', textAlign: 'center', boxShadow: 'none' }}>
+            <Paper variant="outlined" elevation={0} sx={{ p: 3, bgcolor: 'transparent', textAlign: 'center', boxShadow: 'none' }}>
               <AirplanemodeActiveIcon sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
               <Typography variant="body1" color="text.secondary" gutterBottom>
                 No active aircraft found
@@ -1237,323 +1237,153 @@ const QuoteRequestDetails: React.FC<QuoteRequestDetailsProps> = ({
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      {/* City Images */}
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: { xs: 'column', md: 'row' }, 
-        gap: { xs: 2, md: isReturn ? 1 : isMultiCity ? 1 : 2 },
-        mb: 2,
-        flexWrap: 'wrap'
-      }}>
-        {isMultiCity && multiCityAirports.length > 0 ? (
-          // Multi-city images
-          multiCityAirports.map((airport, index) => {
-            const imageUrl = multiCityImages[index] || null;
-            const label = String.fromCharCode(65 + index); // A, B, C, D, etc.
-            
-            return (
-              <Box 
-                key={`city-${index}`} 
-                sx={{ 
-                  flex: { 
-                    xs: '1 1 100%', 
-                    md: multiCityImages.length <= 2 
-                      ? '1 1 calc(50% - 8px)' 
-                      : multiCityImages.length <= 3 
-                        ? '1 1 calc(33% - 8px)' 
-                        : multiCityImages.length <= 4
-                          ? '1 1 calc(25% - 8px)'
-                          : '1 1 calc(20% - 8px)'
-                  },
-                  minWidth: { 
-                    xs: '100%', 
-                    md: multiCityImages.length <= 2 
-                      ? '45%' 
-                      : multiCityImages.length <= 3 
-                        ? '30%' 
-                        : multiCityImages.length <= 4
-                          ? '22%'
-                          : '18%'
-                  },
-                  maxWidth: { 
-                    md: multiCityImages.length <= 2 
-                      ? '50%' 
-                      : multiCityImages.length <= 3 
-                        ? '33%' 
-                        : multiCityImages.length <= 4
-                          ? '25%'
-                          : '20%'
-                  },
-                  mb: { xs: 2, md: 0 }
-                }}
-              >
+      {/* Request Details Card */}
+      <Paper elevation={1} sx={{ p: 3, borderRadius: 2, backgroundColor: 'transparent', border: '1px solid', borderColor: 'divider' }}>
+        {/* City Images */}
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', md: 'row' }, 
+          gap: { xs: 2, md: isReturn ? 1 : isMultiCity ? 1 : 2 },
+          mb: 3,
+          flexWrap: 'wrap'
+        }}>
+          {isMultiCity && multiCityAirports.length > 0 ? (
+            // Multi-city images
+            multiCityAirports.map((airport, index) => {
+              const imageUrl = multiCityImages[index] || null;
+              const label = String.fromCharCode(65 + index); // A, B, C, D, etc.
+              
+              return (
                 <Box 
+                  key={`city-${index}`} 
                   sx={{ 
-                    position: 'relative', 
-                    height: multiCityImages.length <= 3 ? 180 : 160,
-                    borderRadius: 2, 
-                    overflow: 'hidden',
-                    backgroundColor: 'grey.200',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      backgroundColor: 'rgba(11, 55, 70, 0.2)', // Brand primary color with opacity
-                      zIndex: 1,
-                    }
+                    flex: { 
+                      xs: '1 1 100%', 
+                      md: multiCityImages.length <= 2 
+                        ? '1 1 calc(50% - 8px)' 
+                        : multiCityImages.length <= 3 
+                          ? '1 1 calc(33% - 8px)' 
+                          : multiCityImages.length <= 4
+                            ? '1 1 calc(25% - 8px)'
+                            : '1 1 calc(20% - 8px)'
+                    },
+                    minWidth: { 
+                      xs: '100%', 
+                      md: multiCityImages.length <= 2 
+                        ? '45%' 
+                        : multiCityImages.length <= 3 
+                          ? '30%' 
+                          : multiCityImages.length <= 4
+                            ? '22%'
+                            : '18%'
+                    },
+                    maxWidth: { 
+                      md: multiCityImages.length <= 2 
+                        ? '50%' 
+                        : multiCityImages.length <= 3 
+                          ? '33%' 
+                          : multiCityImages.length <= 4
+                            ? '25%'
+                            : '20%'
+                    },
+                    mb: { xs: 2, md: 0 }
                   }}
                 >
-                  {loading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                      <CircularProgress />
-                    </Box>
-                  ) : imageUrl ? (
-                    <Image
-                      src={imageUrl}
-                      alt={airport?.city || ''}
-                      fill
-                      sizes={`(max-width: 768px) 100vw, ${
-                        multiCityImages.length <= 2 ? '50vw' : 
-                        multiCityImages.length <= 3 ? '33vw' : 
-                        multiCityImages.length <= 4 ? '25vw' : '20vw'
-                      }`}
-                      style={{ 
-                        objectFit: 'cover',
-                        objectPosition: 'center',
-                        filter: 'saturate(1.2) contrast(1.1)',
-                        transition: 'transform 0.5s ease-in-out',
-                      }}
-                    />
-                  ) : (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                      <Typography variant="caption">Image not available</Typography>
-                    </Box>
-                  )}
                   <Box 
                     sx={{ 
-                      position: 'absolute', 
-                      bottom: 0, 
-                      left: 0, 
-                      right: 0, 
-                      padding: 2,
-                      background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)',
-                      color: 'white',
-                      zIndex: 2,
+                      position: 'relative', 
+                      height: multiCityImages.length <= 3 ? 180 : 160,
+                      borderRadius: 2, 
+                      overflow: 'hidden',
+                      backgroundColor: 'grey.200',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(11, 55, 70, 0.2)', // Brand primary color with opacity
+                        zIndex: 1,
+                      }
                     }}
                   >
-                    <Typography variant="h6" sx={{ fontWeight: 600, textShadow: '0 2px 4px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        bgcolor: 'transparent',
-                        color: 'white',
-                        width: 28,
-                        height: 28,
-                        borderRadius: '50%',
-                        border: '2px solid white',
-                        fontWeight: 'bold',
-                        fontSize: '0.875rem',
-                        lineHeight: 1,
-                        textAlign: 'center'
-                      }}>{label}</Box>
-                      <Box sx={{ color: 'white', display: 'flex', flexDirection: 'column' }}>
-                        {airport?.city || airport?.name || ''}
-                        <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                          {index === 0 ? 'Leg 1 Departure' : 
-                           index === 1 ? 'Leg 1 Destination' :
-                           index === 2 ? 'Leg 2 Destination' :
-                           index === 3 ? 'Leg 3 Destination' :
-                           index === 4 ? 'Leg 4 Destination' :
-                           `Leg ${index - 1} Destination`}
-                        </Typography>
+                    {loading ? (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                        <CircularProgress />
                       </Box>
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-            );
-          })
-        ) : (
-          // One-way or return flight images
-          <>
-            {/* Departure City */}
-            <Box sx={{ flex: 1, minWidth: isReturn ? { xs: '100%', md: '30%' } : { xs: '100%', md: '48%' } }}>
-              <Box 
-                sx={{ 
-                  position: 'relative', 
-                  height: 200, 
-                  borderRadius: 2, 
-                  overflow: 'hidden',
-                  backgroundColor: 'grey.200',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(11, 55, 70, 0.2)', // Brand primary color with opacity
-                    zIndex: 1,
-                  }
-                }}
-              >
-                {loading ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                    <CircularProgress />
-                  </Box>
-                ) : departureImageUrl ? (
-                  <Image
-                    src={departureImageUrl}
-                    alt={departureAirport?.city || request.routing.departureAirport}
-                    fill
-                    sizes={isReturn ? "(max-width: 768px) 100vw, 33vw" : "(max-width: 768px) 100vw, 50vw"}
-                    style={{ 
-                      objectFit: 'cover',
-                      objectPosition: 'center',
-                      filter: 'saturate(1.2) contrast(1.1)',
-                      transition: 'transform 0.5s ease-in-out',
-                    }}
-                  />
-                ) : (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                    <Typography variant="caption">Image not available</Typography>
-                  </Box>
-                )}
-                <Box 
-                  sx={{ 
-                    position: 'absolute', 
-                    bottom: 0, 
-                    left: 0, 
-                    right: 0, 
-                    padding: 2,
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)',
-                    color: 'white',
-                    zIndex: 2,
-                  }}
-                >
-                  <Typography variant="h6" sx={{ fontWeight: 600, textShadow: '0 2px 4px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      bgcolor: 'transparent',
-                      color: 'white',
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      border: '2px solid white',
-                      fontWeight: 'bold',
-                      fontSize: '0.875rem',
-                      lineHeight: 1,
-                      textAlign: 'center'
-                    }}>A</Box>
-                    <Box sx={{ color: 'white', display: 'flex', flexDirection: 'column' }}>
-                      {departureAirport?.city || request.routing.departureAirportName?.split('(')[0] || request.routing.departureAirport}
-                      {isReturn && (
-                        <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                          Departure
-                        </Typography>
-                      )}
+                    ) : imageUrl ? (
+                      <Image
+                        src={imageUrl}
+                        alt={airport?.city || ''}
+                        fill
+                        sizes={`(max-width: 768px) 100vw, ${
+                          multiCityImages.length <= 2 ? '50vw' : 
+                          multiCityImages.length <= 3 ? '33vw' : 
+                          multiCityImages.length <= 4 ? '25vw' : '20vw'
+                        }`}
+                        style={{ 
+                          objectFit: 'cover',
+                          objectPosition: 'center',
+                          filter: 'saturate(1.2) contrast(1.1)',
+                          transition: 'transform 0.5s ease-in-out',
+                        }}
+                      />
+                    ) : (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                        <Typography variant="caption">Image not available</Typography>
+                      </Box>
+                    )}
+                    <Box 
+                      sx={{ 
+                        position: 'absolute', 
+                        bottom: 0, 
+                        left: 0, 
+                        right: 0, 
+                        padding: 2,
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)',
+                        color: 'white',
+                        zIndex: 2,
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ fontWeight: 600, textShadow: '0 2px 4px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          bgcolor: 'transparent',
+                          color: 'white',
+                          width: 28,
+                          height: 28,
+                          borderRadius: '50%',
+                          border: '2px solid white',
+                          fontWeight: 'bold',
+                          fontSize: '0.875rem',
+                          lineHeight: 1,
+                          textAlign: 'center'
+                        }}>{label}</Box>
+                        <Box sx={{ color: 'white', display: 'flex', flexDirection: 'column' }}>
+                          {airport?.city || airport?.name || ''}
+                          <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                            {index === 0 ? 'Leg 1 Departure' : 
+                             index === 1 ? 'Leg 1 Destination' :
+                             index === 2 ? 'Leg 2 Destination' :
+                             index === 3 ? 'Leg 3 Destination' :
+                             index === 4 ? 'Leg 4 Destination' :
+                             `Leg ${index - 1} Destination`}
+                          </Typography>
+                        </Box>
+                      </Typography>
                     </Box>
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-
-            {/* Arrival City */}
-            <Box sx={{ flex: 1, minWidth: isReturn ? { xs: '100%', md: '30%' } : { xs: '100%', md: '48%' } }}>
-              <Box 
-                sx={{ 
-                  position: 'relative', 
-                  height: 200, 
-                  borderRadius: 2, 
-                  overflow: 'hidden',
-                  backgroundColor: 'grey.200',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(11, 55, 70, 0.2)', // Brand primary color with opacity
-                    zIndex: 1,
-                  }
-                }}
-              >
-                {loading ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                    <CircularProgress />
                   </Box>
-                ) : arrivalImageUrl ? (
-                  <Image
-                    src={arrivalImageUrl}
-                    alt={arrivalAirport?.city || request.routing.arrivalAirport}
-                    fill
-                    sizes={isReturn ? "(max-width: 768px) 100vw, 33vw" : "(max-width: 768px) 100vw, 50vw"}
-                    style={{ 
-                      objectFit: 'cover',
-                      objectPosition: 'center',
-                      filter: 'saturate(1.2) contrast(1.1)',
-                      transition: 'transform 0.5s ease-in-out',
-                    }}
-                  />
-                ) : (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                    <Typography variant="caption">Image not available</Typography>
-                  </Box>
-                )}
-                <Box 
-                  sx={{ 
-                    position: 'absolute', 
-                    bottom: 0, 
-                    left: 0, 
-                    right: 0, 
-                    padding: 2,
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)',
-                    color: 'white',
-                    zIndex: 2,
-                  }}
-                >
-                  <Typography variant="h6" sx={{ fontWeight: 600, textShadow: '0 2px 4px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      bgcolor: 'transparent',
-                      color: 'white',
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      border: '2px solid white',
-                      fontWeight: 'bold',
-                      fontSize: '0.875rem',
-                      lineHeight: 1,
-                      textAlign: 'center'
-                    }}>B</Box>
-                    <Box sx={{ color: 'white', display: 'flex', flexDirection: 'column' }}>
-                      {arrivalAirport?.city || request.routing.arrivalAirportName?.split('(')[0] || request.routing.arrivalAirport}
-                      {isReturn && (
-                        <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                          Arrival / Return Departure
-                        </Typography>
-                      )}
-                    </Box>
-                  </Typography>
                 </Box>
-              </Box>
-            </Box>
-            
-            {/* Return City (same as departure city) - Only shown for return flights */}
-            {isReturn && (
-              <Box sx={{ flex: 1, minWidth: { xs: '100%', md: '30%' } }}>
+              );
+            })
+          ) : (
+            // One-way or return flight images
+            <>
+              {/* Departure City */}
+              <Box sx={{ flex: 1, minWidth: isReturn ? { xs: '100%', md: '30%' } : { xs: '100%', md: '48%' } }}>
                 <Box 
                   sx={{ 
                     position: 'relative', 
@@ -1561,7 +1391,6 @@ const QuoteRequestDetails: React.FC<QuoteRequestDetailsProps> = ({
                     borderRadius: 2, 
                     overflow: 'hidden',
                     backgroundColor: 'grey.200',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                     '&::before': {
                       content: '""',
                       position: 'absolute',
@@ -1583,7 +1412,7 @@ const QuoteRequestDetails: React.FC<QuoteRequestDetailsProps> = ({
                       src={departureImageUrl}
                       alt={departureAirport?.city || request.routing.departureAirport}
                       fill
-                      sizes="(max-width: 768px) 100vw, 33vw"
+                      sizes={isReturn ? "(max-width: 768px) 100vw, 33vw" : "(max-width: 768px) 100vw, 50vw"}
                       style={{ 
                         objectFit: 'cover',
                         objectPosition: 'center',
@@ -1623,24 +1452,191 @@ const QuoteRequestDetails: React.FC<QuoteRequestDetailsProps> = ({
                         fontSize: '0.875rem',
                         lineHeight: 1,
                         textAlign: 'center'
-                      }}>C</Box>
+                      }}>A</Box>
                       <Box sx={{ color: 'white', display: 'flex', flexDirection: 'column' }}>
                         {departureAirport?.city || request.routing.departureAirportName?.split('(')[0] || request.routing.departureAirport}
-                        <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                          Return Arrival
-                        </Typography>
+                        {isReturn && (
+                          <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                            Departure
+                          </Typography>
+                        )}
                       </Box>
                     </Typography>
                   </Box>
                 </Box>
               </Box>
-            )}
-          </>
-        )}
-      </Box>
 
-      {/* Request Details Card */}
-      <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
+              {/* Arrival City */}
+              <Box sx={{ flex: 1, minWidth: isReturn ? { xs: '100%', md: '30%' } : { xs: '100%', md: '48%' } }}>
+                <Box 
+                  sx={{ 
+                    position: 'relative', 
+                    height: 200, 
+                    borderRadius: 2, 
+                    overflow: 'hidden',
+                    backgroundColor: 'grey.200',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: 'rgba(11, 55, 70, 0.2)', // Brand primary color with opacity
+                      zIndex: 1,
+                    }
+                  }}
+                >
+                  {loading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                      <CircularProgress />
+                    </Box>
+                  ) : arrivalImageUrl ? (
+                    <Image
+                      src={arrivalImageUrl}
+                      alt={arrivalAirport?.city || request.routing.arrivalAirport}
+                      fill
+                      sizes={isReturn ? "(max-width: 768px) 100vw, 33vw" : "(max-width: 768px) 100vw, 50vw"}
+                      style={{ 
+                        objectFit: 'cover',
+                        objectPosition: 'center',
+                        filter: 'saturate(1.2) contrast(1.1)',
+                        transition: 'transform 0.5s ease-in-out',
+                      }}
+                    />
+                  ) : (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                      <Typography variant="caption">Image not available</Typography>
+                    </Box>
+                  )}
+                  <Box 
+                    sx={{ 
+                      position: 'absolute', 
+                      bottom: 0, 
+                      left: 0, 
+                      right: 0, 
+                      padding: 2,
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)',
+                      color: 'white',
+                      zIndex: 2,
+                    }}
+                  >
+                    <Typography variant="h6" sx={{ fontWeight: 600, textShadow: '0 2px 4px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        bgcolor: 'transparent',
+                        color: 'white',
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        border: '2px solid white',
+                        fontWeight: 'bold',
+                        fontSize: '0.875rem',
+                        lineHeight: 1,
+                        textAlign: 'center'
+                      }}>B</Box>
+                      <Box sx={{ color: 'white', display: 'flex', flexDirection: 'column' }}>
+                        {arrivalAirport?.city || request.routing.arrivalAirportName?.split('(')[0] || request.routing.arrivalAirport}
+                        {isReturn && (
+                          <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                            Arrival / Return Departure
+                          </Typography>
+                        )}
+                      </Box>
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+              
+              {/* Return City (same as departure city) - Only shown for return flights */}
+              {isReturn && (
+                <Box sx={{ flex: 1, minWidth: { xs: '100%', md: '30%' } }}>
+                  <Box 
+                    sx={{ 
+                      position: 'relative', 
+                      height: 200, 
+                      borderRadius: 2, 
+                      overflow: 'hidden',
+                      backgroundColor: 'grey.200',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(11, 55, 70, 0.2)', // Brand primary color with opacity
+                        zIndex: 1,
+                      }
+                    }}
+                  >
+                    {loading ? (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                        <CircularProgress />
+                      </Box>
+                    ) : departureImageUrl ? (
+                      <Image
+                        src={departureImageUrl}
+                        alt={departureAirport?.city || request.routing.departureAirport}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        style={{ 
+                          objectFit: 'cover',
+                          objectPosition: 'center',
+                          filter: 'saturate(1.2) contrast(1.1)',
+                          transition: 'transform 0.5s ease-in-out',
+                        }}
+                      />
+                    ) : (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                        <Typography variant="caption">Image not available</Typography>
+                      </Box>
+                    )}
+                    <Box 
+                      sx={{ 
+                        position: 'absolute', 
+                        bottom: 0, 
+                        left: 0, 
+                        right: 0, 
+                        padding: 2,
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)',
+                        color: 'white',
+                        zIndex: 2,
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ fontWeight: 600, textShadow: '0 2px 4px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          bgcolor: 'transparent',
+                          color: 'white',
+                          width: 28,
+                          height: 28,
+                          borderRadius: '50%',
+                          border: '2px solid white',
+                          fontWeight: 'bold',
+                          fontSize: '0.875rem',
+                          lineHeight: 1,
+                          textAlign: 'center'
+                        }}>C</Box>
+                        <Box sx={{ color: 'white', display: 'flex', flexDirection: 'column' }}>
+                          {departureAirport?.city || request.routing.departureAirportName?.split('(')[0] || request.routing.departureAirport}
+                          <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                            Return Arrival
+                          </Typography>
+                        </Box>
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              )}
+            </>
+          )}
+        </Box>
+
         {/* Trip Type */}
         <Box sx={{ mb: 3 }}>
           <ToggleButtonGroup
@@ -1732,8 +1728,7 @@ const QuoteRequestDetails: React.FC<QuoteRequestDetailsProps> = ({
           <Box 
             ref={flightDetailsRef}
             sx={{ 
-              flex: { xs: '1 1 100%', md: '0 0 45%' }, 
-              maxWidth: { md: '45%' },
+              flex: { xs: '1 1 100%', md: '1' }, 
               display: 'flex', 
               flexDirection: 'column'
             }}
@@ -1756,7 +1751,7 @@ const QuoteRequestDetails: React.FC<QuoteRequestDetailsProps> = ({
                       borderRadius: 2, 
                       p: 2, 
                       mb: index < (request.multiCityRoutes?.length || 0) - 1 ? 2 : 0,
-                      backgroundColor: 'background.paper'
+                      backgroundColor: 'transparent'
                     }}
                   >
                     <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1.5, color: 'primary.main' }}>
@@ -1804,7 +1799,7 @@ const QuoteRequestDetails: React.FC<QuoteRequestDetailsProps> = ({
                     borderRadius: 2, 
                     p: 2, 
                     mb: isReturn ? 2 : 0,
-                    backgroundColor: 'background.paper'
+                    backgroundColor: 'transparent'
                   }}
                 >
                   <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1.5, color: 'primary.main' }}>
@@ -1851,12 +1846,12 @@ const QuoteRequestDetails: React.FC<QuoteRequestDetailsProps> = ({
                 {/* Leg 2 - Only shown for return flights */}
                 {isReturn && request.routing.returnDate && (
                   <Box 
-                    sx={{ 
-                      border: '1px solid #e0e0e0', 
-                      borderRadius: 2, 
-                      p: 2,
-                      backgroundColor: 'background.paper'
-                    }}
+                                      sx={{ 
+                    border: '1px solid #e0e0e0', 
+                    borderRadius: 2, 
+                    p: 2,
+                    backgroundColor: 'transparent'
+                  }}
                   >
                     <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1.5, color: 'primary.main' }}>
                       Leg 2
@@ -1900,8 +1895,7 @@ const QuoteRequestDetails: React.FC<QuoteRequestDetailsProps> = ({
           <Box 
             ref={mapContainerRef}
             sx={{ 
-              flex: { xs: '1 1 100%', md: '0 0 55%' },
-              maxWidth: { md: '55%' },
+              flex: { xs: '1 1 100%', md: '1' },
               height: { xs: '320px', md: 'auto' },
               border: '1px solid #e0e0e0', 
               borderRadius: 2,
@@ -2200,20 +2194,19 @@ const QuoteRequestDetails: React.FC<QuoteRequestDetailsProps> = ({
             <Typography variant="subtitle1" gutterBottom fontWeight="medium">
               Additional Notes
             </Typography>
-            <Paper 
-              variant="outlined" 
-              elevation={0}
+            <Box 
               sx={{ 
                 p: 2, 
                 borderRadius: 1,
-                boxShadow: 'none',
-                bgcolor: 'background.paper'
+                border: '1px solid',
+                borderColor: 'divider',
+                bgcolor: 'transparent'
               }}
             >
               <Typography variant="body2" color={request.additionalNotes ? 'text.primary' : 'text.secondary'}>
                 {request.additionalNotes || 'No additional notes provided.'}
               </Typography>
-            </Paper>
+            </Box>
           </Box>
         </Box>
       </Paper>
@@ -2431,7 +2424,7 @@ const QuoteRequestDetails: React.FC<QuoteRequestDetailsProps> = ({
               </Box>
 
               {/* Price Breakdown */}
-              <Paper variant="outlined" sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+              <Paper variant="outlined" sx={{ p: 3, mb: 3, borderRadius: 2, backgroundColor: 'transparent' }}>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>
                   Price Breakdown
                 </Typography>
@@ -2459,7 +2452,7 @@ const QuoteRequestDetails: React.FC<QuoteRequestDetailsProps> = ({
               </Paper>
 
               {/* Quote Information */}
-              <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 2, backgroundColor: 'transparent' }}>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>
                   Quote Information
                 </Typography>

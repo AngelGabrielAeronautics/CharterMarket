@@ -18,6 +18,8 @@ import {
   DialogContentText,
   ToggleButton,
   ToggleButtonGroup,
+  LinearProgress,
+  CircularProgress,
 } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -180,11 +182,22 @@ export default function BookingForm() {
   // UI state
   const [operatorModalOpen, setOperatorModalOpen] = useState(false);
   const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
+  const [isSubmittingQuote, setIsSubmittingQuote] = useState(false);
+  const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null);
 
   // Set mounted flag to prevent hydration mismatches
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+  }, [pollInterval]);
 
   // Effect to manage date range error toast
   useEffect(() => {
@@ -524,8 +537,8 @@ export default function BookingForm() {
     if (!user) {
       // Save draft to localStorage so it can be submitted after registration/login
       saveDraftToLocalStorage(formState);
-      // Store intended redirect so post-auth flow lands on quotes page
-      sessionStorage.setItem('postAuthRedirect', '/dashboard/quotes?submitted=true');
+      // Store intended redirect so post-auth flow lands on quote requests page
+      sessionStorage.setItem('postAuthRedirect', '/dashboard/quotes/request?submitted=true');
       openLoginModal();
       return;
     }
@@ -623,6 +636,8 @@ export default function BookingForm() {
 
     // Submit quote request to Firestore
     try {
+      setIsSubmittingQuote(true);
+      
       const tripTypeMap: Record<string, 'oneWay' | 'return' | 'multiCity'> = {
         'one-way': 'oneWay',
         return: 'return',
@@ -663,12 +678,119 @@ export default function BookingForm() {
 
       const requestId = await createQuoteRequest(user.userCode, dataToSubmit);
       await submitQuoteRequest(requestId);
+      
       toast.success('Quote request submitted!');
+      
+      // Set flag to track quote submission
+      sessionStorage.setItem('quoteSubmissionInProgress', 'true');
+      sessionStorage.setItem('submittedQuoteId', requestId);
+      
       router.push(`/dashboard/quotes/request?openRequest=${requestId}`);
+      
+      // Poll for completion signal from target page
+      const checkInterval = setInterval(() => {
+        const inProgress = sessionStorage.getItem('quoteSubmissionInProgress');
+        if (inProgress !== 'true') {
+          setIsSubmittingQuote(false);
+          clearInterval(checkInterval);
+          setPollInterval(null);
+        }
+      }, 200);
+      
+      setPollInterval(checkInterval);
+      
+      // Fallback timeout in case something goes wrong
+      setTimeout(() => {
+        setIsSubmittingQuote(false);
+        clearInterval(checkInterval);
+        setPollInterval(null);
+        sessionStorage.removeItem('quoteSubmissionInProgress');
+        sessionStorage.removeItem('submittedQuoteId');
+      }, 10000);
     } catch (error: any) {
+      setIsSubmittingQuote(false);
+      // Clean up submission tracking
+      sessionStorage.removeItem('quoteSubmissionInProgress');
+      sessionStorage.removeItem('submittedQuoteId');
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        setPollInterval(null);
+      }
       console.error('Error submitting quote request:', error);
       toast.error(error.message || 'Failed to submit request');
     }
+  };
+
+  // Auto-submit handler for restored drafts
+  const handleAutoSubmit = async () => {
+    if (!user) {
+      console.error('Auto-submit failed: No user found');
+      return;
+    }
+
+    console.log('Auto-submitting with form state:', formState);
+    
+    try {
+      await submitQuoteRequestData(formState, user);
+      toast.success('Quote request submitted successfully!');
+    } catch (error: any) {
+      console.error('Auto-submit failed:', error);
+      toast.error('Failed to submit your quote request. Please try again.');
+    }
+  };
+
+  // Helper function to submit quote request
+  const submitQuoteRequestData = async (state: FormState, currentUser: any) => {
+    const tripTypeMap: Record<string, 'oneWay' | 'return' | 'multiCity'> = {
+      'one-way': 'oneWay',
+      return: 'return',
+      multicity: 'multiCity',
+    };
+    
+    const primaryLeg = state.legs[0];
+    const multiCityRoutes =
+      state.flightType === 'multicity'
+        ? state.legs.map((leg) => ({
+            departureAirport: leg.from,
+            arrivalAirport: leg.to,
+            departureDate: leg.departureDate!,
+            flexibleDate: state.flexibleDates,
+          }))
+        : undefined;
+        
+    const dataToSubmit = {
+      tripType: tripTypeMap[state.flightType],
+      departureAirport: primaryLeg.from,
+      arrivalAirport: primaryLeg.to,
+      departureDate: primaryLeg.departureDate!,
+      returnDate: state.flightType === 'return' ? state.returnDate! : undefined,
+      flexibleDates: state.flexibleDates,
+      passengerCount:
+        state.flightType === 'multicity' ? primaryLeg.passengers : state.passengers,
+      specialRequirements: state.additionalNotes || undefined,
+      twinEngineMin: state.twinEngineMin,
+      multiCityRoutes,
+      pressurisedCabin: state.pressurisedCabin,
+      twoCrewMin: state.twoCrewMin,
+      hasPets: state.hasPets,
+      petDetails: state.petDetails || undefined,
+      hasExtraBaggage: state.hasExtraBaggage,
+      baggageDetails: state.baggageDetails || undefined,
+      hasHardBags: state.hasHardBags,
+      hardBagsDetails: state.hardBagsDetails || undefined,
+      additionalNotes: state.additionalNotes || undefined,
+    } as any;
+
+    console.log('Creating quote request with data:', dataToSubmit);
+    const requestId = await createQuoteRequest(currentUser.userCode, dataToSubmit);
+    
+    console.log('Quote request created with ID:', requestId);
+    await submitQuoteRequest(requestId);
+    
+    console.log('Quote request submitted successfully');
+    
+    // Navigate to the quote requests page with the request opened
+    router.push(`/dashboard/quotes/request?openRequest=${requestId}`);
   };
 
   // Returns true if all required data for the current flight type is filled
@@ -722,10 +844,16 @@ export default function BookingForm() {
     if (user && mounted) {
       const draft = getDraftFromLocalStorage();
       if (draft) {
+        console.log('Found draft form data, restoring and auto-submitting...', draft);
         const revived = reviveDraft(draft);
         setFormState(revived);
         clearDraftFromLocalStorage();
-        handleSubmit(new Event('submit') as any);
+        
+        // Trigger auto-submission after form state is set
+        setTimeout(() => {
+          console.log('Auto-submitting restored form data...');
+          handleAutoSubmit();
+        }, 100);
       }
     }
   }, [user, mounted]);
@@ -1007,8 +1135,8 @@ export default function BookingForm() {
                   index === 0 && (
                     <Box
                       sx={{
-                        flex: { xs: '1 1 100%', md: '0.7 1 0' },
-                        minWidth: 0,
+                        flex: { xs: '1 1 100%', md: '0.8 1 0' },
+                        minWidth: { xs: '140px', md: '120px' },
                         order: { xs: 5, md: 5 },
                         // Square left corners of the passenger field on desktop only
                         '& .MuiOutlinedInput-root': {
@@ -1024,6 +1152,7 @@ export default function BookingForm() {
                         '& .MuiOutlinedInput-input': {
                           paddingTop: '14px',
                           paddingBottom: '14px',
+                          paddingRight: { xs: '70px', md: '50px' },
                         },
                       }}
                     >
@@ -1051,29 +1180,36 @@ export default function BookingForm() {
                               <Box sx={{ 
                                 display: 'flex', 
                                 flexDirection: { xs: 'row', md: 'column' },
-                                gap: { xs: 0.5, md: 0.25 }
+                                gap: { xs: 0.25, md: 0.25 },
+                                mr: { xs: 0.5, md: 0 }
                               }}>
                                 <IconButton
                                   onClick={() => incrementPassengers()}
                                   disabled={formState.passengers >= 300}
                                   size="small"
                                   sx={{ 
-                                    minWidth: { xs: '32px', md: 'auto' },
-                                    minHeight: { xs: '32px', md: 'auto' }
+                                    width: { xs: '28px', md: '24px' },
+                                    height: { xs: '28px', md: '24px' },
+                                    minWidth: 'auto',
+                                    minHeight: 'auto',
+                                    padding: 0,
                                   }}
                                 >
-                                  <AddIcon fontSize="small" />
+                                  <AddIcon sx={{ fontSize: { xs: '18px', md: '16px' } }} />
                                 </IconButton>
                                 <IconButton
                                   onClick={() => decrementPassengers()}
                                   disabled={formState.passengers <= 1}
                                   size="small"
                                   sx={{ 
-                                    minWidth: { xs: '32px', md: 'auto' },
-                                    minHeight: { xs: '32px', md: 'auto' }
+                                    width: { xs: '28px', md: '24px' },
+                                    height: { xs: '28px', md: '24px' },
+                                    minWidth: 'auto',
+                                    minHeight: 'auto',
+                                    padding: 0,
                                   }}
                                 >
-                                  <RemoveIcon fontSize="small" />
+                                  <RemoveIcon sx={{ fontSize: { xs: '18px', md: '16px' } }} />
                                 </IconButton>
                               </Box>
                             </InputAdornment>
@@ -1090,8 +1226,8 @@ export default function BookingForm() {
                 {formState.flightType === 'multicity' && (
                   <Box
                     sx={{
-                      flex: { xs: '1 1 100%', md: '0.7 1 0' },
-                      minWidth: 0,
+                      flex: { xs: '1 1 100%', md: '0.8 1 0' },
+                      minWidth: { xs: '140px', md: '120px' },
                       order: { xs: 5, md: 5 },
                       // Square left corners of the per-leg passenger field on desktop only
                       '& .MuiOutlinedInput-root': {
@@ -1107,6 +1243,7 @@ export default function BookingForm() {
                       '& .MuiOutlinedInput-input': {
                         paddingTop: '14px',
                         paddingBottom: '14px',
+                        paddingRight: { xs: '70px', md: '50px' },
                       },
                     }}
                   >
@@ -1134,29 +1271,36 @@ export default function BookingForm() {
                             <Box sx={{ 
                               display: 'flex', 
                               flexDirection: { xs: 'row', md: 'column' },
-                              gap: { xs: 0.5, md: 0.25 }
+                              gap: { xs: 0.25, md: 0.25 },
+                              mr: { xs: 0.5, md: 0 }
                             }}>
                               <IconButton
                                 onClick={() => incrementPassengers(index)}
                                 disabled={leg.passengers >= 300}
                                 size="small"
                                 sx={{ 
-                                  minWidth: { xs: '32px', md: 'auto' },
-                                  minHeight: { xs: '32px', md: 'auto' }
+                                  width: { xs: '28px', md: '24px' },
+                                  height: { xs: '28px', md: '24px' },
+                                  minWidth: 'auto',
+                                  minHeight: 'auto',
+                                  padding: 0,
                                 }}
                               >
-                                <AddIcon fontSize="small" />
+                                <AddIcon sx={{ fontSize: { xs: '18px', md: '16px' } }} />
                               </IconButton>
                               <IconButton
                                 onClick={() => decrementPassengers(index)}
                                 disabled={leg.passengers <= 1}
                                 size="small"
                                 sx={{ 
-                                  minWidth: { xs: '32px', md: 'auto' },
-                                  minHeight: { xs: '32px', md: 'auto' }
+                                  width: { xs: '28px', md: '24px' },
+                                  height: { xs: '28px', md: '24px' },
+                                  minWidth: 'auto',
+                                  minHeight: 'auto',
+                                  padding: 0,
                                 }}
                               >
-                                <RemoveIcon fontSize="small" />
+                                <RemoveIcon sx={{ fontSize: { xs: '18px', md: '16px' } }} />
                               </IconButton>
                             </Box>
                           </InputAdornment>
@@ -1473,7 +1617,7 @@ export default function BookingForm() {
                 color="primary"
                 size="large"
                 fullWidth
-                disabled={!isFormComplete()}
+                disabled={!isFormComplete() || isSubmittingQuote}
                 sx={{
                   py: 1.5,
                   fontSize: '1rem',
@@ -1482,7 +1626,7 @@ export default function BookingForm() {
                   fontWeight: 600,
                 }}
               >
-                Submit Quote Request
+                {isSubmittingQuote ? 'Submitting...' : 'Submit Quote Request'}
               </Button>
             </Box>
 
@@ -1532,6 +1676,68 @@ export default function BookingForm() {
             Register as Passenger
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* Quote Submission Loading Modal */}
+      <Dialog 
+        open={isSubmittingQuote} 
+        disableEscapeKeyDown
+        PaperProps={{
+          sx: { 
+            borderRadius: 2,
+            minWidth: { xs: '280px', sm: '400px' }
+          }
+        }}
+      >
+        <DialogContent sx={{ py: 4, px: 3 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center',
+            gap: 3
+          }}>
+            <Box sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              mb: 1
+            }}>
+              <CircularProgress size={24} color="primary" />
+              <Typography variant="h6" fontWeight="medium">
+                Creating Your Quote Request
+              </Typography>
+            </Box>
+            
+            <Typography 
+              variant="body2" 
+              color="text.secondary" 
+              sx={{ textAlign: 'center', mb: 2 }}
+            >
+              Please wait while we process your request and notify operators...
+            </Typography>
+            
+            <Box sx={{ width: '100%', mb: 1 }}>
+              <LinearProgress 
+                color="primary" 
+                sx={{ 
+                  height: 6, 
+                  borderRadius: 3,
+                  '& .MuiLinearProgress-bar': {
+                    borderRadius: 3
+                  }
+                }}
+              />
+            </Box>
+            
+            <Typography 
+              variant="caption" 
+              color="text.secondary" 
+              sx={{ textAlign: 'center' }}
+            >
+              This usually takes a few seconds
+            </Typography>
+          </Box>
+        </DialogContent>
       </Dialog>
     </>
   );
