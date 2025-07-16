@@ -1,5 +1,5 @@
 export const EMAIL_COLORS = {
-  PRIMARY: '#1A2B3C',
+  PRIMARY: '#0b3847',
   SECONDARY: '#C4A962',
   ACCENT: '#7CB9E8',
   BG: '#F2F0E7',
@@ -27,10 +27,23 @@ export function wrapEmail({ subject, innerRowsHtml, baseUrl }: {
       <tr>
         <td align="center" style="padding:24px 16px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:8px;box-shadow:0 2px 12px rgba(26,43,60,.06);">
-            <!-- Header -->
+            <!-- Hero with overlay text -->
             <tr>
-              <td align="center" style="background:${PRIMARY};padding:32px 24px;border-radius:8px 8px 0 0;">
-                <img src="${baseUrl}/branding/logos/light/charter-logo-dark-mode.png" alt="Charter" width="140" height="40" style="display:block;" />
+              <td background="${baseUrl}/images/login/login_modal.png" bgcolor="#0b3847" style="background-size:cover;background-position:center;border-radius:8px 8px 0 0;">
+                <!--[if gte mso 9]>
+                <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;height:260px;">
+                  <v:fill type="frame" src="${baseUrl}/images/login/login_modal.png" color="#0b3847" />
+                  <v:textbox inset="0,0,0,0">
+                <![endif]-->
+                <div style="padding:100px 24px 60px 24px;text-align:center;">
+                  <img src="${baseUrl}/branding/logos/light/charter-logo-dark-mode.png" alt="Charter" width="140" height="40" style="display:block;margin:0 auto 12px auto;" />
+                  <div style="color:#ffffff;font-size:20px;font-weight:600;margin-bottom:6px;">Welcome to Charter</div>
+                  <div style="color:#ffffff;font-size:14px;">Your premier private jet charter marketplace</div>
+                </div>
+                <!--[if gte mso 9]>
+                  </v:textbox>
+                </v:rect>
+                <![endif]-->
               </td>
             </tr>
             ${innerRowsHtml}

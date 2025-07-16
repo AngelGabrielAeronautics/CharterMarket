@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { SYSTEM_EMAIL_TEMPLATES } from '@/types/email';
 import sgMail from '@sendgrid/mail';
 import { buildWelcomeEmail } from '@/emails/welcomeTemplate';
+import { buildOperatorQuoteNotification } from '@/emails/operatorQuoteNotificationTemplate';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -62,6 +63,36 @@ export async function POST(
         userCode,
         role,
         company,
+        baseUrl,
+      });
+      subject = `[TEST] ${subj}`;
+      htmlContent = html;
+      textContent = text;
+    } else if (templateId === 'operator-quote-notification') {
+      const {
+        operatorFirstName = 'Jane',
+        quoteRequestCode = 'QR001',
+        departureAirport = 'LAX',
+        arrivalAirport = 'JFK',
+        departureDate = new Date().toLocaleDateString(),
+        passengerCount = 4,
+        tripType = 'one-way',
+        requestId = 'QR001',
+      } = sampleData || {};
+
+      const baseUrl =
+        process.env.NEXT_PUBLIC_APP_URL ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
+      const { subject: subj, html, text } = buildOperatorQuoteNotification({
+        operatorFirstName,
+        quoteRequestCode,
+        departureAirport,
+        arrivalAirport,
+        departureDate,
+        passengerCount,
+        tripType,
+        requestId,
         baseUrl,
       });
       subject = `[TEST] ${subj}`;

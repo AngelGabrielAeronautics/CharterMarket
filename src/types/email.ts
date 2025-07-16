@@ -90,7 +90,7 @@ export const SYSTEM_EMAIL_TEMPLATES: SystemEmailTemplate[] = [
     id: 'operator-quote-notification',
     name: 'Operator Quote Notification',
     description: 'Notification to operators about new quote requests',
-    filePath: 'src/app/api/email/operator-quote-notification/route.ts',
+    filePath: 'src/emails/operatorQuoteNotificationTemplate.ts',
     category: 'booking',
     variables: [
       { name: 'operatorFirstName', description: 'Operator\'s first name', required: true, example: 'Jane' },

@@ -321,7 +321,15 @@ export async function sendOperatorQuoteNotifications(quoteRequest: any) {
     // Send notification to each operator
     for (const operator of operators) {
       try {
-        const response = await fetch('/api/email/operator-quote-notification', {
+        const baseUrl =
+          process.env.NEXT_PUBLIC_APP_URL ||
+          (typeof window === 'undefined'
+            ? process.env.VERCEL_URL
+              ? `https://${process.env.VERCEL_URL}`
+              : 'http://localhost:3000'
+            : '');
+
+        const response = await fetch(`${baseUrl}/api/email/operator-quote-notification`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

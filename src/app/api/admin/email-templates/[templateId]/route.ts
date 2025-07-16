@@ -3,6 +3,7 @@ import { SYSTEM_EMAIL_TEMPLATES } from '@/types/email';
 import fs from 'fs/promises';
 import path from 'path';
 import { buildWelcomeEmail } from '@/emails/welcomeTemplate';
+import { buildOperatorQuoteNotification } from '@/emails/operatorQuoteNotificationTemplate';
 
 export async function GET(
   request: NextRequest,
@@ -132,9 +133,12 @@ export async function POST(
       );
     }
 
-    // Special handling for welcome email template
+    // Special handling for specific templates
     if (templateId === 'welcome') {
       return await generateWelcomeEmailPreview(sampleData);
+    }
+    if (templateId === 'operator-quote-notification') {
+      return await generateOperatorQuotePreview(sampleData);
     }
 
     // Read the template file content
@@ -201,6 +205,52 @@ async function generateWelcomeEmailPreview(sampleData: any) {
     console.error('Error generating welcome email preview:', error);
     return NextResponse.json(
       { error: 'Failed to generate welcome email preview' },
+      { status: 500 }
+    );
+  }
+}
+
+async function generateOperatorQuotePreview(sampleData: any) {
+  try {
+    const {
+      operatorFirstName = 'Jane',
+      quoteRequestCode = 'QR001',
+      departureAirport = 'LAX',
+      arrivalAirport = 'JFK',
+      departureDate = new Date().toLocaleDateString(),
+      passengerCount = 4,
+      tripType = 'one-way',
+      requestId = 'QR001',
+    } = sampleData || {};
+
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
+    const { html, text } = buildOperatorQuoteNotification({
+      operatorFirstName,
+      quoteRequestCode,
+      departureAirport,
+      arrivalAirport,
+      departureDate,
+      passengerCount,
+      tripType,
+      requestId,
+      baseUrl,
+    });
+
+    return NextResponse.json({
+      success: true,
+      preview: {
+        html,
+        text,
+        sampleData: sampleData || {},
+      },
+    });
+  } catch (error) {
+    console.error('Error generating operator quote email preview:', error);
+    return NextResponse.json(
+      { error: 'Failed to generate operator quote email preview' },
       { status: 500 }
     );
   }

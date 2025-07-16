@@ -122,14 +122,14 @@ export function buildWelcomeEmail(params: BuildWelcomeEmailParams) {
       </tr>
       <!-- Benefits -->
       <tr>
-        <td style="padding:0 24px 24px 24px;">
+        <td style="padding:0 24px 24px 24px;background:#f2f0e7;border-radius:6px;">
           <h2 style="font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;color:${PRIMARY};font-size:18px;margin:0 0 12px 0;">Why you’ll love Charter</h2>
           <table role="presentation" cellpadding="0" cellspacing="0" width="100%">${benefitsHtml}</table>
         </td>
       </tr>
       <!-- Steps -->
       <tr>
-        <td style="padding:0 24px 24px 24px;">
+        <td style="padding:0 24px 24px 24px;background:#f2f0e7;border-radius:6px;">
           <h2 style="font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;color:${PRIMARY};font-size:18px;margin:0 0 12px 0;">Get started in 4 easy steps</h2>
           <table role="presentation" cellpadding="0" cellspacing="0" width="100%">${stepsHtml}</table>
         </td>

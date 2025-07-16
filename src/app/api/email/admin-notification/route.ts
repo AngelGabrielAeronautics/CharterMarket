@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     }
 
     const msg = {
-      to: 'noreply@chartermarket.app',
+      to: 'admin@chartermarket.app',
       from: process.env.SENDGRID_FROM_EMAIL,
       subject: 'New User Registration - Charter Platform',
       html: `
