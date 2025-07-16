@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { SYSTEM_EMAIL_TEMPLATES } from '@/types/email';
 import sgMail from '@sendgrid/mail';
 import { buildWelcomeEmail } from '@/emails/welcomeTemplate';
+import fs from 'fs/promises';
+import path from 'path';
 
 if (!process.env.SENDGRID_API_KEY) {
   throw new Error('SENDGRID_API_KEY is not set in environment variables');
@@ -67,8 +69,6 @@ export async function POST(
       textContent = text;
     } else {
       // For other templates, use simple variable replacement
-      const fs = require('fs/promises');
-      const path = require('path');
       const filePath = path.join(process.cwd(), template.filePath);
       const fileContent = await fs.readFile(filePath, 'utf8');
       
