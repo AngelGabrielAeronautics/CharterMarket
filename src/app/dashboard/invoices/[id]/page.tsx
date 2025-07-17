@@ -235,7 +235,7 @@ export default function InvoiceDetailsPage() {
           company={{
             name: operatorName,
             addressLines: operatorAddress.split(', '),
-            logoUrl: '/branding/logos/dark/charter logo - light mode.png',
+            logoUrl: '/branding/logos/dark/charter-logo-light-mode.png',
           }}
           invoice={{
             number: invoice.invoiceId,

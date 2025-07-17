@@ -34,8 +34,8 @@ export default function Logo({ href, height = 40, sx = {}, srcOverride }: LogoPr
   const logoSrc = srcOverride
     ? srcOverride
     : isDarkMode 
-      ? '/branding/logos/light/charter logo - dark mode.png'
-      : '/branding/logos/dark/charter logo - light mode.png';
+      ? '/branding/logos/light/charter-logo-dark-mode.png'
+      : '/branding/logos/dark/charter-logo-light-mode.png';
     
   const logoComponent = (
     <Box sx={{ position: 'relative', transition: 'opacity 200ms', ...sx }}>

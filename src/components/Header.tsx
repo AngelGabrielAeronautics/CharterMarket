@@ -110,8 +110,8 @@ export default function Header() {
             sx={{ color: 'inherit' }}
             srcOverride={
               isScrolled
-                ? '/branding/logos/dark/charter logo - light mode.png'
-                : '/branding/logos/light/charter logo - dark mode.png'
+                ? '/branding/logos/dark/charter-logo-light-mode.png'
+                : '/branding/logos/light/charter-logo-dark-mode.png'
             }
           />
         </Box>

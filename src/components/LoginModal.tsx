@@ -366,7 +366,7 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
             }}
           >
             <Image
-              src="/branding/logos/light/charter logo - dark mode.png"
+              src="/branding/logos/light/charter-logo-dark-mode.png"
               alt="Charter Logo"
               width={180}
               height={60}

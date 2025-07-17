@@ -368,7 +368,7 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
               />
             )}
             <Image
-              src="/branding/logos/light/charter logo - dark mode.png"
+              src="/branding/logos/light/charter-logo-dark-mode.png"
               alt="Charter Logo"
               width={140}
               height={40}

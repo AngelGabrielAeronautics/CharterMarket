@@ -703,7 +703,7 @@ export default function Home() {
             <GridItem xs={12} sm={6} md={3}>
               <Box sx={{ mb: { xs: 2, sm: 3 } }}>
                 <Image
-                  src="/branding/logos/light/charter logo - dark mode.png"
+                  src="/branding/logos/light/charter-logo-dark-mode.png"
                   alt="Charter Logo"
                   width={120}
                   height={40}
