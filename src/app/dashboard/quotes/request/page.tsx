@@ -176,6 +176,18 @@ export default function QuoteRequestsPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
 
+  /**
+   * If the page was opened with `?submitted=true` (used after registration/login when we saved
+   * a draft quote request), switch to the "Submit New Request" tab so the hidden BookingForm
+   * mounts, restores the draft from localStorage and auto-submits it.
+   */
+  useEffect(() => {
+    const submittedFlag = searchParams.get('submitted');
+    if (submittedFlag === 'true') {
+      setTabValue(1); // open "Submit New Request" tab (index 1)
+    }
+  }, [searchParams]);
+
   const {
     requests: quoteRequests,
     loading,

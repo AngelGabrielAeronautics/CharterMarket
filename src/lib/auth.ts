@@ -67,6 +67,8 @@ function getAuthErrorMessage(error: AuthError): string {
       return 'This account has been disabled. Please contact support for assistance.';
     case 'auth/operation-not-allowed':
       return 'This sign in method is not enabled. Please try a different method.';
+    case 'auth/email-already-in-use':
+      return 'An account with this email already exists. Please sign in or use “Forgot Password” to reset your credentials.';
     default:
       return 'An error occurred during sign in. Please try again.';
   }
@@ -245,7 +247,10 @@ export const registerUser = async (
     return userData;
   } catch (error: any) {
     console.error('Registration error:', error);
-    throw new Error(error.message);
+    if (error.code) {
+      throw new Error(getAuthErrorMessage(error));
+    }
+    throw new Error(error.message ?? 'Registration failed. Please try again.');
   }
 };
 
