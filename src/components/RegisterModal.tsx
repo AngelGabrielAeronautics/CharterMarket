@@ -110,6 +110,10 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
     superAdmin: 'Full platform administration access.',
   };
 
+  // Helper for animated layout – if an account type is selected we want
+  // to stack the buttons vertically, highlight the chosen one and shrink the rest.
+  const typeIsChosen = Boolean(userType);
+
   useEffect(() => {
     if (defaultUserType) {
       setUserType(defaultUserType);
@@ -425,7 +429,17 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                 <Typography variant="h5" gutterBottom>
                   Select your account type
                 </Typography>
-                <Box sx={{ display: 'flex', gap: tokens.spacing[2].value, width: '100%' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' }, // mobile stacks, desktop row as originally
+                    alignItems: 'center',
+                    gap: tokens.spacing[2].value,
+                    width: '100%',
+                    transition: 'all 0.35s ease',
+                    justifyContent: 'center',
+                  }}
+                >
                   <Button
                     color="primary"
                     variant="outlined"
@@ -448,13 +462,19 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                         borderColor: theme.palette.primary.main,
                       },
                       ...(userType === 'passenger' && {
-                        borderWidth: '3px',
-                        borderStyle: 'solid',
                         borderColor:
                           theme.palette.mode === 'dark'
                             ? theme.palette.primary.contrastText
                             : theme.palette.primary.main,
                       }),
+                      // Animation transforms
+                      transition: 'transform 0.35s ease, opacity 0.35s ease',
+                      transform:
+                        typeIsChosen && userType !== 'passenger'
+                          ? 'scale(0.85) translateY(8px)'
+                          : 'scale(1)',
+                      opacity: typeIsChosen && userType !== 'passenger' ? 0.6 : 1,
+                      // selected remains default scale
                     })}
                   >
                     <Typography variant="h6" gutterBottom>
@@ -486,13 +506,19 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                         borderColor: theme.palette.primary.main,
                       },
                       ...(userType === 'agent' && {
-                        borderWidth: '3px',
-                        borderStyle: 'solid',
                         borderColor:
                           theme.palette.mode === 'dark'
                             ? theme.palette.primary.contrastText
                             : theme.palette.primary.main,
                       }),
+                      // Animation transforms
+                      transition: 'transform 0.35s ease, opacity 0.35s ease',
+                      transform:
+                        typeIsChosen && userType !== 'agent'
+                          ? 'scale(0.85) translateY(8px)'
+                          : 'scale(1)',
+                      opacity: typeIsChosen && userType !== 'agent' ? 0.6 : 1,
+                      // selected keeps default scale
                     })}
                   >
                     <Typography variant="h6" gutterBottom>
@@ -524,13 +550,19 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
                         borderColor: theme.palette.primary.main,
                       },
                       ...(userType === 'operator' && {
-                        borderWidth: '3px',
-                        borderStyle: 'solid',
                         borderColor:
                           theme.palette.mode === 'dark'
                             ? theme.palette.primary.contrastText
                             : theme.palette.primary.main,
                       }),
+                      // Animation transforms
+                      transition: 'transform 0.35s ease, opacity 0.35s ease',
+                      transform:
+                        typeIsChosen && userType !== 'operator'
+                          ? 'scale(0.85) translateY(8px)'
+                          : 'scale(1)',
+                      opacity: typeIsChosen && userType !== 'operator' ? 0.6 : 1,
+                      // selected default scale
                     })}
                   >
                     <Typography variant="h6" gutterBottom>
