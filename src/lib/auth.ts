@@ -162,7 +162,7 @@ export const registerUser = async (
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ email, firstName }),
         });
 
         // Log successful verification email with type-safe logging

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAdminAuth } from '@/lib/firebase-admin';
 import sgMail from '@sendgrid/mail';
+import { buildVerifyEmail } from '@/emails/verifyEmailTemplate';
 
 export async function POST(request: Request) {
   // Validate SendGrid API key at request time
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
   const adminAuth = getAdminAuth();
 
   try {
-    const { email } = await request.json();
+    const { email, firstName } = await request.json();
 
     if (!email) {
       return NextResponse.json(
@@ -29,18 +30,25 @@ export async function POST(request: Request) {
     // Generate verification link
     const verificationLink = await adminAuth.generateEmailVerificationLink(email);
 
-    if (!process.env.SENDGRID_FROM_EMAIL || !process.env.SENDGRID_VERIFICATION_TEMPLATE_ID) {
-      throw new Error('Required SendGrid configuration is missing');
+    if (!process.env.SENDGRID_FROM_EMAIL) {
+      throw new Error('SENDGRID_FROM_EMAIL is not set in environment variables');
     }
 
-    // Send email using SendGrid
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
+    const { subject, html, text } = buildVerifyEmail({
+      email,
+      verificationLink,
+      firstName,
+      baseUrl,
+    });
+
     const msg = {
       to: email,
       from: process.env.SENDGRID_FROM_EMAIL,
-      templateId: process.env.SENDGRID_VERIFICATION_TEMPLATE_ID,
-      dynamicTemplateData: {
-        verificationLink
-      },
+      subject,
+      html,
+      text,
     };
 
     await sgMail.send(msg);
