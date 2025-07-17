@@ -705,7 +705,7 @@ export default function Home() {
                 <Image
                   src="/branding/logos/light/charter-logo-dark-mode.png"
                   alt="Charter Logo"
-                  width={120}
+                  width={140}
                   height={40}
                   priority
                 />
