@@ -2,8 +2,7 @@
  * @jest-environment jsdom
  */
 import React from 'react';
-import { render } from '@testing-library/react';
-import { screen, fireEvent } from '@testing-library/dom';
+import { render, screen, fireEvent } from '@testing-library/react';
 import BookingForm from './BookingForm';
 import { AuthContext } from '@/contexts/AuthContext';
 import { ModalContext } from '@/contexts/ModalContext';
