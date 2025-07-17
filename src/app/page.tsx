@@ -28,6 +28,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import BookingForm from '@/components/BookingForm';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PeopleIcon from '@mui/icons-material/People';
+import AppDownloadBanner from '@/components/ui/AppDownloadBanner';
 
 // Define props that are specific to Grid containers and should be omitted for items
 type GridContainerPropsKeys =
@@ -451,6 +452,7 @@ export default function Home() {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+      <AppDownloadBanner variant="full" persistentId="homepage-app-download" mobileOnly={false} />
       {/* Hero Section */}
       <Box
         component="section"

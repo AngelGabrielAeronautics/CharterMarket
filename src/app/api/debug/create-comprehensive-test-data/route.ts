@@ -110,7 +110,8 @@ export async function POST(req: NextRequest) {
       offers: [] as any[],
       bookings: [] as any[],
       passengers: [] as any[],
-      invoices: [] as any[]
+      invoices: [] as any[],
+      operators: [] as any[]
     };
 
     // Create 20 diverse user accounts
@@ -177,18 +178,45 @@ export async function POST(req: NextRequest) {
         batch.set(userRef, userData);
         createdData.users.push({ userCode, email, role });
 
-        // Create aircraft for operators
+        // ----------------------------------------------
+        // NEW: Also create a document in the `operators` collection
+        // so that operator-specific queries work correctly.
+        // ----------------------------------------------
         if (role === 'operator') {
           const aircraftCount = Math.floor(Math.random() * 4) + 2; // 2-5 aircraft per operator
-          
+
+          const baseAirportObj = getRandomElement(AIRPORTS.slice(0, 4)); // SA airports for home base
+          const operatorData = {
+            operatorCode: userCode,
+            companyName: userData.company ?? `${firstName} ${lastName} Aviation`,
+            aocNumber: `AOC-${Math.floor(Math.random() * 9000) + 1000}`,
+            baseAirport: baseAirportObj.code,
+            contactEmail: email,
+            contactPhone: userData.phone,
+            status: 'active',
+            operatingRegions: [baseAirportObj.country],
+            fleetSize: aircraftCount,
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+          };
+
+          const operatorRef = adminDb.collection('operators').doc(userCode);
+          batch.set(operatorRef, operatorData);
+          // Track created operator for summary/debugging
+          createdData.operators.push({ operatorCode: userCode, companyName: operatorData.companyName });
+
+          // ----------------------------------------------
+          // Generate aircraft for this operator
+          // ----------------------------------------------
           for (let j = 0; j < aircraftCount; j++) {
             const aircraftType = getRandomElement(AIRCRAFT_TYPES);
             const aircraftId = `AC-${userCode}-${j + 1}`;
             const registration = generateRegistration();
-            
+
             const aircraftData = {
               id: aircraftId,
-              operatorUserCode: userCode,
+              operatorId: userCode,          // Link back to operator document
+              operatorUserCode: userCode,    // Legacy compatibility
               registration,
               make: aircraftType.make,
               model: aircraftType.model,
@@ -196,7 +224,7 @@ export async function POST(req: NextRequest) {
               maxPassengers: aircraftType.maxPassengers,
               range: aircraftType.range,
               year: Math.floor(Math.random() * 8) + 2017, // 2017-2024
-              baseAirport: getRandomElement(AIRPORTS.slice(0, 4)).code, // SA airports
+              baseAirport: baseAirportObj.code,
               status: Math.random() > 0.1 ? 'ACTIVE' : 'MAINTENANCE',
               documents: {
                 airworthinessValid: true,
@@ -204,16 +232,16 @@ export async function POST(req: NextRequest) {
                 insuranceValid: true,
                 airworthinessExpiry: Timestamp.fromDate(generateRandomDate(-30, 365)),
                 registrationExpiry: Timestamp.fromDate(generateRandomDate(-30, 730)),
-                insuranceExpiry: Timestamp.fromDate(generateRandomDate(-30, 365))
+                insuranceExpiry: Timestamp.fromDate(generateRandomDate(-30, 365)),
               },
               maintenance: {
                 lastMaintenance: Timestamp.fromDate(generateRandomDate(90, 0)),
                 nextMaintenance: Timestamp.fromDate(generateRandomDate(0, 180)),
                 flightHours: Math.floor(Math.random() * 3000) + 500,
-                flightCycles: Math.floor(Math.random() * 2000) + 200
+                flightCycles: Math.floor(Math.random() * 2000) + 200,
               },
               createdAt: Timestamp.now(),
-              updatedAt: Timestamp.now()
+              updatedAt: Timestamp.now(),
             };
 
             const aircraftRef = adminDb.collection('aircraft').doc(aircraftId);

@@ -21,13 +21,10 @@ import Link from 'next/link';
 import {
   PhoneIphone,
   CheckCircle,
-  FlightTakeoff,
-  Notifications,
-  OfflinePin,
-  Security,
-  Payment,
 } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
+import Image from 'next/image';
+const APP_IMAGE_SRC = '/images/misc/mobile-app-image.png?v=2';
 import { useRouter } from 'next/navigation';
 
 export default function DownloadPage() {
@@ -91,7 +88,7 @@ export default function DownloadPage() {
       >
         <CloseIcon />
       </IconButton>
-      <Box sx={{ py: 8 }}>
+      <Box sx={{ pt: { xs: 6, md: 10 }, pb: { xs: 2, md: 4 } }}>
         <Typography variant="h3" component="h1" fontWeight="bold" textAlign="center" gutterBottom>
           Download the Charter App
         </Typography>
@@ -116,101 +113,14 @@ export default function DownloadPage() {
                 justifyContent: 'center',
               }}
             >
-              <Box
-                sx={{
-                  position: 'relative',
-                  width: { xs: 220, md: 280 },
-                  height: { xs: 400, md: 600 },
-                  border: '12px solid #333',
-                  borderRadius: 5,
-                  overflow: 'hidden',
-                  boxShadow: theme.shadows[10],
-                }}
-              >
-                {/* Placeholder for a mockup of the app interface */}
-                <Box
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    bgcolor: '#f5f5f5',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    pt: 4,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: '90%',
-                      height: 40,
-                      bgcolor: '#1A2B3C',
-                      borderRadius: 1,
-                      mb: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Typography variant="subtitle2" color="white">
-                      Charter
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{ width: '90%', height: 120, bgcolor: '#C4A962', borderRadius: 1, mb: 2 }}
-                  ></Box>
-                  <Box
-                    sx={{
-                      width: '90%',
-                      height: 80,
-                      bgcolor: 'white',
-                      borderRadius: 1,
-                      mb: 2,
-                      border: '1px solid #ddd',
-                    }}
-                  ></Box>
-                  <Box
-                    sx={{
-                      width: '90%',
-                      height: 80,
-                      bgcolor: 'white',
-                      borderRadius: 1,
-                      mb: 2,
-                      border: '1px solid #ddd',
-                    }}
-                  ></Box>
-                  <Box
-                    sx={{
-                      width: '90%',
-                      height: 80,
-                      bgcolor: 'white',
-                      borderRadius: 1,
-                      mb: 2,
-                      border: '1px solid #ddd',
-                    }}
-                  ></Box>
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      bottom: 0,
-                      width: '100%',
-                      height: 60,
-                      bgcolor: 'white',
-                      borderTop: '1px solid #ddd',
-                      display: 'flex',
-                      justifyContent: 'space-around',
-                      alignItems: 'center',
-                      px: 2,
-                    }}
-                  >
-                    <FlightTakeoff fontSize="small" />
-                    <Notifications fontSize="small" />
-                    <PhoneIphone fontSize="small" />
-                    <Payment fontSize="small" />
-                    <Security fontSize="small" />
-                  </Box>
-                </Box>
-              </Box>
+              <Image
+                src={APP_IMAGE_SRC}
+                alt="Charter mobile app preview"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                style={{ objectFit: 'contain' }}
+                priority
+              />
             </Box>
           </Grid>
 
@@ -270,126 +180,120 @@ export default function DownloadPage() {
                   />
                 </ListItem>
               </List>
-
-              <Box
-                sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 4 }}
-              >
-                {/* Apple App Store Badge */}
-                <Button
-                  component="a"
-                  href="https://apps.apple.com/app/chartermarket/id123456789"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  variant="contained"
-                  sx={{
-                    bgcolor: '#000000',
-                    color: 'white',
-                    height: 54,
-                    width: { xs: '100%', sm: 200 },
-                    display: 'flex',
-                    alignItems: 'center',
-                    '&:hover': {
-                      bgcolor: '#333',
-                    },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      mr: 1,
-                    }}
-                  >
-                    <Typography variant="caption" sx={{ fontSize: '0.7rem', lineHeight: 1 }}>
-                      Download on the
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>
-                      App Store
-                    </Typography>
-                  </Box>
-                  <PhoneIphone />
-                </Button>
-
-                {/* Google Play Store Badge */}
-                <Button
-                  component="a"
-                  href="https://play.google.com/store/apps/details?id=app.chartermarket"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  variant="contained"
-                  sx={{
-                    bgcolor: '#000000',
-                    color: 'white',
-                    height: 54,
-                    width: { xs: '100%', sm: 200 },
-                    display: 'flex',
-                    alignItems: 'center',
-                    '&:hover': {
-                      bgcolor: '#333',
-                    },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      mr: 1,
-                    }}
-                  >
-                    <Typography variant="caption" sx={{ fontSize: '0.7rem', lineHeight: 1 }}>
-                      GET IT ON
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>
-                      Google Play
-                    </Typography>
-                  </Box>
-                  <PhoneIphone />
-                </Button>
-              </Box>
-
-              {/* Web App Install Prompt */}
-              {showPwaInstall && (
-                <Card variant="outlined" sx={{ bgcolor: '#f8f8f8', mb: 2 }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <OfflinePin color="primary" fontSize="large" />
-                      <Box>
-                        <Typography variant="body1" fontWeight="medium">
-                          Install Charter as a Web App
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          Use Charter even without an internet connection
-                        </Typography>
-                        <Button
-                          variant="outlined"
-                          color="primary"
-                          size="small"
-                          onClick={handlePwaInstall}
-                          sx={{ mt: 1 }}
-                        >
-                          Install Now
-                        </Button>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              )}
-
-              <Typography variant="body2" color="text.secondary">
-                By downloading our app, you agree to our{' '}
-                <Link href="/terms" style={{ color: theme.palette.primary.main }}>
-                  Terms of Service
-                </Link>{' '}
-                and{' '}
-                <Link href="/privacy" style={{ color: theme.palette.primary.main }}>
-                  Privacy Policy
-                </Link>
-              </Typography>
             </Box>
           </Grid>
         </Grid>
+
+        {/* CTA section below image & bullets */}
+        <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+          {/* Store Badges */}
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+            <Button
+              component="a"
+              href="https://apps.apple.com/app/chartermarket/id123456789"
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="contained"
+              sx={{
+                bgcolor: '#000000',
+                color: 'white',
+                height: 54,
+                width: 200,
+                display: 'flex',
+                alignItems: 'center',
+                '&:hover': {
+                  bgcolor: '#333',
+                },
+              }}
+            >
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', mr: 1 }}>
+                <Typography variant="caption" sx={{ fontSize: '0.7rem', lineHeight: 1 }}>
+                  Download on the
+                </Typography>
+                <Typography variant="body1" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>
+                  App Store
+                </Typography>
+              </Box>
+              <PhoneIphone />
+            </Button>
+
+            <Button
+              component="a"
+              href="https://play.google.com/store/apps/details?id=app.chartermarket"
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="contained"
+              sx={{
+                bgcolor: '#000000',
+                color: 'white',
+                height: 54,
+                width: 200,
+                display: 'flex',
+                alignItems: 'center',
+                '&:hover': {
+                  bgcolor: '#333',
+                },
+              }}
+            >
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', mr: 1 }}>
+                <Typography variant="caption" sx={{ fontSize: '0.7rem', lineHeight: 1 }}>
+                  GET IT ON
+                </Typography>
+                <Typography variant="body1" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>
+                  Google Play
+                </Typography>
+              </Box>
+              <PhoneIphone />
+            </Button>
+          </Box>
+
+          {/* Web App Install Prompt */}
+          {showPwaInstall && (
+            <Card variant="outlined" sx={{ bgcolor: '#f8f8f8', width: '100%', maxWidth: 560 }}>
+              <CardContent sx={{ px: 3, py: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Image
+                      src="/branding/favicon/Charter-favicon-16x16.png"
+                      alt="Charter logo"
+                      width={48}
+                      height={48}
+                      style={{ borderRadius: 6 }}
+                    />
+                    <Box>
+                      <Typography variant="subtitle1" fontWeight="medium">
+                        Install Charter as a Web App
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Works offline after installation
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    onClick={handlePwaInstall}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    Install Now
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          )}
+
+          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+            By downloading our app, you agree to our{' '}
+            <Link href="/terms" style={{ color: theme.palette.primary.main }}>
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link href="/privacy" style={{ color: theme.palette.primary.main }}>
+              Privacy Policy
+            </Link>
+          </Typography>
+        </Box>
       </Box>
     </Container>
   );

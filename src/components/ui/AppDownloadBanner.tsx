@@ -11,6 +11,8 @@ interface AppDownloadBannerProps {
   variant?: 'full' | 'compact';
   showCloseButton?: boolean;
   persistentId?: string;
+  /** Show banner only on mobile devices (default true). Set to false to display on desktop too. */
+  mobileOnly?: boolean;
 }
 
 const BANNER_DISMISS_DAYS = 7; // How many days to hide the banner after dismissal
@@ -19,6 +21,7 @@ export default function AppDownloadBanner({
   variant = 'compact',
   showCloseButton = true,
   persistentId = 'app-download-banner',
+  mobileOnly = true,
 }: AppDownloadBannerProps) {
   const theme = useTheme();
   const [cookies, setCookie] = useCookies([`dismissed-${persistentId}`]);
@@ -41,11 +44,9 @@ export default function AppDownloadBanner({
     setIsStandalone(isInStandaloneMode);
     setIsMobile(isMobileDevice);
 
-    // Only show the banner if:
-    // 1. It wasn't dismissed before
-    // 2. The app is not already installed
-    // 3. The user is on a mobile device
-    setShow(!isDismissed && !isInStandaloneMode && isMobileDevice);
+    // Determine whether banner should be visible
+    const deviceOk = mobileOnly ? isMobileDevice : true;
+    setShow(!isDismissed && !isInStandaloneMode && deviceOk);
   }, [cookies, persistentId]);
 
   const handleDismiss = () => {

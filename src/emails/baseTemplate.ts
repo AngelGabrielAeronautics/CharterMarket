@@ -47,6 +47,18 @@ export function wrapEmail({ subject, innerRowsHtml, baseUrl }: {
               </td>
             </tr>
             ${innerRowsHtml}
+            <!-- App download CTA -->
+            <tr>
+              <td align="center" style="padding:24px;">
+                <a href="${baseUrl}/download" style="text-decoration:none;display:inline-block;margin:0 4px;">
+                  <img src="${baseUrl}/icons/app-store/app-store-badge.svg" alt="Download on the App Store" width="140" style="display:block;border:0;outline:none;text-decoration:none;" />
+                </a>
+                <a href="${baseUrl}/icons/app-store/google-play-badge.svg" style="text-decoration:none;display:inline-block;margin:0 4px;">
+                  <img src="${baseUrl}/icons/app-store/google-play-badge.svg" alt="Get it on Google Play" width="140" style="display:block;border:0;outline:none;text-decoration:none;" />
+                </a>
+                <div style="font-size:12px;color:#666666;margin-top:8px;">Manage your flights on the go with the Charter mobile app</div>
+              </td>
+            </tr>
             <!-- Footer -->
             <tr>
               <td style="background:${PRIMARY};color:#ffffff;padding:16px 24px;border-radius:0 0 8px 8px;font-size:12px;text-align:center;">
