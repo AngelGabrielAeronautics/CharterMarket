@@ -278,7 +278,7 @@ export async function sendOperatorQuoteNotifications(quoteRequest: any) {
     const operatorsQuery = query(
       collection(db, 'users'),
       where('role', '==', 'operator'),
-      where('status', '==', 'active')
+      where('status', 'in', ['active', 'incomplete'])
     );
     
     console.log('🔍 Querying for active operators...');

@@ -11,6 +11,7 @@ import SideNav from '@/components/SideNav';
 import { UserRole } from '@/lib/userCode';
 import { UserStatus } from '@/types/user';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import OperatorSetupGuideModal from '@/components/operator/OperatorSetupGuideModal';
 import { Box, Container, IconButton, Tooltip } from '@mui/material';
 import ProgressNav from '@/components/dashboard/ProgressNav';
 import { usePathname } from 'next/navigation';
@@ -36,6 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSideNavMini, setIsSideNavMini] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   const pathname = usePathname();
   // Width of the sidebar drawer (to offset content when open on mobile)
@@ -143,6 +145,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [userData]); // Rerun when userData changes, specifically userData.emailVerified
 
+  // Show operator setup guide until dismissed
+  useEffect(() => {
+    if (userData?.role === 'operator') {
+      try {
+        const dismissed = localStorage.getItem('operatorSetupGuideDismissed');
+        if (!dismissed) {
+          setShowGuide(true);
+        }
+      } catch (e) {
+        console.error('localStorage unavailable:', e);
+      }
+    }
+  }, [userData]);
+
+  const handleDismissGuide = () => {
+    try {
+      localStorage.setItem('operatorSetupGuideDismissed', 'true');
+    } catch {}
+    setShowGuide(false);
+  };
 
 
   if (loading || !userData) {
@@ -296,6 +318,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       >
         <AppDownloadBanner variant="full" persistentId="dashboard-app-download-fixed" />
       </Box>
+      <OperatorSetupGuideModal
+        open={showGuide}
+        onClose={() => setShowGuide(false)}
+        onDontShowAgain={handleDismissGuide}
+      />
     </Box>
   );
 }
