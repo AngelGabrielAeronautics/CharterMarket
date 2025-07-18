@@ -49,6 +49,7 @@ import { generateQuoteId } from '@/lib/serials';
 import { QuoteFormData } from '@/types/quote';
 import { Offer, OfferStatus, QuoteRequest, FlightStatus, User } from '@/types/flight';
 import { uploadMultipleQuoteAttachments } from '@/lib/aircraft';
+import { sendQuoteSubmittedNotification } from '@/lib/email';
 
 /**
  * Submit an operator's offer for a specific quote request.
@@ -714,6 +715,14 @@ export const submitOffer = async (
   try {
     const offerId = await createQuote(request.id, operator.userCode, quoteData);
     console.log(`Offer ${offerId} submitted successfully for request ${request.id}`);
+
+    // Notify the requesting passenger that a new quote is available
+    try {
+      await sendQuoteSubmittedNotification(request);
+    } catch (notifyErr) {
+      console.warn('Failed to send quote-submitted notification:', notifyErr);
+    }
+
     return offerId;
   } catch (error) {
     console.error(`Failed to submit offer for request ${request.id}:`, error);

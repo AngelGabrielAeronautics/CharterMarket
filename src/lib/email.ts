@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 
 // Types for notifications
 export interface EmailNotification {
@@ -549,5 +549,76 @@ export async function sendRegistrationReminderEmail(
       reminderNumber
     });
     throw error;
+  }
+} 
+
+export async function sendQuoteSubmittedNotification(quoteRequest: any) {
+  try {
+    // Fetch passenger (client) details
+    const clientRef = doc(db, 'users', quoteRequest.clientUserCode);
+    const clientSnap = await getDoc(clientRef);
+    if (!clientSnap.exists()) {
+      console.warn('Client user not found for quote request', quoteRequest.id);
+      return;
+    }
+    const clientData: any = clientSnap.data();
+    const passengerEmail = clientData.email;
+    const passengerFirstName = clientData.firstName || '';
+
+    if (!passengerEmail) {
+      console.warn('Passenger email missing, cannot send notification');
+      return;
+    }
+
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (typeof window === 'undefined'
+        ? process.env.VERCEL_URL
+          ? `https://${process.env.VERCEL_URL}`
+          : 'http://localhost:3000'
+        : '');
+
+    const response = await fetch(`${baseUrl}/api/email/quote-submitted-notification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        passengerEmail,
+        passengerFirstName,
+        quoteRequestCode: quoteRequest.requestCode,
+        departureAirport: quoteRequest.routing?.departureAirport || quoteRequest.departureAirport,
+        arrivalAirport: quoteRequest.routing?.arrivalAirport || quoteRequest.arrivalAirport,
+        departureDate: quoteRequest.routing?.departureDate || quoteRequest.departureDate,
+        passengerCount: quoteRequest.passengerCount,
+        tripType: quoteRequest.tripType,
+        requestId: quoteRequest.id || quoteRequest.requestCode,
+      }),
+    });
+
+    if (response.ok) {
+      await storeEmailNotification({
+        userId: quoteRequest.clientUserCode,
+        userCode: quoteRequest.clientUserCode,
+        type: 'quote_request',
+        emailType: 'QUOTE_SUBMITTED_NOTIFICATION',
+        sentTo: passengerEmail,
+        status: 'sent',
+      });
+      console.log('Quote submitted notification sent to passenger:', passengerEmail);
+    } else {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+  } catch (error) {
+    await storeEmailNotification({
+      userId: quoteRequest.clientUserCode,
+      userCode: quoteRequest.clientUserCode,
+      type: 'quote_request',
+      emailType: 'QUOTE_SUBMITTED_NOTIFICATION',
+      sentTo: quoteRequest?.clientUserCode || 'unknown',
+      status: 'failed',
+      error: error instanceof Error ? error.message : String(error),
+    });
+    console.error('Failed to send quote submitted notification:', error);
   }
 } 
