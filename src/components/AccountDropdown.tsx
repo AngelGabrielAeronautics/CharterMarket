@@ -161,7 +161,7 @@ export default function AccountDropdown({ userEmail, firstName, compact }: Accou
               elevation={4}
               sx={{ 
                 mt: 1,
-                borderRadius: 2, // 8px
+                borderRadius: '6px', // subtle rounding
                 overflow: 'hidden'
               }}
             >

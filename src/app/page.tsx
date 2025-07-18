@@ -458,10 +458,12 @@ export default function Home() {
         component="section"
         sx={{
           position: 'relative',
+          // Maintain a minimum height but allow the section to grow with content
           minHeight: { xs: 450, sm: 500, md: 600 },
-          height: { xs: '100vh', sm: '100vh', md: '100vh' },
+          // Lift hero section up to sit behind the header bar so video touches the very top
           mt: { xs: -8, sm: -10, md: -12 },
-          overflow: 'hidden', // Prevent any content overflow
+          // Allow content (like an expanded booking form) to be fully visible
+          overflow: 'visible',
         }}
       >
         {/* Background with overlay */}
@@ -529,12 +531,12 @@ export default function Home() {
         <Box
           sx={{
             position: 'relative',
-            height: '100%',
+            // Let content define height so expanded elements create space automatically
             display: 'flex',
             alignItems: 'center',
           }}
         >
-          <Container>
+          <Container sx={{ pt: { xs: 8, sm: 10, md: 12 } }}>
             <Box
               sx={{
                 maxWidth: 1200,

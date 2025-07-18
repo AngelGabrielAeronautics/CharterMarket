@@ -125,32 +125,47 @@ export default function Header() {
           {!loading && profile ? (
             <>
               {/* Direct link to the user's dashboard */}
-              <Badge
-                badgeContent={totalUnreadCount > 0 ? totalUnreadCount : undefined}
-                color="error"
-                max={99}
+              <Button
+                component={Link}
+                href="/dashboard"
+                color="inherit"
+                startIcon={<DashboardIcon />}
                 sx={{
-                  '& .MuiBadge-badge': {
-                    fontSize: '0.6rem',
-                    height: '16px',
-                    minWidth: '16px',
-                    borderRadius: '8px',
-                  }
+                  textTransform: 'none',
+                  color: pathname === '/' && !isScrolled ? 'common.white' : 'inherit',
                 }}
               >
-                <Button
-                  component={Link}
-                  href="/dashboard"
-                  color="inherit"
-                  startIcon={<DashboardIcon />}
-                  sx={{
-                    textTransform: 'none',
-                    color: pathname === '/' && !isScrolled ? 'common.white' : 'inherit',
-                  }}
-                >
-                  Dashboard
-                </Button>
-              </Badge>
+                Dashboard
+              </Button>
+              <Button
+                component={Link}
+                href="/dashboard/messages"
+                color="inherit"
+                startIcon={
+                  <Badge
+                    badgeContent={totalUnreadCount > 0 ? totalUnreadCount : undefined}
+                    color="error"
+                    max={99}
+                    overlap="circular"
+                    sx={{
+                      '& .MuiBadge-badge': {
+                        fontSize: '0.6rem',
+                        height: '16px',
+                        minWidth: '16px',
+                        borderRadius: '8px',
+                      }
+                    }}
+                  >
+                    <MessageIcon />
+                  </Badge>
+                }
+                sx={{
+                  textTransform: 'none',
+                  color: pathname === '/' && !isScrolled ? 'common.white' : 'inherit',
+                }}
+              >
+                Messages
+              </Button>
               <Button
                 ref={anchorRef}
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -239,7 +254,7 @@ export default function Header() {
                       elevation={4}
                       sx={{
                         mt: 1,
-                        borderRadius: theme.shape.borderRadius,
+                        borderRadius: '6px',
                         overflow: 'hidden',
                       }}
                     >

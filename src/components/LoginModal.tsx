@@ -23,7 +23,7 @@ import { Visibility, VisibilityOff } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import Image from 'next/image';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, alpha } from '@mui/material/styles';
 
 import { auth } from '@/lib/firebase';
 import { useModal } from '@/contexts/ModalContext';
@@ -298,14 +298,16 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
 
   return (
     <Dialog
+      scroll="paper"
       open={modalIsOpen}
       onClose={handleClose}
       maxWidth="xl"
       fullWidth
       BackdropProps={{
-        sx: {
-          backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        },
+        sx: (t) => ({
+          backgroundColor: alpha(t.palette.common.black, 0.6),
+          backdropFilter: 'blur(8px)',
+        }),
       }}
       PaperProps={{
         sx: {
@@ -315,8 +317,10 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
           m: { xs: tokens.spacing[2].value, sm: tokens.spacing[4].value },
           maxWidth: '1200px',
           width: { xs: '100%', md: '1200px' },
-          maxHeight: { xs: '60vh', md: '50vh' },
-          height: { xs: '60vh', md: '50vh' },
+          maxHeight: { xs: '90vh', md: '85vh' },
+          height: 'auto',
+          overflowY: 'auto',
+          backgroundColor: theme.palette.background.paper,
           '& .MuiOutlinedInput-notchedOutline': {
             border: `1px solid ${theme.palette.divider}`,
           },

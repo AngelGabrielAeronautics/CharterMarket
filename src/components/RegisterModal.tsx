@@ -23,11 +23,10 @@ import { Visibility, VisibilityOff, Check, Close } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useModal } from '@/contexts/ModalContext';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, alpha } from '@mui/material/styles';
 import tokens from '@/styles/tokens';
 import Image from 'next/image';
 import { grey } from '@mui/material/colors';
-import { alpha } from '@mui/material/styles';
 import { registerUser } from '@/lib/auth';
 import { UserRole } from '@/lib/userCode';
 
@@ -280,14 +279,16 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
 
   return (
     <Dialog
+      scroll="paper"
       open={isRegisterModalOpen}
       onClose={closeRegisterModal}
       maxWidth="xl"
       fullWidth
       BackdropProps={{
-        sx: {
-          backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        },
+        sx: (t) => ({
+          backgroundColor: alpha(t.palette.common.black, 0.6),
+          backdropFilter: 'blur(8px)',
+        }),
       }}
       PaperProps={{
         sx: {
@@ -297,8 +298,10 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
           m: { xs: tokens.spacing[2].value, sm: tokens.spacing[4].value },
           maxWidth: '1400px',
           width: { xs: '100%', md: '1400px' },
-          height: { xs: 'auto', md: '700px' },
-          maxHeight: { xs: '90vh', md: '700px' },
+          height: 'auto',
+          maxHeight: { xs: '90vh', md: '85vh' },
+          overflowY: 'auto',
+          backgroundColor: theme.palette.background.paper,
           '& .MuiOutlinedInput-notchedOutline': {
             border: `1px solid ${theme.palette.divider}`,
           },
@@ -310,7 +313,7 @@ export default function RegisterModal({ isOpen, onClose, defaultUserType }: Regi
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
           height: '100%',
-          overflow: 'hidden',
+          overflowY: 'auto',
         }}
       >
         <Box
