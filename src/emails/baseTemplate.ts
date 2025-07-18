@@ -36,7 +36,7 @@ export function wrapEmail({ subject, innerRowsHtml, baseUrl }: {
             <!-- Logo & tagline (separate row – better client support) -->
             <tr>
               <td align="center" style="padding:24px 24px 0 24px;background:#ffffff;">
-                <img src="${baseUrl}/branding/logos/light/charter-logo-dark-mode.png" alt="Charter" width="140" height="40" style="display:block;margin:0 auto 12px auto;" />
+                <img src="${baseUrl}/branding/logos/light/charter-logo-dark-mode.png" alt="Charter" width="140" height="40" style="display:block;margin:0 auto 12px auto;max-width:140px;height:auto;" />
                 <div style="color:${PRIMARY};font-size:20px;font-weight:600;margin-bottom:6px;">Welcome to Charter</div>
                 <div style="color:${PRIMARY};font-size:14px;opacity:0.85;">Your premier private jet charter marketplace</div>
               </td>

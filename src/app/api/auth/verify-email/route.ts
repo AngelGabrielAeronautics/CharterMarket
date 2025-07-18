@@ -34,7 +34,14 @@ export async function POST(request: Request) {
       throw new Error('SENDGRID_FROM_EMAIL is not set in environment variables');
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL?.startsWith('http')
+        ? process.env.NEXT_PUBLIC_APP_URL
+        : process.env.NEXT_PUBLIC_APP_URL
+        ? `https://${process.env.NEXT_PUBLIC_APP_URL}`
+        : process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL.split('-')[0]}.vercel.app`
+        : 'http://localhost:3000';
 
     const { subject, html, text } = buildVerifyEmail({
       email,

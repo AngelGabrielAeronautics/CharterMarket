@@ -24,7 +24,15 @@ export async function POST(request: Request) {
       throw new Error('Required SendGrid configuration is missing');
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL?.startsWith('http')
+        ? process.env.NEXT_PUBLIC_APP_URL
+        : process.env.NEXT_PUBLIC_APP_URL
+        ? `https://${process.env.NEXT_PUBLIC_APP_URL}`
+        : process.env.VERCEL_URL
+        ? // If Vercel auto-url contains a team slug we fall back to the primary domain by removing the hash part before the first dash
+          `https://${process.env.VERCEL_URL.split('-')[0]}.vercel.app`
+        : 'http://localhost:3000';
 
     // Build the e-mail using shared template generator
     const { subject, html, text } = buildWelcomeEmail({
