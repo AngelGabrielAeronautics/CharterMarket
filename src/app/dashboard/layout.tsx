@@ -162,7 +162,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const handleDismissGuide = () => {
     try {
       localStorage.setItem('operatorSetupGuideDismissed', 'true');
-    } catch {}
+    } catch (err) {
+      // Ignore localStorage write errors (e.g., in private/incognito or disabled storage)
+    }
     setShowGuide(false);
   };
 
