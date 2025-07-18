@@ -312,6 +312,11 @@ function ImageUploadSection({ type, images, onImagesChange, aircraftId, disabled
             {images.map((imageItem, index) => {
               console.log(`Rendering image ${index}:`, imageItem);
               const key = typeof imageItem === 'string' ? imageItem : `file-${index}-${imageItem.name}`;
+
+              // Determine image source and whether it's a File (blob URL) or a stored string URL
+              const imageSrc = getImageSrc(imageItem, index);
+              const isLocalFile = typeof imageItem !== 'string';
+
               return (
                 <Grid size={{ xs: 12, sm: 6, md: 4 }} key={key}>
                   <Card 
@@ -331,8 +336,14 @@ function ImageUploadSection({ type, images, onImagesChange, aircraftId, disabled
                         backgroundColor: 'grey.100',
                       }}
                     >
+                      {/*
+                        Next.js <Image> optimisation pipeline does not support `blob:` URLs that are generated
+                        when previewing user-selected File objects. Setting `unoptimized` to true tells Next.js
+                        to bypass the optimisation pipeline for these previews while continuing to optimise
+                        persisted string URLs (Firebase Storage etc.).
+                      */}
                       <Image
-                        src={getImageSrc(imageItem, index)}
+                        src={imageSrc}
                         alt={`${typeLabels[type]} ${index + 1}`}
                         fill
                         style={{
@@ -341,6 +352,7 @@ function ImageUploadSection({ type, images, onImagesChange, aircraftId, disabled
                         onError={() => handleImageError(index)}
                         onLoad={() => handleImageLoad(index)}
                         sizes="(max-width: 600px) 100vw, 50vw"
+                        unoptimized={isLocalFile}
                       />
                     </Box>
                     
